@@ -211,12 +211,10 @@ update_services() {
     docker compose -f "$COMPOSE_FILE" pull
 
     # 重新构建并启动（排除 deploy-webhook，避免自我中断）
-    # 先构建所有服务
-    docker compose -f "$COMPOSE_FILE" build
+    # 先构建除 webhook 外的服务
+    docker compose -f "$COMPOSE_FILE" build nginx redis core-api ai-service pay-service
     # 启动除 deploy-webhook 外的服务
     docker compose -f "$COMPOSE_FILE" up -d --force-recreate --no-deps nginx redis core-api ai-service pay-service
-    # 确保 deploy-webhook 也在运行（不重建）
-    docker compose -f "$COMPOSE_FILE" up -d deploy-webhook
 
     # 清理旧镜像
     docker image prune -f
