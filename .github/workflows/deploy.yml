@@ -70,9 +70,9 @@ jobs:
             echo "等待服务启动..."
             sleep 30
 
-            # 在服务器本地检查健康状态
-            NGINX_OK=$(curl -sf "http://localhost/health" && echo "1" || echo "0")
-            API_OK=$(curl -sf "http://localhost/api/health" && echo "1" || echo "0")
+            # 在服务器本地检查健康状态 (使用 -L 跟随重定向)
+            NGINX_OK=$(curl -sfL "http://localhost/health" && echo "1" || echo "0")
+            API_OK=$(curl -sf "http://localhost:3001/api/health" && echo "1" || echo "0")
 
             echo "健康检查结果: Nginx=$NGINX_OK, API=$API_OK"
 
