@@ -14,8 +14,10 @@ FROM base AS deps
 # 复制 package 文件
 COPY package*.json ./
 
-# 安装所有依赖（包括 devDependencies 用于构建）
-RUN npm install --omit=dev && npm cache clean --force
+# 配置 npm 镜像和 better-sqlite3 预编译二进制下载地址
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set better_sqlite3_binary_host https://registry.npmmirror.com/-/binary/better-sqlite3 && \
+    npm install --omit=dev && npm cache clean --force
 
 # ==================== 生产运行阶段 ====================
 FROM base AS production
