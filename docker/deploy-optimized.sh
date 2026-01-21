@@ -149,7 +149,8 @@ cleanup_old_containers() {
     print_info "清理旧容器..."
 
     # 停止并删除可能冲突的旧容器
-    local containers="flashphoto-nginx flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-redis flashphoto-deploy-webhook flashphoto-miniprogram-api flashphoto-admin-api"
+    # 注意: 不清理 deploy-webhook，因为它可能正在执行部署
+    local containers="flashphoto-nginx flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-redis flashphoto-miniprogram-api flashphoto-admin-api"
 
     for container in $containers; do
         if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
