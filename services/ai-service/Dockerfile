@@ -1,7 +1,7 @@
 # AI 服务 Dockerfile
 # 端口: 3002
 
-FROM node:18-alpine
+FROM m.daocloud.io/docker.io/library/node:18-alpine
 
 # 设置工作目录
 WORKDIR /app
