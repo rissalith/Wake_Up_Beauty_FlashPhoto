@@ -386,6 +386,166 @@ async function getAllUserIds() {
   return Array.from(userIds);
 }
 
+// ==================== 素材桶操作函数 ====================
+
+// 列出素材桶中的对象
+async function listAssetObjects(prefix = '', maxKeys = 1000) {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化');
+  }
+
+  return new Promise((resolve, reject) => {
+    cosClient.getBucket({
+      Bucket: ASSET_COS_CONFIG.bucket,
+      Region: ASSET_COS_CONFIG.region,
+      Prefix: prefix,
+      MaxKeys: maxKeys
+    }, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+// 上传到素材桶
+async function uploadToAssetBucket(buffer, key, contentType) {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化');
+  }
+
+  return new Promise((resolve, reject) => {
+    cosClient.putObject({
+      Bucket: ASSET_COS_CONFIG.bucket,
+      Region: ASSET_COS_CONFIG.region,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType
+    }, (err, data) => {
+      if (err) reject(err);
+      else resolve({
+        key: key,
+        url: `${ASSET_COS_CONFIG.baseUrl}/${key}`,
+        etag: data.ETag
+      });
+    });
+  });
+}
+
+// 从素材桶删除对象
+async function deleteFromAssetBucket(key) {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化');
+  }
+
+  return new Promise((resolve, reject) => {
+    cosClient.deleteObject({
+      Bucket: ASSET_COS_CONFIG.bucket,
+      Region: ASSET_COS_CONFIG.region,
+      Key: key
+    }, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+// 获取所有素材列表（分类整理）
+async function getAllAssets() {
+  const data = await listAssetObjects('', 1000);
+  const contents = data.Contents || [];
+
+  const result = {
+    banners: {
+      'zh-CN': [],
+      'zh-TW': [],
+      'en': []
+    },
+    features: {
+      'zh-CN': '',
+      'zh-TW': '',
+      'en': ''
+    },
+    titles: {
+      'zh-CN': '',
+      'zh-TW': '',
+      'en': ''
+    },
+    tabbar: {
+      home: { normal: '', active: '' },
+      history: { normal: '', active: '' },
+      mine: { normal: '', active: '' }
+    },
+    sceneIcons: [],
+    uiIcons: []
+  };
+
+  contents.forEach(item => {
+    const key = item.Key;
+    const url = `${ASSET_COS_CONFIG.baseUrl}/${key}`;
+    const fileName = key.split('/').pop();
+
+    // Banner
+    if (key.startsWith('banner/') && fileName) {
+      result.banners['zh-CN'].push({ key, url, fileName });
+    } else if (key.startsWith('banner-tw/') && fileName) {
+      result.banners['zh-TW'].push({ key, url, fileName });
+    } else if (key.startsWith('banner-en/') && fileName) {
+      result.banners['en'].push({ key, url, fileName });
+    }
+
+    // Feature图片
+    else if (key === 'feature-zh-cn.png') {
+      result.features['zh-CN'] = url;
+    } else if (key === 'feature-zh-tw.png') {
+      result.features['zh-TW'] = url;
+    } else if (key === 'feature-en.png') {
+      result.features['en'] = url;
+    }
+
+    // Title图片
+    else if (key === 'title-zh-cn.png') {
+      result.titles['zh-CN'] = url;
+    } else if (key === 'title-zh-tw.png') {
+      result.titles['zh-TW'] = url;
+    } else if (key === 'title-en.png') {
+      result.titles['en'] = url;
+    }
+
+    // TabBar图标
+    else if (key === 'tab-home.png') {
+      result.tabbar.home.normal = url;
+    } else if (key === 'tab-home-active.png') {
+      result.tabbar.home.active = url;
+    } else if (key === 'tab-history.png') {
+      result.tabbar.history.normal = url;
+    } else if (key === 'tab-history-active.png') {
+      result.tabbar.history.active = url;
+    } else if (key === 'tab-mine.png') {
+      result.tabbar.mine.normal = url;
+    } else if (key === 'tab-mine-active.png') {
+      result.tabbar.mine.active = url;
+    }
+
+    // 场景图标
+    else if (!key.includes('/') && key.endsWith('.png') &&
+      !key.startsWith('tab-') && !key.startsWith('feature-') && !key.startsWith('title-') && key !== 'logo.png') {
+      result.sceneIcons.push({ key, url, fileName });
+    }
+
+    // UI图标
+    else if (key.startsWith('icon/') && fileName && (fileName.endsWith('.svg') || fileName.endsWith('.png'))) {
+      result.uiIcons.push({ key, url, fileName });
+    }
+  });
+
+  // 按文件名排序Banner
+  Object.keys(result.banners).forEach(lang => {
+    result.banners[lang].sort((a, b) => a.fileName.localeCompare(b.fileName));
+  });
+
+  return result;
+}
+
 module.exports = {
   COS_CONFIG,
   ASSET_COS_CONFIG,
@@ -400,5 +560,9 @@ module.exports = {
   listObjects,
   getAllUserPhotos,
   getUserPhotos,
-  getAllUserIds
+  getAllUserIds,
+  listAssetObjects,
+  uploadToAssetBucket,
+  deleteFromAssetBucket,
+  getAllAssets
 };

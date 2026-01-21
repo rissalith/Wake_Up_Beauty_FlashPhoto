@@ -314,8 +314,154 @@ app.get('/api/config/admin/scenes', (req, res) => {
 });
 
 // 素材列表
-app.get('/api/assets/list', (req, res) => {
-  res.json({ code: 0, data: { list: [], total: 0 } });
+app.get('/api/assets/list', async (req, res) => {
+  try {
+    const { isCOSConfigured, getAllAssets } = require('./config/cos');
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+    const result = await getAllAssets();
+    res.json({ code: 0, data: result });
+  } catch (error) {
+    console.error('[Assets] 获取素材列表失败:', error);
+    res.status(500).json({ code: 500, message: '获取素材列表失败: ' + error.message });
+  }
+});
+
+// 素材上传
+const multer = require('multer');
+const uploadStorage = multer.memoryStorage();
+const assetUpload = multer({
+  storage: uploadStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('不支持的文件类型'), false);
+    }
+  }
+});
+
+app.post('/api/assets/upload', assetUpload.single('file'), async (req, res) => {
+  try {
+    const { isCOSConfigured, uploadToAssetBucket, ASSET_COS_CONFIG } = require('./config/cos');
+    const path = require('path');
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    const { category, lang, name, state } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ code: 400, message: '请选择文件' });
+    }
+
+    let key = '';
+    const ext = path.extname(file.originalname) || '.png';
+    const timestamp = Date.now();
+
+    switch (category) {
+      case 'banner':
+        const bannerDir = lang === 'zh-TW' ? 'banner-tw' : lang === 'en' ? 'banner-en' : 'banner';
+        key = `${bannerDir}/${timestamp}${ext}`;
+        break;
+      case 'feature':
+        const featureLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        key = `feature-${featureLang}${ext}`;
+        break;
+      case 'title':
+        const titleLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        key = `title-${titleLang}${ext}`;
+        break;
+      case 'tabbar':
+        const suffix = state === 'active' ? '-active' : '';
+        key = `tab-${name}${suffix}${ext}`;
+        break;
+      case 'scene-icon':
+        key = `scene-${timestamp}${ext}`;
+        break;
+      case 'ui-icon':
+        key = `icon/${file.originalname}`;
+        break;
+      default:
+        key = `misc/${timestamp}${ext}`;
+    }
+
+    const result = await uploadToAssetBucket(file.buffer, key, file.mimetype);
+    console.log(`[Assets] 素材上传成功: ${result.url}`);
+
+    res.json({
+      code: 0,
+      message: '上传成功',
+      data: {
+        key: result.key,
+        url: result.url,
+        fileName: key.split('/').pop()
+      }
+    });
+  } catch (error) {
+    console.error('[Assets] 素材上传失败:', error);
+    res.status(500).json({ code: 500, message: '上传失败: ' + error.message });
+  }
+});
+
+// 素材删除
+app.delete('/api/assets/delete', async (req, res) => {
+  try {
+    const { isCOSConfigured, deleteFromAssetBucket } = require('./config/cos');
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    const { key } = req.body;
+    if (!key) {
+      return res.status(400).json({ code: 400, message: '缺少key参数' });
+    }
+
+    await deleteFromAssetBucket(key);
+    console.log(`[Assets] 素材删除成功: ${key}`);
+
+    res.json({ code: 0, message: '删除成功' });
+  } catch (error) {
+    console.error('[Assets] 素材删除失败:', error);
+    res.status(500).json({ code: 500, message: '删除失败: ' + error.message });
+  }
+});
+
+// 获取Banner列表
+app.get('/api/assets/banners', async (req, res) => {
+  try {
+    const { isCOSConfigured, listAssetObjects, ASSET_COS_CONFIG } = require('./config/cos');
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    const { lang = 'zh-CN' } = req.query;
+    let prefix = 'banner/';
+    if (lang === 'zh-TW') prefix = 'banner-tw/';
+    else if (lang === 'en') prefix = 'banner-en/';
+
+    const data = await listAssetObjects(prefix);
+    const banners = (data.Contents || [])
+      .filter(item => /\.(jpg|jpeg|png|webp)$/i.test(item.Key))
+      .map(item => ({
+        key: item.Key,
+        url: `${ASSET_COS_CONFIG.baseUrl}/${item.Key}`,
+        fileName: item.Key.split('/').pop()
+      }))
+      .sort((a, b) => a.fileName.localeCompare(b.fileName));
+
+    res.json({ code: 0, data: banners });
+  } catch (error) {
+    console.error('[Assets] 获取Banner失败:', error);
+    res.status(500).json({ code: 500, message: '获取Banner失败' });
+  }
 });
 
 // ==================== 场景步骤和Prompt相关API ====================
