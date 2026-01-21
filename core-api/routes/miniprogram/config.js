@@ -83,11 +83,23 @@ router.get('/scene/:sceneId', (req, res) => {
     // 3. 获取每个步骤的选项
     const stepsWithOptions = steps.map(step => {
       const options = db.prepare('SELECT * FROM step_options WHERE step_id = ? ORDER BY sort_order').all(step.id);
-      return {
+
+      // 构建步骤对象
+      const stepObj = {
         ...step,
         name: step.step_name || step.name,
         options
       };
+
+      // 如果步骤标记为 gender_based，添加 depends_on 信息
+      if (step.gender_based) {
+        stepObj.depends_on = {
+          step: 'gender',
+          filter_field: 'gender'
+        };
+      }
+
+      return stepObj;
     });
 
     // 4. 获取 Prompt 模板
