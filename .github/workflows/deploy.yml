@@ -16,7 +16,7 @@ env:
   DEPLOY_PATH: /www/wwwroot/pop-pub.com
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,61 +35,82 @@ jobs:
         working-directory: admin-server/admin-web
         run: npm run build
 
-      - name: Pre-deploy Backup
-        if: ${{ github.event.inputs.skip_backup != 'true' }}
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd ${{ env.DEPLOY_PATH }}
-            bash docker/deploy-optimized.sh backup || echo "备份跳过（可能是首次部署）"
+          name: admin-frontend
+          path: admin-server/admin-web/dist
+          retention-days: 1
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          command_timeout: 30m
-          script: |
-            cd ${{ env.DEPLOY_PATH }}
-            git fetch origin
-            git reset --hard origin/${{ github.ref_name }}
-            bash docker/deploy-optimized.sh update
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Deploy via Webhook
+        id: deploy
+        run: |
+          echo "触发部署 Webhook..."
+
+          # 生成签名
+          PAYLOAD='{"branch":"${{ github.ref_name }}","commit":"${{ github.sha }}","actor":"${{ github.actor }}"}'
+          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/^.* //')
+
+          # 发送请求
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://${{ env.DOMAIN }}/webhook/deploy" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Signature: sha256=$SIGNATURE" \
+            -d "$PAYLOAD" \
+            --max-time 30)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "HTTP 状态码: $HTTP_CODE"
+          echo "响应: $BODY"
+
+          if [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "Webhook 触发成功"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "Webhook 触发失败"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Wait for Deployment
+        run: |
+          echo "等待部署完成..."
+          sleep 60
 
       - name: Verify Deployment
         id: verify
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            echo "等待服务启动..."
-            sleep 30
+        run: |
+          echo "验证部署状态..."
 
-            # 在服务器本地检查健康状态
-            NGINX_OK=$(curl -sfL "http://localhost/health" > /dev/null && echo "1" || echo "0")
-            API_OK=$(curl -sfk "https://localhost/api/health" > /dev/null && echo "1" || echo "0")
+          # 检查健康状态
+          for i in {1..5}; do
+            echo "尝试 $i/5..."
 
-            echo "健康检查结果: Nginx=$NGINX_OK, API=$API_OK"
+            HEALTH=$(curl -sf "https://${{ env.DOMAIN }}/api/health" || echo "failed")
 
-            if [ "$NGINX_OK" = "1" ] && [ "$API_OK" = "1" ]; then
-              echo "所有服务健康检查通过"
-              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            if [ "$HEALTH" != "failed" ]; then
+              echo "健康检查通过"
+              echo "status=success" >> $GITHUB_OUTPUT
               exit 0
-            else
-              echo "健康检查失败"
-              echo "--- Docker 容器状态 ---"
-              docker ps -a
-              echo "--- Nginx 日志 ---"
-              docker logs flashphoto-nginx --tail 30 2>&1 || echo "无法获取 Nginx 日志"
-              echo "--- Core API 日志 ---"
-              docker logs flashphoto-core-api --tail 30 2>&1 || echo "无法获取 Core API 日志"
-              exit 1
             fi
+
+            sleep 10
+          done
+
+          echo "健康检查失败"
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Check Deploy Logs on Failure
+        if: failure()
+        run: |
+          echo "获取部署日志..."
+          curl -sf "https://${{ env.DOMAIN }}/webhook/logs" || echo "无法获取日志"
 
       - name: Notify Success
         if: success()
@@ -107,38 +128,14 @@ jobs:
 
       - name: Notify Failure
         if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        continue-on-error: true
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            # 收集错误信息
-            ERROR_INFO=$(docker ps -a --format "{{.Names}}: {{.Status}}" 2>&1 | head -10)
-            NGINX_LOG=$(docker logs flashphoto-nginx --tail 10 2>&1 | tail -5 || echo "无日志")
-            API_LOG=$(docker logs flashphoto-core-api --tail 10 2>&1 | tail -5 || echo "无日志")
-
-            # 发送企业微信通知
-            if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
-              curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
-                -H "Content-Type: application/json" \
-                -d "{
-                  \"msgtype\": \"markdown\",
-                  \"markdown\": {
-                    \"content\": \"## ❌ FlashPhoto 部署失败\n> **分支**: ${{ github.ref_name }}\n> **提交**: \`${{ github.sha }}\`\n> **触发者**: ${{ github.actor }}\n\n**容器状态**:\n\`\`\`\n${ERROR_INFO}\n\`\`\`\n\n**Nginx 日志**:\n\`\`\`\n${NGINX_LOG}\n\`\`\`\n\n**API 日志**:\n\`\`\`\n${API_LOG}\n\`\`\`\n\n[查看完整日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"
-                  }
-                }"
-            fi
-
-      - name: Rollback on Failure
-        if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd ${{ env.DEPLOY_PATH }}
-            echo "部署失败，尝试回滚..."
-            bash docker/deploy-optimized.sh rollback || echo "回滚失败或无备份可用"
+        run: |
+          if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "msgtype": "markdown",
+                "markdown": {
+                  "content": "## ❌ FlashPhoto 部署失败\n> **分支**: ${{ github.ref_name }}\n> **提交**: `${{ github.sha }}`\n> **触发者**: ${{ github.actor }}\n\n[查看完整日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                }
+              }'
+          fi

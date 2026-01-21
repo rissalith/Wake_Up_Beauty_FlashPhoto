@@ -1,0 +1,11 @@
+{
+  "name": "deploy-webhook",
+  "version": "1.0.0",
+  "description": "GitHub Actions 部署 Webhook 服务",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "MIT"
+}

@@ -125,6 +125,40 @@ services:
         reservations:
           memory: 256M
 
+  # ==================== 部署 Webhook 服务 ====================
+  deploy-webhook:
+    build:
+      context: ./services/deploy-webhook
+      dockerfile: Dockerfile
+    container_name: flashphoto-deploy-webhook
+    restart: always
+    expose:
+      - "3004"
+    environment:
+      - WEBHOOK_PORT=3004
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - DEPLOY_PATH=/www/wwwroot/pop-pub.com
+    volumes:
+      # 挂载宿主机的项目目录，用于执行 git pull
+      - /www/wwwroot/pop-pub.com:/www/wwwroot/pop-pub.com
+      # 挂载 docker socket，用于执行 docker compose 命令
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 日志持久化
+      - webhook-logs:/app/logs
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
+
   # ==================== 支付服务 ====================
   pay-service:
     build:
@@ -173,6 +207,8 @@ volumes:
   shared-data:
     name: flashphoto-shared-data
     external: true
+  webhook-logs:
+    name: flashphoto-webhook-logs
 
 # ==================== 网络 ====================
 networks:

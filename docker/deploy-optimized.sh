@@ -122,11 +122,12 @@ start_services() {
     echo "  健康检查: https://pop-pub.com/health"
     echo ""
     print_info "服务列表:"
-    echo "  Nginx:       80/443 (反向代理 + SSL)"
-    echo "  Redis:       16379 (内部: 6379)"
-    echo "  Core API:    内部 3001"
-    echo "  AI Service:  内部 3002"
-    echo "  Pay Service: 内部 3003"
+    echo "  Nginx:          80/443 (反向代理 + SSL)"
+    echo "  Redis:          16379 (内部: 6379)"
+    echo "  Core API:       内部 3001"
+    echo "  AI Service:     内部 3002"
+    echo "  Pay Service:    内部 3003"
+    echo "  Deploy Webhook: 内部 3004"
 }
 
 # 停止服务
@@ -148,7 +149,7 @@ cleanup_old_containers() {
     print_info "清理旧容器..."
 
     # 停止并删除可能冲突的旧容器
-    local containers="flashphoto-nginx flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-redis flashphoto-miniprogram-api flashphoto-admin-api"
+    local containers="flashphoto-nginx flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-redis flashphoto-deploy-webhook flashphoto-miniprogram-api flashphoto-admin-api"
 
     for container in $containers; do
         if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
@@ -185,6 +186,11 @@ ensure_resources() {
     if ! docker volume ls --format '{{.Name}}' | grep -q '^flashphoto-shared-data$'; then
         print_info "创建卷: flashphoto-shared-data"
         docker volume create flashphoto-shared-data
+    fi
+
+    if ! docker volume ls --format '{{.Name}}' | grep -q '^flashphoto-webhook-logs$'; then
+        print_info "创建卷: flashphoto-webhook-logs"
+        docker volume create flashphoto-webhook-logs
     fi
 
     print_success "Docker 资源检查完成"
@@ -234,7 +240,7 @@ view_status() {
 
     print_info "资源使用:"
     docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" \
-        flashphoto-nginx flashphoto-redis flashphoto-core-api flashphoto-ai-service flashphoto-pay-service 2>/dev/null || true
+        flashphoto-nginx flashphoto-redis flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-deploy-webhook 2>/dev/null || true
     echo ""
 
     print_info "数据卷:"
@@ -344,6 +350,10 @@ health_check() {
     curl -s http://localhost/health/pay | head -c 200 || echo "无法连接"
     echo ""
     echo ""
+    echo "Deploy Webhook:"
+    curl -s http://localhost/webhook/health | head -c 200 || echo "无法连接"
+    echo ""
+    echo ""
     echo "Redis:"
     docker exec flashphoto-redis redis-cli ping || echo "无法连接"
 }
@@ -396,11 +406,12 @@ show_help() {
     echo "  help        显示帮助"
     echo ""
     echo "服务列表:"
-    echo "  nginx       - Nginx 反向代理 (SSL + 路由)"
-    echo "  redis       - Redis 消息队列"
-    echo "  core-api    - 统一后端 (小程序 + 后台管理)"
-    echo "  ai-service  - AI 图片生成"
-    echo "  pay-service - 支付服务"
+    echo "  nginx          - Nginx 反向代理 (SSL + 路由)"
+    echo "  redis          - Redis 消息队列"
+    echo "  core-api       - 统一后端 (小程序 + 后台管理)"
+    echo "  ai-service     - AI 图片生成"
+    echo "  pay-service    - 支付服务"
+    echo "  deploy-webhook - 部署 Webhook (GitHub Actions 触发)"
     echo ""
     echo "示例:"
     echo "  $0 start           # 启动服务"
