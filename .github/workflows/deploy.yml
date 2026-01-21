@@ -61,22 +61,35 @@ jobs:
 
       - name: Verify Deployment
         id: verify
-        run: |
-          echo "等待服务启动..."
-          sleep 45
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "等待服务启动..."
+            sleep 30
 
-          # 检查各服务健康状态
-          NGINX_OK=$(curl -sf "https://${{ env.DOMAIN }}/health" && echo "1" || echo "0")
-          API_OK=$(curl -sf "https://${{ env.DOMAIN }}/api/health" && echo "1" || echo "0")
+            # 在服务器本地检查健康状态
+            NGINX_OK=$(curl -sf "http://localhost/health" && echo "1" || echo "0")
+            API_OK=$(curl -sf "http://localhost/api/health" && echo "1" || echo "0")
 
-          if [ "$NGINX_OK" = "1" ] && [ "$API_OK" = "1" ]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "所有服务健康检查通过"
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "健康检查失败: Nginx=$NGINX_OK, API=$API_OK"
-            exit 1
-          fi
+            echo "健康检查结果: Nginx=$NGINX_OK, API=$API_OK"
+
+            if [ "$NGINX_OK" = "1" ] && [ "$API_OK" = "1" ]; then
+              echo "所有服务健康检查通过"
+              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+              exit 0
+            else
+              echo "健康检查失败"
+              echo "--- Docker 容器状态 ---"
+              docker ps -a
+              echo "--- Nginx 日志 ---"
+              docker logs flashphoto-nginx --tail 30 2>&1 || echo "无法获取 Nginx 日志"
+              echo "--- Core API 日志 ---"
+              docker logs flashphoto-core-api --tail 30 2>&1 || echo "无法获取 Core API 日志"
+              exit 1
+            fi
 
       - name: Notify Success
         if: success()
@@ -87,24 +100,36 @@ jobs:
               -d '{
                 "msgtype": "markdown",
                 "markdown": {
-                  "content": "## FlashPhoto 部署成功\n> **分支**: ${{ github.ref_name }}\n> **提交**: ${{ github.sha }}\n> **触发者**: ${{ github.actor }}"
+                  "content": "## ✅ FlashPhoto 部署成功\n> **分支**: ${{ github.ref_name }}\n> **提交**: `${{ github.sha }}`\n> **触发者**: ${{ github.actor }}\n> **访问地址**: https://pop-pub.com"
                 }
               }'
           fi
 
       - name: Notify Failure
         if: failure()
-        run: |
-          if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
-            curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "msgtype": "markdown",
-                "markdown": {
-                  "content": "## FlashPhoto 部署失败\n> **分支**: ${{ github.ref_name }}\n> **提交**: ${{ github.sha }}\n> **触发者**: ${{ github.actor }}\n> [查看日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                }
-              }'
-          fi
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # 收集错误信息
+            ERROR_INFO=$(docker ps -a --format "{{.Names}}: {{.Status}}" 2>&1 | head -10)
+            NGINX_LOG=$(docker logs flashphoto-nginx --tail 10 2>&1 | tail -5 || echo "无日志")
+            API_LOG=$(docker logs flashphoto-core-api --tail 10 2>&1 | tail -5 || echo "无日志")
+
+            # 发送企业微信通知
+            if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
+              curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"msgtype\": \"markdown\",
+                  \"markdown\": {
+                    \"content\": \"## ❌ FlashPhoto 部署失败\n> **分支**: ${{ github.ref_name }}\n> **提交**: \`${{ github.sha }}\`\n> **触发者**: ${{ github.actor }}\n\n**容器状态**:\n\`\`\`\n${ERROR_INFO}\n\`\`\`\n\n**Nginx 日志**:\n\`\`\`\n${NGINX_LOG}\n\`\`\`\n\n**API 日志**:\n\`\`\`\n${API_LOG}\n\`\`\`\n\n[查看完整日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"
+                  }
+                }"
+            fi
 
       - name: Rollback on Failure
         if: failure()
