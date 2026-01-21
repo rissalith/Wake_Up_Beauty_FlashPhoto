@@ -102,6 +102,12 @@ start_services() {
     check_ssl
     check_admin_frontend
 
+    # 清理旧容器
+    cleanup_old_containers
+
+    # 确保网络和卷存在
+    ensure_resources
+
     docker compose -f "$COMPOSE_FILE" up -d --build
 
     print_success "服务启动完成！"
@@ -137,20 +143,77 @@ restart_services() {
     print_success "服务已重启"
 }
 
+# 清理旧容器 (解决容器名冲突)
+cleanup_old_containers() {
+    print_info "清理旧容器..."
+
+    # 停止并删除可能冲突的旧容器
+    local containers="flashphoto-nginx flashphoto-core-api flashphoto-ai-service flashphoto-pay-service flashphoto-redis flashphoto-miniprogram-api flashphoto-admin-api"
+
+    for container in $containers; do
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+            docker stop "$container" 2>/dev/null || true
+            docker rm "$container" 2>/dev/null || true
+            print_info "已清理: $container"
+        fi
+    done
+
+    # 停止宝塔 Nginx (释放 80/443 端口)
+    if netstat -tlnp 2>/dev/null | grep -q ':80 .*nginx'; then
+        print_info "停止宝塔 Nginx..."
+        /etc/init.d/nginx stop 2>/dev/null || killall nginx 2>/dev/null || true
+        sleep 2
+    fi
+}
+
+# 确保网络和卷存在
+ensure_resources() {
+    print_info "检查 Docker 网络和卷..."
+
+    # 创建网络 (如果不存在)
+    if ! docker network ls --format '{{.Name}}' | grep -q '^flashphoto-network$'; then
+        print_info "创建网络: flashphoto-network"
+        docker network create flashphoto-network
+    fi
+
+    # 创建数据卷 (如果不存在)
+    if ! docker volume ls --format '{{.Name}}' | grep -q '^flashphoto-redis-data$'; then
+        print_info "创建卷: flashphoto-redis-data"
+        docker volume create flashphoto-redis-data
+    fi
+
+    if ! docker volume ls --format '{{.Name}}' | grep -q '^flashphoto-shared-data$'; then
+        print_info "创建卷: flashphoto-shared-data"
+        docker volume create flashphoto-shared-data
+    fi
+
+    print_success "Docker 资源检查完成"
+}
+
 # 更新服务
 update_services() {
     print_info "正在更新服务..."
-    
+
+    # 清理旧容器
+    cleanup_old_containers
+
+    # 确保网络和卷存在
+    ensure_resources
+
     # 拉取最新镜像
     docker compose -f "$COMPOSE_FILE" pull
-    
+
     # 重新构建并启动
-    docker compose -f "$COMPOSE_FILE" up -d --build
-    
+    docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate
+
     # 清理旧镜像
     docker image prune -f
-    
+
     print_success "服务更新完成"
+
+    # 执行健康检查
+    sleep 10
+    health_check
 }
 
 # 查看日志

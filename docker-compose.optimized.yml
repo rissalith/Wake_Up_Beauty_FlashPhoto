@@ -169,11 +169,13 @@ services:
 volumes:
   redis-data:
     name: flashphoto-redis-data
+    external: true
   shared-data:
     name: flashphoto-shared-data
+    external: true
 
 # ==================== 网络 ====================
 networks:
   flashphoto-network:
     name: flashphoto-network
-    driver: bridge
+    external: true
