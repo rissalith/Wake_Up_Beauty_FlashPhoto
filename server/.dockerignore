@@ -1,0 +1,30 @@
+# 依赖目录
+node_modules/
+
+# 日志
+*.log
+logs/
+
+# 本地数据库
+data/
+*.db
+
+# 环境变量
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 测试
+test/
+tests/
+coverage/
+
+# 文档
+*.md

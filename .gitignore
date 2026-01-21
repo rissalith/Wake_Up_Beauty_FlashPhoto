@@ -1,0 +1,62 @@
+# 环境变量和敏感配置
+.env
+.env.local
+.env.deploy
+.env.*.local
+docker/config/common.env
+!docker/config/*.example
+
+# 部署脚本（可能包含敏感信息）
+deploy_*.py
+*_deploy.py
+check_*.py
+test_*.py
+reset_*.py
+fix_*.py
+
+# 证书和密钥
+*.pem
+*.key
+*.crt
+*.cert
+cert_new/
+cert_temp/
+*.zip
+
+# 发布产物（不应在代码仓库中）
+*.tar.gz
+*.tar
+releases/
+
+# 依赖
+node_modules/
+
+# 构建输出
+dist/
+miniprogram/miniprogram_npm/
+
+# 数据库文件
+*.db
+*.db-journal
+
+# 日志
+*.log
+npm-debug.log*
+
+# 临时文件
+nul
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 测试覆盖率
+coverage/

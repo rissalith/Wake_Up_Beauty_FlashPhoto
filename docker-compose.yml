@@ -1,0 +1,163 @@
+# 醒美闪图 - Docker 微服务架构
+# 包含: Redis消息队列 + 小程序API + 后台管理 + AI服务 + 支付服务
+# 架构特点: 服务间通过 Redis 消息队列通信，完全解耦
+# 数据库: 所有服务共享统一的 SQLite 数据库 (shared-data 卷)
+
+services:
+  # ==================== Redis 消息队列 ====================
+  redis:
+    image: m.daocloud.io/docker.io/library/redis:7-alpine
+    container_name: flashphoto-redis
+    restart: always
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # ==================== 小程序 API 服务 ====================
+  miniprogram-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: flashphoto-miniprogram-api
+    restart: always
+    ports:
+      - "13001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - WX_APPID=${WX_APPID}
+      - WX_SECRET=${WX_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - SHARED_DB_PATH=/app/data/flashphoto.db
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - shared-data:/app/data
+      - ./server/config:/app/config:ro
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==================== 后台管理 API 服务 ====================
+  admin-api:
+    build:
+      context: ./admin-server/server
+      dockerfile: Dockerfile
+    container_name: flashphoto-admin-api
+    restart: always
+    ports:
+      - "13000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-xingmei-jwt-secret-change-in-production}
+      - SHARED_DB_PATH=/app/data/flashphoto.db
+      - COS_SECRET_ID=${COS_SECRET_ID}
+      - COS_SECRET_KEY=${COS_SECRET_KEY}
+      - WX_APPID=${WX_APPID}
+      - WX_APPSECRET=${WX_SECRET}
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_API_BASE=${AI_API_BASE:-https://api.vectorengine.ai}
+    volumes:
+      - shared-data:/app/data
+      - admin-uploads:/app/uploads
+      - ./admin-server/server/public:/app/public:ro
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==================== AI 服务 ====================
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    container_name: flashphoto-ai-service
+    restart: always
+    ports:
+      - "13002:3002"
+    environment:
+      - NODE_ENV=production
+      - AI_SERVICE_PORT=3002
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_API_BASE=${AI_API_BASE:-https://api.vectorengine.ai}
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  # ==================== 支付服务 ====================
+  pay-service:
+    build:
+      context: ./services/pay-service
+      dockerfile: Dockerfile
+    container_name: flashphoto-pay-service
+    restart: always
+    ports:
+      - "13003:3003"
+    environment:
+      - NODE_ENV=production
+      - PAY_SERVICE_PORT=3003
+      - REDIS_URL=redis://redis:6379
+      - WX_APPID=${WX_APPID}
+      - WX_MCH_ID=${WX_MCH_ID}
+      - WX_PAY_API_KEY=${WX_PAY_API_KEY}
+      - WX_PAY_CERT_SERIAL=${WX_PAY_CERT_SERIAL}
+      - WX_PAY_NOTIFY_URL=${WX_PAY_NOTIFY_URL:-https://pop-pub.com/api/pay/notify}
+    volumes:
+      - ./docker/certs:/app/certs:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - flashphoto-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# ==================== 数据卷 (持久化存储) ====================
+volumes:
+  redis-data:
+    name: flashphoto-redis-data
+  shared-data:
+    name: flashphoto-shared-data
+  admin-uploads:
+    name: flashphoto-admin-uploads
+
+# ==================== 网络 ====================
+networks:
+  flashphoto-network:
+    name: flashphoto-network
+    driver: bridge

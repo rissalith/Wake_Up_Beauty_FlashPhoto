@@ -1,0 +1,170 @@
+<view class="privacy-modal" wx:if="{{show}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask"></view>
+
+  <!-- 主界面 -->
+  <view class="modal-content" wx:if="{{!viewingPolicy}}">
+    <!-- 标题 -->
+    <view class="modal-header">
+      <text class="title">{{i18n.privacyTitle || '用户隐私保护提示'}}</text>
+    </view>
+
+    <!-- 内容 -->
+    <view class="modal-body">
+      <text class="content">
+        {{i18n.privacyContent || '感谢您使用醒美闪图！为了更好地为您提供服务，我们需要您阅读并同意以下协议。我们将严格保护您的个人信息安全，不会向第三方泄露您的隐私数据。'}}
+      </text>
+
+      <view class="policy-list">
+        <view class="policy-item" bindtap="toggleAgreementCheck">
+          <view class="checkbox {{agreementChecked ? 'checked' : ''}}">
+            <text wx:if="{{agreementChecked}}" class="check-icon">✓</text>
+          </view>
+          <text class="policy-link" catchtap="viewPrivacy">{{i18n.privacyPolicy || '隐私政策'}}</text>
+          <text class="policy-label">{{i18n.and || '和'}}</text>
+          <text class="policy-link" catchtap="viewTerms">{{i18n.userAgreement || '用户协议'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 按钮 -->
+    <view class="modal-footer">
+      <button class="btn btn-reject" bindtap="onReject">
+        {{i18n.disagree || '不同意'}}
+      </button>
+      <button class="btn btn-agree {{agreementChecked ? '' : 'disabled'}}" bindtap="onAgree">
+        {{i18n.agree || '同意'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 协议详情视图 -->
+  <view class="policy-detail-view" wx:if="{{viewingPolicy}}">
+    <!-- 顶部导航栏 -->
+    <view class="detail-header">
+      <view class="back-btn" bindtap="backToMain">
+        <text class="back-arrow">‹</text>
+        <text class="back-text">{{i18n.back || '返回'}}</text>
+      </view>
+      <text class="detail-title">{{viewingPolicy === 'privacy' ? (i18n.privacyPolicy || '隐私政策') : (i18n.userAgreement || '用户协议')}}</text>
+      <view class="header-placeholder"></view>
+    </view>
+
+    <!-- 协议内容滚动区 -->
+    <scroll-view class="detail-content" scroll-y enhanced show-scrollbar="{{false}}">
+      <!-- 隐私政策内容 -->
+      <view wx:if="{{viewingPolicy === 'privacy'}}" class="policy-text">
+        <view class="section">
+          <view class="section-title">{{i18n.privacy_title || '隐私政策'}}</view>
+          <view class="paragraph">{{i18n.privacy_welcome || '欢迎您使用醒美闪图。'}}{{i18n.privacy_intro || '我们非常重视您的隐私保护和个人信息安全。'}}</view>
+          <view class="paragraph">{{i18n.privacy_read_tip || '请您在使用我们的服务前，仔细阅读并理解本隐私政策。'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.privacy_section1_title || '一、我们收集的信息'}}</view>
+          <view class="paragraph">{{i18n.privacy_section1_intro || '为了向您提供服务，我们可能会收集以下信息：'}}</view>
+
+          <view class="sub-section">
+            <view class="sub-title">{{i18n.privacy_s1_1_title || '1. 基本信息'}}</view>
+            <view class="paragraph">{{i18n.privacy_s1_1_desc || '当您使用微信登录时，我们会获取：'}}</view>
+            <view class="list-item">{{i18n.privacy_s1_1_item1 || '• 微信昵称'}}</view>
+            <view class="list-item">{{i18n.privacy_s1_1_item2 || '• 微信头像'}}</view>
+          </view>
+
+          <view class="sub-section">
+            <view class="sub-title">{{i18n.privacy_s1_2_title || '2. 照片信息'}}</view>
+            <view class="paragraph">{{i18n.privacy_s1_2_desc || '当您使用证件照服务时：'}}</view>
+            <view class="list-item">{{i18n.privacy_s1_2_item1 || '• 您上传的照片'}}</view>
+            <view class="list-item">{{i18n.privacy_s1_2_item2 || '• 生成的证件照'}}</view>
+          </view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.privacy_section2_title || '二、信息的使用'}}</view>
+          <view class="list-item">{{i18n.privacy_section2_item1 || '• 提供、维护和改进我们的服务'}}</view>
+          <view class="list-item">{{i18n.privacy_section2_item2 || '• 处理您的证件照生成请求'}}</view>
+          <view class="list-item">{{i18n.privacy_section2_item3 || '• 发送服务通知'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.privacy_section3_title || '三、信息的保护'}}</view>
+          <view class="paragraph">{{i18n.privacy_s3_1_desc || '我们采取多种安全措施保护您的信息：'}}</view>
+          <view class="list-item">{{i18n.privacy_s3_1_item1 || '• 数据加密传输'}}</view>
+          <view class="list-item">{{i18n.privacy_s3_1_item2 || '• 访问权限控制'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.privacy_section4_title || '四、您的权利'}}</view>
+          <view class="paragraph">{{i18n.privacy_section4_intro || '您对您的个人信息享有以下权利：'}}</view>
+          <view class="list-item">{{i18n.privacy_section4_item1 || '• 访问和获取您的信息'}}</view>
+          <view class="list-item">{{i18n.privacy_section4_item2 || '• 更正不准确的信息'}}</view>
+          <view class="list-item">{{i18n.privacy_section4_item3 || '• 删除您的账号和信息'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.privacy_section5_title || '五、政策更新'}}</view>
+          <view class="paragraph">{{i18n.privacy_section5_content || '我们可能会不时更新本隐私政策。更新后的政策将在小程序内公布。'}}</view>
+        </view>
+
+      </view>
+
+      <!-- 用户协议内容 -->
+      <view wx:if="{{viewingPolicy === 'terms'}}" class="policy-text">
+        <view class="section">
+          <view class="section-title">{{i18n.terms_title || '用户协议'}}</view>
+          <view class="paragraph">{{i18n.terms_welcome || '欢迎您使用醒美闪图（以下简称"本产品"或"我们"）。'}}</view>
+          <view class="paragraph">{{i18n.terms_intro || '请您在使用本产品前，仔细阅读并充分理解本用户协议的全部内容。'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section1_title || '一、服务说明'}}</view>
+          <view class="paragraph">{{i18n.terms_section1_content || '本产品是一款基于人工智能技术的证件照生成工具。'}}</view>
+          <view class="list-item">{{i18n.terms_s1_item1 || '• 用户上传照片后，可选择不同规格、背景颜色等参数'}}</view>
+          <view class="list-item">{{i18n.terms_s1_item2 || '• AI将根据参数生成符合要求的证件照'}}</view>
+          <view class="list-item">{{i18n.terms_s1_item3 || '• 生成的照片可下载保存'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section2_title || '二、用户账号'}}</view>
+          <view class="paragraph">{{i18n.terms_section2_intro || '您可以通过微信授权登录使用本产品。'}}</view>
+          <view class="list-item">{{i18n.terms_s2_item1 || '• 您应妥善保管账号信息'}}</view>
+          <view class="list-item">{{i18n.terms_s2_item2 || '• 您不得将账号转让、出借给他人'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section3_title || '三、用户行为规范'}}</view>
+          <view class="paragraph">{{i18n.terms_section3_intro || '您在使用本产品时，应遵守以下规范：'}}</view>
+          <view class="list-item">{{i18n.terms_s3_item1 || '• 不得上传违法、色情、暴力等不良内容'}}</view>
+          <view class="list-item">{{i18n.terms_s3_item2 || '• 不得上传侵犯他人肖像权的照片'}}</view>
+          <view class="list-item">{{i18n.terms_s3_item3 || '• 不得将生成的照片用于非法目的'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section4_title || '四、付费服务'}}</view>
+          <view class="paragraph">{{i18n.terms_section4_intro || '本产品提供付费的AI证件照生成服务：'}}</view>
+          <view class="list-item">{{i18n.terms_s4_item1 || '• 用户需使用醒币支付生成服务'}}</view>
+          <view class="list-item">{{i18n.terms_s4_item2 || '• 醒币可通过充值、邀请好友等方式获得'}}</view>
+          <view class="list-item">{{i18n.terms_s4_item3 || '• 服务完成后不支持退款'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section5_title || '五、知识产权'}}</view>
+          <view class="list-item">{{i18n.terms_s5_item1 || '• 本产品的知识产权归我们所有'}}</view>
+          <view class="list-item">{{i18n.terms_s5_item2 || '• 用户上传的照片知识产权归用户所有'}}</view>
+          <view class="list-item">{{i18n.terms_s5_item3 || '• AI生成的证件照用户享有使用权'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section6_title || '六、免责声明'}}</view>
+          <view class="list-item">{{i18n.terms_s6_item1 || '• AI生成的照片仅供参考'}}</view>
+          <view class="list-item">{{i18n.terms_s6_item2 || '• 因不可抗力导致的服务中断我们不承担责任'}}</view>
+        </view>
+
+        <view class="section">
+          <view class="section-subtitle">{{i18n.terms_section7_title || '七、协议修改'}}</view>
+          <view class="paragraph">{{i18n.terms_section7_content || '我们有权根据需要修改本协议。修改后将在产品内公布。'}}</view>
+        </view>
+
+      </view>
+    </scroll-view>
+  </view>
+</view>

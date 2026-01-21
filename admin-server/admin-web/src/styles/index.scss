@@ -1,0 +1,192 @@
+// 主题色 - 奶油渐变风格
+$primary-color: #E8B686;
+$primary-light: #F5D0A9;
+$primary-dark: #C68B4D;
+
+// 背景色
+$bg-color: #FFF8F0;
+$bg-light: #FFFAF5;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: $bg-color;
+  color: #333;
+}
+
+// Element Plus 主题覆盖
+:root {
+  --el-color-primary: #{$primary-color};
+  --el-color-primary-light-3: #{$primary-light};
+  --el-color-primary-light-5: #f8e0c8;
+  --el-color-primary-light-7: #fbeeda;
+  --el-color-primary-light-8: #fdf4e8;
+  --el-color-primary-light-9: #fef9f3;
+  --el-color-primary-dark-2: #{$primary-dark};
+}
+
+// 布局样式
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  min-width: 0; // 允许flex子元素收缩
+}
+
+.admin-sidebar {
+  width: 220px;
+  min-width: 180px;
+  height: 100%;
+  background: linear-gradient(180deg, #fff 0%, $bg-light 100%);
+  border-right: 1px solid #f0e6dc;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .logo {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #f0e6dc;
+    flex-shrink: 0;
+
+    h1 {
+      font-size: 18px;
+      color: $primary-dark;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  }
+
+  .el-menu {
+    border-right: none;
+    background: transparent;
+    flex: 1;
+    overflow-y: auto;
+  }
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; // 关键：允许内容区域收缩
+  overflow: hidden;
+
+  .admin-header {
+    height: 60px;
+    min-height: 60px;
+    background: #fff;
+    border-bottom: 1px solid #f0e6dc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+      flex: 1;
+
+      .breadcrumb {
+        font-size: 14px;
+        color: #666;
+      }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+  }
+
+  .admin-content {
+    flex: 1;
+    padding: 20px;
+    overflow: auto; // 改为auto，支持横向和纵向滚动
+    background: $bg-color;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+
+    // 确保子内容能够正确收缩和滚动
+    > * {
+      min-width: 0;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// 卡片样式
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+  .stat-title {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 12px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: $primary-dark;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+  }
+}
+
+// 表格样式
+.page-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+}
+
+// 分页
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}

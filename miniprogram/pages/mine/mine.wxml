@@ -1,0 +1,184 @@
+<!-- 我的页面 -->
+
+<!-- 悬浮进度条 - 有正在生成的任务时显示 -->
+<view class="floating-progress {{generatingCount > 0 ? 'show' : ''}}" bindtap="goToHistory">
+  <view class="floating-progress-inner">
+    <view class="progress-spinner"></view>
+    <text class="progress-text">{{generatingCount}}{{i18n.generatingPhotos || '张照片生成中...'}}</text>
+    <text class="progress-arrow">›</text>
+  </view>
+</view>
+
+<view class="container">
+  <!-- 用户信息区域 -->
+  <view class="user-section-wrap">
+    <view class="user-section">
+      <!-- 未登录状态 -->
+      <block wx:if="{{!isLoggedIn}}">
+        <view class="user-avatar-wrap" bindtap="wxLogin">
+          <view class="default-avatar">
+            <view class="default-avatar-icon"></view>
+          </view>
+        </view>
+        <view class="user-info" bindtap="wxLogin">
+          <text class="user-name login-text">{{i18n.clickToLogin || '点击登录'}}</text>
+          <text class="user-id">{{i18n.loginToGetMore || '登录后享受更多功能'}}</text>
+        </view>
+      </block>
+      <!-- 已登录状态 -->
+      <block wx:else>
+        <button class="user-avatar-wrap avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatarDirect">
+          <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        </button>
+        <view class="user-info" bindtap="showNicknameModal">
+          <text class="user-name">{{userInfo.nickName || '点击设置昵称'}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 醒币余额卡片 - 始终显示，未登录显示0 -->
+  <view class="points-card">
+    <!-- 流光背景层 -->
+    <view class="points-shimmer-bg"></view>
+    <view class="points-shimmer-overlay"></view>
+    <!-- 金色光点装饰 -->
+    <view class="points-sparkles">
+      <view class="points-sparkle sparkle-a"></view>
+      <view class="points-sparkle sparkle-b"></view>
+      <view class="points-sparkle sparkle-c"></view>
+    </view>
+    <!-- 内容层 -->
+    <view class="points-main">
+      <view class="points-left">
+        <view class="points-star-icon">✦</view>
+        <view class="points-info">
+          <text class="points-label">{{i18n.myPoints || '我的醒币'}}</text>
+          <text class="points-value">{{userPoints}}</text>
+        </view>
+      </view>
+      <view class="points-right">
+        <view class="detail-btn" bindtap="goToPointsRecord">{{i18n.pointsDetail || '明细'}}</view>
+        <!-- Android/开发者工具显示充值按钮 -->
+        <view class="recharge-btn" bindtap="goToRecharge" wx:if="{{showRecharge}}">{{i18n.recharge || '充值'}}</view>
+        <!-- iOS 显示免费获取提示 -->
+        <view class="free-ways-btn" bindtap="goToInvite" wx:else>{{i18n.freeGet || '免费获取'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能卡片区域 -->
+  <view class="card-section">
+    <view class="feature-card invite-card" bindtap="goToInvite">
+      <view class="card-icon-wrap">
+        <view class="css-icon gift-icon"></view>
+      </view>
+      <view class="card-text">
+        <view class="card-title">{{i18n.inviteGift || '邀请有礼'}}</view>
+        <view class="card-desc">{{i18n.inviteGiftDesc || '邀1人得10醒币'}}</view>
+      </view>
+      <!-- 星星装饰 -->
+      <view class="invite-star-decoration">✦</view>
+      <!-- 光影效果 -->
+      <view class="card-shimmer"></view>
+      <view class="card-glow"></view>
+    </view>
+    <view class="feature-card order-card" bindtap="goToOrders">
+      <view class="card-icon-wrap">
+        <view class="css-icon order-icon"></view>
+      </view>
+      <view class="card-text">
+        <view class="card-title">{{i18n.myOrders || '我的订单'}}</view>
+        <view class="card-desc">{{i18n.myOrdersDesc || '快去制作吧'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="menu-item" bindtap="goToFeedback">
+      <view class="menu-icon-wrap">
+        <view class="css-icon feedback-icon"></view>
+      </view>
+      <text class="menu-text">{{i18n.feedback || '意见反馈'}}</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="goToAbout">
+      <view class="menu-icon-wrap">
+        <view class="css-icon about-icon"></view>
+      </view>
+      <text class="menu-text">{{i18n.aboutUs || '关于我们'}}</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="goToPrivacy">
+      <view class="menu-icon-wrap">
+        <view class="css-icon privacy-icon"></view>
+      </view>
+      <text class="menu-text">{{i18n.privacyPolicy || '隐私政策'}}</text>
+      <view class="privacy-status" wx:if="{{privacyConfirmed}}">
+        <text class="privacy-check">{{i18n.confirmed || '已签订'}}</text>
+        <text class="privacy-time" wx:if="{{privacyConfirmTimeStr}}">{{privacyConfirmTimeStr}}</text>
+      </view>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="goToTerms">
+      <view class="menu-icon-wrap">
+        <view class="css-icon terms-icon"></view>
+      </view>
+      <text class="menu-text">{{i18n.userAgreement || '用户协议'}}</text>
+      <view class="privacy-status" wx:if="{{privacyConfirmed}}">
+        <text class="privacy-check">{{i18n.confirmed || '已签订'}}</text>
+        <text class="privacy-time" wx:if="{{privacyConfirmTimeStr}}">{{privacyConfirmTimeStr}}</text>
+      </view>
+      <text class="menu-arrow">></text>
+    </view>
+    <!-- 退出登录 - 仅登录后显示 -->
+    <view class="menu-item logout-item" bindtap="logout" wx:if="{{isLoggedIn}}">
+      <view class="menu-icon-wrap">
+        <view class="css-icon logout-icon"></view>
+      </view>
+      <text class="menu-text logout-text-menu">{{i18n.logout || '退出登录'}}</text>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+</view>
+
+<!-- 编辑昵称弹窗 -->
+<view class="modal-mask" wx:if="{{showNicknameModal}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask-bg" bindtap="hideNicknameModal"></view>
+  <view class="modal-content nickname-modal" catchtap="preventTap">
+    <view class="modal-header">
+      <text class="modal-title">{{i18n.setNickname || '设置昵称'}}</text>
+      <view class="modal-close" bindtap="hideNicknameModal">×</view>
+    </view>
+    <view class="modal-body">
+      <input
+        class="modal-input"
+        type="nickname"
+        placeholder="{{i18n.enterNickname || '点击输入或选择微信昵称'}}"
+        value="{{tempNickname}}"
+        bindinput="onNicknameInput"
+        maxlength="20"
+        focus="{{showNicknameModal}}"
+      />
+    </view>
+    <view class="modal-footer">
+      <view class="modal-btn cancel" bindtap="hideNicknameModal">{{i18n.cancel || '取消'}}</view>
+      <view class="modal-btn confirm" bindtap="saveNickname">{{i18n.save || '保存'}}</view>
+    </view>
+  </view>
+</view>
+
+<!-- 登录弹窗 -->
+<login-modal
+  show="{{showLoginModal}}"
+  bind:close="onLoginModalClose"
+  bind:loginsuccess="onLoginSuccess"
+/>
+
+<!-- 隐私政策弹窗 -->
+<privacy-modal
+  show="{{showPrivacyModal}}"
+  bind:close="onPrivacyModalClose"
+  bind:agree="onPrivacyAgree"
+/>

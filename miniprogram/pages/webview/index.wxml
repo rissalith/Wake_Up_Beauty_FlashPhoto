@@ -1,0 +1,2 @@
+<web-view wx:if="src" src="{{src}}"></web-view>
+<view wx:else>{{i18n.invalidPath || '路径不正确'}}</view>

@@ -1,0 +1,109 @@
+<view class="container">
+  <view class="policy-content">
+    <view class="section">
+      <view class="title">{{lang.terms_title || '用户协议'}}</view>
+      <view class="paragraph">
+        {{lang.terms_welcome || '欢迎您使用醒美闪图（以下简称"本产品"或"我们"）。'}}
+      </view>
+      <view class="paragraph">
+        {{lang.terms_intro || '请您在使用本产品前，仔细阅读并充分理解本用户协议的全部内容。如您不同意本协议的任何条款，请勿使用本产品。您使用本产品即表示您已阅读并同意本协议。'}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section1_title || '一、服务说明'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section1_content || '本产品是一款基于人工智能技术的证件照生成工具，为用户提供证件照拍摄、美化、换装、换背景等服务。'}}
+      </view>
+      <view class="list-item">{{lang.terms_s1_item1 || '用户上传照片后，可选择不同规格、背景颜色、美颜程度等参数'}}</view>
+      <view class="list-item">{{lang.terms_s1_item2 || 'AI将根据用户选择的参数生成符合要求的证件照'}}</view>
+      <view class="list-item">{{lang.terms_s1_item3 || '生成的照片可下载保存或发送至邮箱'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section2_title || '二、用户账号'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section2_intro || '您可以通过微信授权登录使用本产品。'}}
+      </view>
+      <view class="list-item">{{lang.terms_s2_item1 || '您应妥善保管账号信息，因您的原因导致账号被盗用或信息泄露，由您自行承担责任'}}</view>
+      <view class="list-item">{{lang.terms_s2_item2 || '您不得将账号转让、出借给他人使用'}}</view>
+      <view class="list-item">{{lang.terms_s2_item3 || '如发现账号被他人非法使用，应立即通知我们'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section3_title || '三、用户行为规范'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section3_intro || '您在使用本产品时，应遵守以下规范：'}}
+      </view>
+      <view class="list-item">{{lang.terms_s3_item1 || '不得上传违法、色情、暴力等不良内容的照片'}}</view>
+      <view class="list-item">{{lang.terms_s3_item2 || '不得上传侵犯他人肖像权、隐私权的照片'}}</view>
+      <view class="list-item">{{lang.terms_s3_item3 || '不得将生成的照片用于任何非法目的'}}</view>
+      <view class="list-item">{{lang.terms_s3_item4 || '不得利用本产品从事任何违反法律法规的活动'}}</view>
+      <view class="list-item">{{lang.terms_s3_item5 || '不得干扰或破坏本产品的正常运行'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section4_title || '四、醒币规则与付费服务'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section4_intro || '本产品使用"醒币"作为虚拟服务货币，请仔细阅读以下规则：'}}
+      </view>
+      <view class="list-item">{{lang.terms_s4_item1 || '醒币是本产品的虚拟服务道具，仅可用于本小程序内的服务消费，不具有货币价值'}}</view>
+      <view class="list-item">{{lang.terms_s4_item2 || '醒币获取方式：充值购买（1元=10醒币）、邀请好友奖励、分享奖励等'}}</view>
+      <view class="list-item">{{lang.terms_s4_item3 || '醒币仅限在本小程序内使用，不支持转赠、转让、提现或兑换为现金'}}</view>
+      <view class="list-item">{{lang.terms_s4_item4 || '因AI实时生成服务的特殊性，醒币一经消费即视为服务已交付，不支持退款'}}</view>
+      <view class="list-item">{{lang.terms_s4_item5 || '因系统原因导致生成失败的，已消费的醒币将自动退还'}}</view>
+      <view class="list-item">{{lang.terms_s4_item6 || '用户主动取消正在生成的任务，已消耗的醒币不予退还'}}</view>
+      <view class="list-item">{{lang.terms_s4_item7 || '账户注销时，账户内剩余醒币将被清零且无法恢复，请在注销前使用完毕'}}</view>
+      <view class="list-item">{{lang.terms_s4_item8 || '我们有权根据运营需要调整醒币的获取规则和消费价格，调整前将提前通知'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section5_title || '五、知识产权'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section5_intro || '关于本产品的知识产权说明：'}}
+      </view>
+      <view class="list-item">{{lang.terms_s5_item1 || '本产品的所有内容（包括但不限于文字、图片、代码、界面设计等）的知识产权归我们所有'}}</view>
+      <view class="list-item">{{lang.terms_s5_item2 || '用户上传的原始照片，其知识产权归用户所有'}}</view>
+      <view class="list-item">{{lang.terms_s5_item3 || 'AI生成的证件照，用户享有使用权，可用于个人合法用途'}}</view>
+      <view class="list-item">{{lang.terms_s5_item4 || '未经授权，用户不得对本产品进行反向工程、反编译等操作'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section6_title || '六、免责声明'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section6_intro || '在法律允许的范围内，我们对以下情况不承担责任：'}}
+      </view>
+      <view class="list-item">{{lang.terms_s6_item1 || 'AI生成的照片仅供参考，可能与真实照片存在差异'}}</view>
+      <view class="list-item">{{lang.terms_s6_item2 || '因不可抗力、网络故障等原因导致的服务中断或数据丢失'}}</view>
+      <view class="list-item">{{lang.terms_s6_item3 || '用户因违反本协议或相关法律法规而产生的任何后果'}}</view>
+      <view class="list-item">{{lang.terms_s6_item4 || '用户将生成的照片用于特定场景（如签证申请）时，应自行确认是否符合该场景的具体要求'}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section7_title || '七、协议修改'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section7_content || '我们有权根据需要修改本协议。协议修改后，我们将在产品内公布。如您继续使用本产品，即表示您接受修改后的协议。如您不同意修改后的协议，请停止使用本产品。'}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section8_title || '八、法律适用与争议解决'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section8_content || '本协议的订立、执行和解释及争议的解决均应适用中华人民共和国法律。如发生争议，双方应友好协商解决；协商不成的，任何一方均可向产品运营方所在地有管辖权的人民法院提起诉讼。'}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.terms_section9_title || '九、联系我们'}}</view>
+      <view class="paragraph">
+        {{lang.terms_section9_content || '如您对本协议有任何疑问，可通过产品内的"意见反馈"功能与我们联系。'}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="paragraph update-time">
+        {{lang.terms_update_time || '本协议最后更新日期：2025年1月'}}
+      </view>
+    </view>
+  </view>
+</view>

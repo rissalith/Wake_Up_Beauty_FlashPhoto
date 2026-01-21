@@ -1,0 +1,302 @@
+<!-- 历史记录页面 -->
+<view class="container">
+  <!-- AI生成免责声明 -->
+  <view class="ai-disclaimer" wx:if="{{statusCounts.all > 0}}">
+    <text class="disclaimer-text">{{i18n.hist_aiDisclaimer}}</text>
+  </view>
+
+  <!-- 状态筛选标签 -->
+  <view class="filter-section" wx:if="{{statusCounts.all > 0}}">
+    <view class="filter-tabs status-tabs">
+      <view class="filter-tab {{currentStatus === 'all' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="all">
+        <text>{{i18n.hist_statusAll || '全部'}}</text>
+        <text class="filter-count" wx:if="{{statusCounts.all > 0}}">{{statusCounts.all}}</text>
+      </view>
+      <view class="filter-tab {{currentStatus === 'pending' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="pending" wx:if="{{statusCounts.pending > 0}}">
+        <text>{{i18n.hist_statusPending || '进行中'}}</text>
+        <text class="filter-count pending-count">{{statusCounts.pending}}</text>
+      </view>
+      <view class="filter-tab {{currentStatus === 'done' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="done">
+        <text>{{i18n.hist_statusDone || '已完成'}}</text>
+        <text class="filter-count" wx:if="{{statusCounts.done > 0}}">{{statusCounts.done}}</text>
+      </view>
+      <view class="filter-tab {{currentStatus === 'failed' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="failed" wx:if="{{statusCounts.failed > 0}}">
+        <text>{{i18n.hist_statusFailed || '失败'}}</text>
+        <text class="filter-count failed-count">{{statusCounts.failed}}</text>
+      </view>
+      <view class="filter-tab {{currentStatus === 'remake' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="remake" wx:if="{{statusCounts.remake > 0}}">
+        <text>{{i18n.hist_statusRemake || '重制'}}</text>
+        <text class="filter-count">{{statusCounts.remake}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 类型筛选标签（仅在已完成/重制状态或全部状态时显示，且有多种类型时才显示） -->
+  <view class="filter-section type-filter" wx:if="{{(currentStatus === 'all' || currentStatus === 'done' || currentStatus === 'remake') && allHistoryCount > 0 && typeFilters.length > 1}}">
+    <view class="filter-tabs">
+      <view class="filter-tab {{currentFilter === 'all' ? 'active' : ''}}" bindtap="setFilter" data-filter="all">
+        <text>{{i18n.hist_filterAll || '全部'}}</text>
+      </view>
+      <view class="filter-tab {{currentFilter === item.id ? 'active' : ''}}" wx:for="{{typeFilters}}" wx:key="id" bindtap="setFilter" data-filter="{{item.id}}">
+        <text>{{item.name}}</text>
+        <text class="filter-count">{{item.count}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 全局空状态 - 完全没有任何记录 -->
+  <view class="section empty-section" wx:if="{{statusCounts.all === 0}}">
+    <view class="empty-state">
+      <view class="empty-icon-wrap">
+        <view class="css-icon history-icon-large"></view>
+      </view>
+      <text class="empty-text">{{i18n.hist_noRecords}}</text>
+      <text class="empty-tip">{{i18n.hist_noRecordsTip}}</text>
+      <view class="empty-btn" bindtap="goToHome">{{i18n.hist_createNow}}</view>
+    </view>
+  </view>
+
+  <!-- 历史记录内容区 -->
+  <view class="section" wx:if="{{statusCounts.all > 0}}">
+    <!-- 操作栏 -->
+    <view class="section-header" wx:if="{{historyList.length > 0}}">
+      <text class="section-count">{{historyList.length}}{{i18n.hist_unit || '条'}}</text>
+      <view class="header-actions">
+        <!-- 清除失败按钮 -->
+        <view class="clear-failed-btn" wx:if="{{currentStatus === 'failed' && statusCounts.failed > 0}}" bindtap="clearFailedTasks">
+          {{i18n.hist_clearAll || '清除全部'}}
+        </view>
+        <!-- Tab滑块切换 -->
+        <view class="view-mode-tabs" wx:if="{{currentStatus !== 'pending' && currentStatus !== 'failed'}}">
+          <view class="tab-slider {{viewMode === 'grid' ? 'slide-right' : ''}}"></view>
+          <view class="tab-item {{viewMode === 'list' ? 'active' : ''}}" bindtap="setViewMode" data-mode="list">
+            <view class="css-icon list-view-icon"></view>
+          </view>
+          <view class="tab-item {{viewMode === 'grid' ? 'active' : ''}}" bindtap="setViewMode" data-mode="grid">
+            <view class="css-icon grid-view-icon"></view>
+          </view>
+        </view>
+        <view class="select-mode-btn" bindtap="toggleSelectMode" wx:if="{{currentStatus !== 'pending' && currentStatus !== 'failed'}}">
+          {{selectMode ? i18n.hist_cancel : i18n.hist_select}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 多选操作栏 -->
+    <view class="select-bar" wx:if="{{selectMode}}">
+      <view class="select-all" bindtap="toggleSelectAll">
+        <view class="checkbox {{isAllSelected ? 'checked' : ''}}"></view>
+        <text>{{i18n.selectAll}}</text>
+      </view>
+      <text class="selected-count">{{i18n.hist_selectedCount}}{{selectedCount}}{{i18n.hist_unit}}</text>
+      <view class="batch-actions">
+        <view class="batch-btn download {{selectedCount > 0 ? '' : 'disabled'}}" bindtap="batchDownload">
+          <image class="batch-icon" src="./icons/download.svg" mode="aspectFit"></image>
+          <text class="batch-btn-text">{{i18n.hist_download}}</text>
+        </view>
+        <view class="batch-btn delete {{selectedCount > 0 ? '' : 'disabled'}}" bindtap="batchDelete">
+          <image class="batch-icon" src="./icons/delete.svg" mode="aspectFit"></image>
+          <text class="batch-btn-text">{{i18n.hist_delete}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 筛选空状态 - 当前筛选条件下没有记录 -->
+    <view class="filter-empty-state" wx:if="{{historyList.length === 0 && statusCounts.all > 0}}">
+      <view class="filter-empty-icon">🔍</view>
+      <text class="filter-empty-text">{{i18n.hist_filterNoRecords || '该分类下暂无记录'}}</text>
+      <view class="filter-empty-tip" bindtap="resetFilter">
+        <text>{{i18n.hist_viewAll || '查看全部'}}</text>
+      </view>
+    </view>
+
+    <!-- 统一列表 - 列表视图 -->
+    <view class="history-list" wx:if="{{historyList.length > 0 && viewMode === 'list'}}">
+      <block wx:for="{{historyList}}" wx:key="id">
+        <!-- 进行中的任务 -->
+        <view class="history-item pending-item" wx:if="{{item.displayStatus === 'pending'}}" data-id="{{item.id}}">
+          <view class="history-img-wrap">
+            <image class="history-img" src="{{item.originalImage}}" mode="aspectFill"></image>
+            <view class="status-overlay pending">
+              <view class="loading-spinner small"></view>
+            </view>
+          </view>
+          <view class="history-info">
+            <text class="history-spec">{{item.specDisplay}}</text>
+            <text class="history-status pending">{{i18n.hist_aiGenerating || '生成中...'}}</text>
+            <text class="history-time">{{item.timeStr}}</text>
+          </view>
+          <view class="item-actions">
+            <view class="action-btn cancel" catchtap="cancelPendingTask" data-id="{{item.id}}">
+              <view class="cancel-x">✕</view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 失败的任务 -->
+        <view class="history-item failed-item" wx:elif="{{item.displayStatus === 'failed'}}" data-id="{{item.id}}">
+          <view class="history-img-wrap">
+            <image class="history-img" src="{{item.originalImage}}" mode="aspectFill"></image>
+            <view class="status-overlay failed">
+              <text class="failed-x">✕</text>
+            </view>
+          </view>
+          <view class="history-info">
+            <text class="history-spec">{{item.specDisplay}}</text>
+            <text class="history-status failed">{{item.failReason || i18n.hist_failedTitle || '生成失败'}}</text>
+            <text class="history-time">{{item.timeStr}}</text>
+          </view>
+          <view class="item-actions">
+            <view class="action-btn retry" catchtap="retryFailedTask" data-id="{{item.id}}">
+              <image class="action-icon" src="./icons/retry.svg" mode="aspectFit"></image>
+            </view>
+            <view class="action-btn delete" catchtap="deleteFailedTask" data-id="{{item.id}}">
+              <image class="action-icon" src="./icons/delete.svg" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+
+        <!-- 已完成的任务 -->
+        <view class="history-item {{item.selected ? 'selected' : ''}}" wx:else bindtap="{{selectMode ? 'toggleSelect' : 'showPhotoDetail'}}" data-index="{{index}}" data-id="{{item.id}}">
+          <!-- 多选复选框 -->
+          <view class="item-checkbox" wx:if="{{selectMode}}" catchtap="toggleSelect" data-index="{{index}}">
+            <view class="checkbox {{item.selected ? 'checked' : ''}}"></view>
+          </view>
+          <view class="history-img-wrap">
+            <image class="history-img" src="{{item.resultImage}}" mode="aspectFill"></image>
+            <!-- 重制标记 -->
+            <view class="remake-tag" wx:if="{{item.isRemake}}">
+              <text class="remake-tag-text">{{i18n.hist_remakeTag || '重制'}}</text>
+            </view>
+          </view>
+          <view class="history-info">
+            <text class="history-spec">{{item.specDisplay}}</text>
+            <text class="history-time">{{item.timeStr}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 统一列表 - 网格视图（仅显示已完成的） -->
+    <view class="history-grid" wx:if="{{historyList.length > 0 && viewMode === 'grid' && currentStatus !== 'pending' && currentStatus !== 'failed'}}">
+      <block wx:for="{{historyList}}" wx:key="id">
+        <view class="grid-item {{item.selected ? 'selected' : ''}}" wx:if="{{item.displayStatus === 'done'}}" bindtap="{{selectMode ? 'toggleSelect' : 'showPhotoDetail'}}" data-index="{{index}}" data-id="{{item.id}}">
+          <!-- 多选复选框 -->
+          <view class="grid-checkbox" wx:if="{{selectMode}}" catchtap="toggleSelect" data-index="{{index}}">
+            <view class="checkbox {{item.selected ? 'checked' : ''}}"></view>
+          </view>
+          <!-- 图片容器 -->
+          <view class="grid-img-wrap">
+            <image class="grid-img" src="{{item.resultImage}}" mode="aspectFill"></image>
+            <!-- 重制标记 -->
+            <view class="remake-tag" wx:if="{{item.isRemake}}">
+              <text class="remake-tag-text">{{i18n.hist_remakeTag || '重制'}}</text>
+            </view>
+          </view>
+          <view class="grid-info">
+            <text class="grid-spec">{{item.specDisplay}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 底部占位，防止被TabBar遮挡 -->
+  <view class="bottom-safe-area"></view>
+</view>
+
+<!-- 照片详情弹窗 -->
+<view class="modal-mask" wx:if="{{showPhotoDetailModal}}" bindtap="hidePhotoDetail">
+  <view class="photo-detail-modal" catchtap="">
+    <!-- 关闭按钮 -->
+    <view class="detail-close-btn" bindtap="hidePhotoDetail">
+      <text class="close-x">×</text>
+    </view>
+
+    <!-- 图片预览 -->
+    <view class="detail-image-wrap">
+      <image class="detail-image" src="{{currentDetailPhoto.resultImage}}" mode="aspectFit" bindtap="previewDetailImage"></image>
+    </view>
+
+    <!-- 照片信息 -->
+    <view class="detail-info">
+      <text class="detail-spec">{{currentDetailPhoto.specDisplay}}</text>
+      <text class="detail-time">{{currentDetailPhoto.timeStr}}</text>
+    </view>
+
+    <!-- 生成条件 -->
+    <view class="detail-options" wx:if="{{currentDetailPhoto.configDisplay && currentDetailPhoto.configDisplay.length > 0}}">
+      <view class="detail-options-title">{{i18n.detail_conditions || '生成条件'}}</view>
+      <view class="detail-options-list">
+        <view class="detail-option-item" wx:for="{{currentDetailPhoto.configDisplay}}" wx:key="key">
+          <text class="option-label">{{item.label}}:</text>
+          <text class="option-value">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="detail-actions">
+      <view class="detail-action-btn" bindtap="detailSharePhoto">
+        <image class="detail-action-icon" src="./icons/share.svg" mode="aspectFit"></image>
+        <text class="detail-action-btn-text">{{i18n.detail_share || '分享'}}</text>
+        <!-- 红点仅在非重制且未分享过时显示 -->
+        <view class="share-red-dot" wx:if="{{!currentDetailPhoto.hasShared && !currentDetailPhoto.isRemake}}"></view>
+      </view>
+      <view class="detail-action-btn" bindtap="detailRegeneratePhoto" wx:if="{{!currentDetailPhoto.isRemake}}">
+        <image class="detail-action-icon" src="./icons/retry.svg" mode="aspectFit"></image>
+        <text class="detail-action-btn-text">{{i18n.detail_remake || '重制'}}</text>
+      </view>
+      <view class="detail-action-btn" bindtap="detailSaveImage">
+        <image class="detail-action-icon" src="./icons/download.svg" mode="aspectFit"></image>
+        <text class="detail-action-btn-text">{{i18n.detail_save || '保存'}}</text>
+      </view>
+      <view class="detail-action-btn delete" bindtap="detailDeletePhoto">
+        <image class="detail-action-icon" src="./icons/delete.svg" mode="aspectFit"></image>
+        <text class="detail-action-btn-text">{{i18n.detail_delete || '删除'}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 分享海报弹窗 -->
+<view class="modal-mask" wx:if="{{showShareModal}}" bindtap="hideShareModal">
+  <view class="share-modal-content" catchtap="">
+    <!-- 头部 -->
+    <view class="share-modal-header">
+      <text class="share-modal-title">{{i18n.hist_sharePoster || '分享海报'}}</text>
+      <view class="modal-close-btn" bindtap="hideShareModal">
+        <view class="close-line close-line-1"></view>
+        <view class="close-line close-line-2"></view>
+      </view>
+    </view>
+
+    <!-- 海报预览区 -->
+    <view class="share-poster-wrap">
+      <canvas type="2d" id="posterCanvas" class="poster-canvas" style="width: 540rpx; height: 660rpx;"></canvas>
+      <image wx:if="{{posterImage}}" class="poster-preview" src="{{posterImage}}" mode="aspectFit"></image>
+      <view class="poster-loading" wx:if="{{!posterImage}}">
+        <view class="poster-spinner"></view>
+        <text class="poster-loading-text">{{i18n.loading || '生成中...'}}</text>
+      </view>
+    </view>
+
+    <!-- 醒币奖励提示：仅在非重制且未分享过时显示 -->
+    <view class="share-coupon-tip" wx:if="{{!shareItem.hasShared && !shareItem.isRemake}}">
+      <image class="coupon-tip-icon" src="./icons/gift.svg" mode="aspectFit"></image>
+      <text class="coupon-tip-text">{{i18n.hist_sharePointsTip || '首次分享可获得10醒币'}}</text>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="share-actions">
+      <button class="share-action-btn wechat" open-type="share" data-share-type="poster">
+        <image class="share-btn-icon" src="./icons/wechat.svg" mode="aspectFit"></image>
+        <text>{{i18n.hist_shareToFriend || '分享给好友'}}</text>
+      </button>
+      <view class="share-action-btn save" bindtap="savePoster">
+        <image class="share-btn-icon" src="./icons/save.svg" mode="aspectFit"></image>
+        <text>{{i18n.hist_savePoster || '保存海报'}}</text>
+      </view>
+    </view>
+  </view>
+</view>

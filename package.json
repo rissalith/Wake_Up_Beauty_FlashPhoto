@@ -1,0 +1,19 @@
+{
+  "name": "arsdk-miniprogram-demo",
+  "version": "1.0.0",
+  "description": "https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.woa.com/video_fe/arsdk-miniprogram-demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@tencent/eslint-config-tencent": "^0.16.0",
+    "eslint": "^8.11.0"
+  }
+}

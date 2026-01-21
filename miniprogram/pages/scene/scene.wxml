@@ -1,0 +1,290 @@
+<!--通用场景页面 - 根据中台配置动态渲染-->
+<view class="scene-page">
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{configLoading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{lang.loading || '加载中...'}}</text>
+  </view>
+
+  <!-- 主内容 -->
+  <scroll-view class="main-content" scroll-y wx:else>
+    <!-- 顶部提醒 -->
+    <view class="top-notice {{showTopNotice ? 'show' : ''}}" wx:if="{{showTopNotice}}">
+      <text>{{topNoticeText}}</text>
+    </view>
+
+    <!-- 悬浮进度条 -->
+    <view class="floating-progress" wx:if="{{generatingCount > 0 || showCompleted}}" bindtap="goToHistory">
+      <view class="progress-content {{showCompleted ? 'completed' : ''}}">
+        <view class="progress-icon">
+          <view class="spinner" wx:if="{{!showCompleted}}"></view>
+          <text class="check-icon" wx:else>✓</text>
+        </view>
+        <text class="progress-text" wx:if="{{!showCompleted}}">{{generatingCount}}{{lang.fp_photosGenerating || '张照片生成中...'}}</text>
+        <text class="progress-text" wx:else>{{lang.hist_generateComplete || '生成完成，点击查看'}}</text>
+      </view>
+    </view>
+
+    <!-- 图片上传区 -->
+    <view class="upload-section">
+      <view class="section-title">{{lang.fp_uploadPhoto || '上传照片'}}</view>
+      <view class="upload-area">
+        <view class="image-list">
+          <view class="image-item" wx:for="{{uploadedImages}}" wx:key="index">
+            <image src="{{item.path}}" mode="aspectFill" class="preview-image" />
+            <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
+          </view>
+          <view class="add-image" wx:if="{{uploadedImages.length < 3}}" bindtap="chooseImage">
+            <view class="add-icon">+</view>
+            <text class="add-text">{{lang.fp_add || '添加照片'}}</text>
+          </view>
+        </view>
+        <view class="upload-tips">{{lang.fp_uploadTip || '最多上传3张照片，建议正面清晰照片'}}</view>
+      </view>
+    </view>
+
+    <!-- 动态步骤配置 -->
+    <block wx:for="{{steps}}" wx:key="step_key">
+      <!-- 跳过图片上传类型 -->
+      <block wx:if="{{item.component_type !== 'image_upload'}}">
+        <view class="config-section" wx:if="{{stepOptions[item.step_key] && stepOptions[item.step_key].length > 0}}">
+          <view class="section-title">
+            <image class="step-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
+            <text>{{item.title}}</text>
+          </view>
+
+          <!-- 性别选择 (gender_select) -->
+          <view class="gender-options" wx:if="{{item.component_type === 'gender_select'}}">
+            <view
+              class="gender-item male {{selections[item.step_key] === 'male' ? 'active' : ''}}"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="male"
+            >
+              <view class="gender-icon-wrapper">
+                <view class="gender-icon-male"></view>
+              </view>
+          <text class="gender-text">{{lang.fp_male || '男'}}</text>
+            </view>
+            <view
+              class="gender-item female {{selections[item.step_key] === 'female' ? 'active' : ''}}"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="female"
+            >
+              <view class="gender-icon-wrapper">
+                <view class="gender-icon-female"></view>
+              </view>
+          <text class="gender-text">{{lang.fp_female || '女'}}</text>
+            </view>
+          </view>
+
+          <!-- 单选框/性别选择 (radio) -->
+          <view class="radio-options" wx:if="{{item.component_type === 'radio'}}">
+            <view
+              class="radio-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+              wx:for="{{stepOptions[item.step_key]}}"
+              wx:for-item="opt"
+              wx:key="id"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="{{opt.id}}"
+            >
+              <text>{{opt.name}}</text>
+            </view>
+          </view>
+
+          <!-- 标签选择（文字） -->
+          <view class="tag-options" wx:if="{{item.component_type === 'tags'}}">
+            <view
+              class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+              wx:for="{{stepOptions[item.step_key]}}"
+              wx:for-item="opt"
+              wx:key="id"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="{{opt.id}}"
+            >
+              <text>{{opt.name}}</text>
+            </view>
+          </view>
+
+          <!-- 规格选择 -->
+          <view class="tag-options" wx:if="{{item.component_type === 'spec_select'}}">
+            <view
+              class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+              wx:for="{{stepOptions[item.step_key]}}"
+              wx:for-item="opt"
+              wx:key="id"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="{{opt.id}}"
+            >
+              <text>{{opt.name}}</text>
+            </view>
+          </view>
+
+          <!-- 颜色选择器 -->
+          <view class="color-options" wx:if="{{item.component_type === 'color_picker'}}">
+            <view
+              class="color-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+              wx:for="{{stepOptions[item.step_key]}}"
+              wx:for-item="opt"
+              wx:key="id"
+              bindtap="selectOption"
+              data-key="{{item.step_key}}"
+              data-id="{{opt.id}}"
+            >
+              <view class="color-circle" style="background-color: {{opt.color || '#ffffff'}};"></view>
+              <text class="color-name">{{opt.name}}</text>
+            </view>
+          </view>
+
+          <!-- 图片标签选择 -->
+          <scroll-view class="image-tag-scroll" scroll-x wx:if="{{item.component_type === 'image_tags'}}">
+            <view class="image-tag-options">
+              <view
+                class="image-tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                wx:for="{{stepOptions[item.step_key]}}"
+                wx:for-item="opt"
+                wx:key="id"
+                bindtap="selectOption"
+                data-key="{{item.step_key}}"
+                data-id="{{opt.id}}"
+              >
+                <view class="tag-image-wrapper">
+                  <image
+                    src="{{opt.image}}"
+                    mode="aspectFill"
+                    class="tag-image"
+                    wx:if="{{opt.image}}"
+                    catchtap="previewTagImage"
+                    data-url="{{opt.image}}"
+                    data-name="{{opt.name}}"
+                  />
+                  <view class="tag-placeholder" wx:else>
+                    <text>{{opt.name}}</text>
+                  </view>
+                </view>
+                <text class="tag-name">{{opt.name}}</text>
+                <view class="select-indicator {{selections[item.step_key] === opt.id ? 'selected' : ''}}">
+                  <view class="indicator-dot" wx:if="{{selections[item.step_key] === opt.id}}"></view>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+
+          <!-- 滑块 -->
+          <view class="slider-wrapper" wx:if="{{item.component_type === 'slider'}}">
+            <slider
+              value="{{selections[item.step_key]}}"
+              min="{{item.min || 0}}"
+              max="{{item.max || 100}}"
+              step="{{item.step || 1}}"
+              show-value
+              activeColor="#ff6b35"
+              bindchange="onSliderChange"
+              data-key="{{item.step_key}}"
+            />
+          </view>
+        </view>
+      </block>
+    </block>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{!configLoading}}">
+    <view class="quantity-selector">
+      <view class="qty-btn {{generateCount <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">−</view>
+      <text class="qty-value">{{generateCount}}{{lang.fp_unit}}</text>
+      <view class="qty-btn {{generateCount >= 10 ? 'disabled' : ''}}" bindtap="increaseQuantity">+</view>
+    </view>
+    <view class="generate-btn {{uploadedImages.length === 0 ? 'disabled' : ''}}" bindtap="showPaymentModal">
+      <text class="btn-text">{{lang.fp_generateNow || 'Generate Now'}}</text>
+      <text class="btn-points">{{totalPoints}} {{lang.points || 'Points'}}</text>
+    </view>
+  </view>
+
+  <!-- 支付弹窗 -->
+  <view class="modal-mask" wx:if="{{showPayModal}}" catchtap="hidePaymentModal">
+    <view class="modal-content pay-modal" catchtap="stopPropagation">
+      <!-- 装饰性渐变背景 -->
+      <view class="pay-modal-bg"></view>
+
+      <!-- 关闭按钮 -->
+      <view class="modal-close-btn" bindtap="hidePaymentModal">×</view>
+
+      <view class="modal-body">
+        <!-- 醒币图标装饰 -->
+        <view class="pay-icon-decoration">
+          <view class="pay-icon-circle">
+            <text class="pay-icon-star">✦</text>
+          </view>
+        </view>
+
+        <view class="pay-info-card">
+          <view class="pay-info-row">
+            <text class="info-label">{{lang.fp_generateQty || '生成数量'}}</text>
+            <text class="info-value">{{generateCount}}{{lang.fp_unit || '张'}}</text>
+          </view>
+          <view class="pay-info-divider"></view>
+          <view class="pay-info-row highlight-row">
+            <text class="info-label">{{lang.consumePoints || '本次消耗'}}</text>
+            <view class="info-value-wrapper">
+              <text class="info-value-highlight">-{{totalPoints}}</text>
+              <text class="info-unit">{{lang.pointsUnit || '醒币'}}</text>
+            </view>
+          </view>
+          <view class="pay-info-divider"></view>
+          <view class="pay-info-row">
+            <text class="info-label">{{lang.currentBalance || '当前余额'}}</text>
+            <view class="info-value-wrapper">
+              <text class="info-value">{{userPoints}}</text>
+              <text class="info-unit">{{lang.pointsUnit || '醒币'}}</text>
+            </view>
+          </view>
+          <view class="pay-info-divider"></view>
+          <view class="pay-info-row balance-after-row">
+            <text class="info-label-after">{{lang.balanceAfterPay || '支付后余额'}}</text>
+            <view class="info-value-wrapper">
+              <text class="info-value-after">{{userPoints - totalPoints}}</text>
+              <text class="info-unit-after">{{lang.pointsUnit || '醒币'}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 余额不足提示 -->
+        <view class="pay-warning" wx:if="{{userPoints < totalPoints}}">
+          <view class="warning-icon">!</view>
+          <text>{{lang.insufficientBalance || '余额不足，请先充值'}}</text>
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <view class="pay-btn btn-recharge" bindtap="goToRecharge" wx:if="{{userPoints < totalPoints}}">
+          <text>{{lang.goRecharge || '去充值'}}</text>
+        </view>
+        <view class="pay-btn btn-confirm" bindtap="confirmPayment" wx:else>
+          <text>{{lang.fp_confirmPayBtn || '确认支付'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 登录弹窗 -->
+  <login-modal
+    show="{{showLoginModal}}"
+    bind:close="onLoginModalClose"
+    bind:loginsuccess="onLoginSuccess"
+  />
+
+  <!-- 隐私协议弹窗 -->
+  <privacy-modal
+    show="{{showPrivacyModal}}"
+    bind:close="onPrivacyModalClose"
+    bind:agree="onPrivacyAgree"
+  />
+</view>

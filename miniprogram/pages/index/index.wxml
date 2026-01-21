@@ -1,0 +1,137 @@
+<!-- 醒美闪图 - 主页面 -->
+
+<!-- 悬浮进度条 - 有正在生成的任务时显示 -->
+<view class="floating-progress {{(generatingCount > 0 || showCompleted) ? 'show' : ''}}" style="top: {{navBarHeight}}px;" bindtap="goToHistory" wx:if="{{generatingCount > 0 || showCompleted}}">
+  <view class="floating-progress-inner {{showCompleted ? 'completed' : ''}}">
+    <view class="progress-spinner" wx:if="{{!showCompleted}}"></view>
+    <view class="progress-check" wx:if="{{showCompleted}}"></view>
+    <text class="progress-text" wx:if="{{!showCompleted}}">{{generatingCount}}{{i18n.generatingPhotos || '张照片生成中...'}}</text>
+    <text class="progress-text" wx:if="{{showCompleted}}">{{i18n.allCompleted || '全部完成'}}</text>
+    <text class="progress-arrow">›</text>
+  </view>
+</view>
+
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <!-- 语言切换控件 - 左侧 -->
+      <view class="nav-lang-switch">
+        <view class="lang-switch-track two-options">
+          <view class="lang-switch-indicator {{currentLanguage === 'zh-CN' ? 'pos-0' : 'pos-1'}}"></view>
+          <view class="lang-switch-option {{currentLanguage === 'zh-CN' ? 'active' : ''}}" bindtap="switchLanguage" data-lang="zh-CN">简</view>
+          <view class="lang-switch-option {{currentLanguage === 'en' ? 'active' : ''}}" bindtap="switchLanguage" data-lang="en">En</view>
+        </view>
+      </view>
+      <text class="nav-title">{{i18n.appName || '醒美闪图'}}</text>
+      <view class="nav-title-wrap">
+        <image class="nav-title-img" src="{{titleImage}}" mode="heightFix"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- 页面内容 -->
+  <view class="container" style="padding-top: {{navBarHeight}}px;">
+    <!-- 头部 Banner 轮播 -->
+    <view class="header-banner">
+      <swiper class="banner-swiper" autoplay="{{bannerAutoplay}}" interval="{{4000}}" duration="{{500}}" circular="{{true}}" indicator-dots="{{false}}" bindchange="onBannerChange" current="{{bannerCurrent}}">
+        <swiper-item wx:for="{{bannerList}}" wx:key="index">
+          <image class="banner-bg" src="{{item}}" mode="aspectFill"></image>
+        </swiper-item>
+      </swiper>
+      <!-- 轮播指示点 -->
+      <view class="banner-dots">
+        <view class="banner-dot {{bannerCurrent === index ? 'active' : ''}}" wx:for="{{bannerList}}" wx:key="index"></view>
+      </view>
+    </view>
+
+    <!-- 公告提示 -->
+    <view class="announcement-bar" wx:if="{{announcement}}">
+      <text class="announcement-text">{{announcement}}</text>
+    </view>
+
+    <!-- 功能列表 - 可滑动切页 -->
+    <view class="service-section">
+      <view class="service-header">
+        <text class="service-section-title">{{i18n.selectScene || '选择场景'}}</text>
+      </view>
+
+      <!-- 配置加载完成后渲染 -->
+      <block wx:if="{{configLoaded}}">
+        <swiper class="service-swiper" bindchange="onSwiperChange" current="{{currentPage}}" duration="300" easing-function="easeOutCubic">
+          <!-- 动态渲染每一页 -->
+          <swiper-item wx:for="{{scenePages}}" wx:key="index" wx:for-item="pageScenes" wx:for-index="pageIndex">
+            <view class="service-list">
+              <!-- 当前页的场景列表 -->
+              <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}}" wx:for="{{pageScenes}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100">
+                <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
+                  <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
+                </view>
+                <view class="service-info">
+                  <view class="service-title-row" wx:if="{{item.status === 'coming_soon'}}">
+                    <text class="service-title">{{item.displayName}}</text>
+                    <view class="coming-tag">{{item.coming_soon_text || i18n.comingSoon || '即将上线'}}</view>
+                  </view>
+                  <text class="service-title" wx:else>{{item.displayName}}</text>
+                  <text class="service-desc">{{item.displayDesc}}</text>
+                </view>
+              </view>
+
+              <!-- 最后一页且场景不满时显示"更多场景"占位 -->
+              <view class="service-card more-coming" wx:if="{{pageIndex === pageCount - 1 && pageScenes.length < scenesPerPage}}">
+                <view class="service-icon-wrap more">
+                  <view class="more-icon">
+                    <view class="more-dot"></view>
+                    <view class="more-dot"></view>
+                    <view class="more-dot"></view>
+                  </view>
+                </view>
+                <view class="service-info">
+                  <text class="service-title">{{i18n.moreScene || '更多场景'}}</text>
+                  <text class="service-desc">{{i18n.moreSceneDesc || '更多精彩场景，敬请期待...'}}</text>
+                </view>
+              </view>
+            </view>
+          </swiper-item>
+        </swiper>
+        <!-- 动态分页指示器 -->
+        <view class="swiper-dots-bottom" wx:if="{{pageCount > 1}}">
+          <view class="dot {{currentPage === index ? 'active' : ''}}" wx:for="{{scenePages}}" wx:key="index"></view>
+        </view>
+      </block>
+
+      <!-- 加载中状态 -->
+      <view class="service-loading" wx:if="{{!configLoaded}}">
+        <view class="loading-placeholder" wx:for="{{[1,2,3]}}" wx:key="*this">
+          <view class="placeholder-icon"></view>
+          <view class="placeholder-text"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 特色功能 -->
+    <view class="feature-section" wx:if="{{featureImage}}">
+      <image class="feature-banner-img" src="{{featureImage}}" mode="widthFix" binderror="onFeatureImageError"></image>
+    </view>
+  </view>
+</view>
+
+<!-- 登录弹窗 -->
+<login-modal
+  show="{{showLoginModal}}"
+  bind:close="onLoginModalClose"
+  bind:loginsuccess="onLoginSuccess"
+/>
+
+<!-- 隐私政策弹窗 -->
+<privacy-modal
+  show="{{showPrivacyModal}}"
+  bind:close="onPrivacyModalClose"
+  bind:agree="onPrivacyAgree"
+/>
+
+<!-- 用户信息设置弹窗 -->
+<user-info-modal
+  show="{{showUserInfoModal}}"
+  bind:complete="onUserInfoComplete"
+/>

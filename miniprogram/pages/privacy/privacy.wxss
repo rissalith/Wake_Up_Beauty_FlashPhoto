@@ -1,0 +1,79 @@
+/* 隐私政策页面样式 */
+/* 奶油渐变风格 */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF8F0 0%, #FFF5EB 50%, #FFFAF5 100%);
+  padding: 20rpx;
+  padding-bottom: 40rpx;
+  box-sizing: border-box;
+}
+
+.policy-content {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+}
+
+.section {
+  margin-bottom: 40rpx;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.subtitle {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 20rpx;
+}
+
+.sub-section {
+  margin-top: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.sub-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #444444;
+  margin-bottom: 16rpx;
+}
+
+.paragraph {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.8;
+  margin-bottom: 16rpx;
+  text-align: justify;
+}
+
+.paragraph.note {
+  color: #888888;
+  font-size: 24rpx;
+}
+
+.list-item {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.8;
+  padding-left: 24rpx;
+  position: relative;
+  margin-bottom: 8rpx;
+}
+
+.list-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16rpx;
+  width: 8rpx;
+  height: 8rpx;
+  background-color: #999999;
+  border-radius: 50%;
+}

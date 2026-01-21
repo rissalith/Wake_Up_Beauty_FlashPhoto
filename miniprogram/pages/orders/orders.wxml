@@ -1,0 +1,43 @@
+<!-- 消费记录页面 -->
+<view class="container">
+  <!-- 订单列表 -->
+  <view class="order-list" wx:if="{{orders.length > 0}}">
+    <view class="order-item" wx:for="{{orders}}" wx:key="id">
+      <view class="order-header">
+        <text class="order-scene">{{item.sceneName || '照片生成'}}</text>
+        <text class="order-status {{item.status}}">{{item.statusText}}</text>
+      </view>
+      <view class="order-content">
+        <view class="order-info">
+          <text class="order-time">{{item.createTimeStr}}</text>
+          <view class="order-detail-row">
+            <text class="order-label">{{lang.order_generateQty || '生成数量'}}</text>
+            <text class="order-value">{{item.count}}{{lang.fp_unit || '张'}}</text>
+          </view>
+        </view>
+        <view class="order-price">
+          <text class="price-label">{{lang.order_actualPay || '消费'}}</text>
+          <text class="price-value">{{item.points}}{{lang.pointsUnit || '醒币'}}</text>
+        </view>
+      </view>
+    </view>
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <text>{{lang.loading || '加载中...'}}</text>
+    </view>
+    <view class="no-more" wx:elif="{{!hasMore}}">
+      <text>{{lang.noMore || '没有更多了'}}</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-state" wx:elif="{{loading}}">
+    <text>{{lang.loading || '加载中...'}}</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text class="empty-text">{{lang.order_noOrders || '暂无消费记录'}}</text>
+    <view class="empty-btn" bindtap="goToHome">{{lang.order_goPhoto || '去拍照'}}</view>
+  </view>
+</view>

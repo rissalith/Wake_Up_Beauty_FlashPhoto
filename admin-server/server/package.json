@@ -1,0 +1,26 @@
+{
+  "name": "xingmei-admin-server",
+  "version": "1.0.0",
+  "description": "醒美闪图后台管理系统 API 服务",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5",
+    "cos-nodejs-sdk-v5": "^2.14.4",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "form-data": "^4.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.33.2",
+    "xml2js": "^0.6.2"
+  }
+}

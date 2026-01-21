@@ -1,0 +1,36 @@
+<view class="user-info-modal" wx:if="{{show}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="title">完善个人信息</text>
+      <text class="subtitle">完善信息，享受更好的服务</text>
+    </view>
+    
+    <view class="modal-body">
+      <view class="avatar-section">
+        <text class="label">头像</text>
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image class="avatar" src="{{avatarUrl || defaultAvatar}}" mode="aspectFill"></image>
+          <view class="avatar-tip">点击上传</view>
+        </button>
+      </view>
+      
+      <view class="nickname-section">
+        <text class="label">昵称</text>
+        <input class="nickname-input" 
+               type="nickname" 
+               placeholder="{{nickname}}" 
+               value="{{nickname}}"
+               bindinput="onNicknameInput"
+               maxlength="20"/>
+      </view>
+      
+      <view class="tip-text">昵称已随机生成，您可以修改或使用微信昵称</view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-skip" bindtap="onSkip">下次再说</button>
+      <button class="btn btn-submit" bindtap="onSubmit">完成</button>
+    </view>
+  </view>
+</view>

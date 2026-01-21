@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>醒美闪图 - 管理后台</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --sidebar-width: 240px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f7fa;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 0;
+      z-index: 1000;
+    }
+    .sidebar-brand {
+      padding: 10px 20px 30px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    .sidebar-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar-nav li a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .sidebar-nav li a:hover,
+    .sidebar-nav li a.active {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+    .sidebar-nav li a i {
+      margin-right: 10px;
+      font-size: 1.1rem;
+    }
+    .main-content {
+      margin-left: var(--sidebar-width);
+      padding: 20px 30px;
+      min-height: 100vh;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .env-switch {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .env-badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .env-badge.test {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .env-badge.production {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+    .stat-card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+    .stat-card .icon.users { background: #dbeafe; color: #2563eb; }
+    .stat-card .icon.points { background: #fef3c7; color: #d97706; }
+    .stat-card .icon.photos { background: #dcfce7; color: #16a34a; }
+    .stat-card .icon.invites { background: #f3e8ff; color: #9333ea; }
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1f2937;
+    }
+    .stat-card .label {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .stat-card .sub-stats {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f3f4f6;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .card-header {
+      background: white;
+      border-bottom: 1px solid #f3f4f6;
+      padding: 16px 20px;
+      font-weight: 600;
+    }
+    .table {
+      margin-bottom: 0;
+    }
+    .table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+      border-bottom-width: 1px;
+    }
+    .table td {
+      vertical-align: middle;
+    }
+    .badge-status {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge-status.active { background: #dcfce7; color: #166534; }
+    .badge-status.disabled { background: #fee2e2; color: #991b1b; }
+    .badge-status.generating { background: #fef3c7; color: #92400e; }
+    .badge-status.done { background: #dcfce7; color: #166534; }
+    .badge-status.failed { background: #fee2e2; color: #991b1b; }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e5e7eb;
+    }
+    .pagination {
+      margin-bottom: 0;
+    }
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    .login-title {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-title h1 {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #1f2937;
+    }
+    .login-title p {
+      color: #6b7280;
+    }
+    .modal-confirm .modal-body {
+      text-align: center;
+      padding: 30px;
+    }
+    .amount-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .amount-input .btn-group .btn {
+      padding: 4px 12px;
+    }
+    #app { display: none; }
+    #login { display: block; }
+    .config-info {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 15px;
+      font-size: 0.85rem;
+    }
+    .config-info .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+    .config-info .item .label { color: #6b7280; }
+    .config-info .item .value { font-weight: 500; color: #1f2937; }
+  </style>
+</head>
+<body>
+  <!-- 登录页面 -->
+  <div id="login" class="login-container">
+    <div class="login-card">
+      <div class="login-title">
+        <h1><i class="bi bi-camera-fill me-2"></i>醒美闪图</h1>
+        <p>管理后台</p>
+      </div>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label class="form-label">用户名</label>
+          <input type="text" class="form-control form-control-lg" id="username" value="admin" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">密码</label>
+          <input type="password" class="form-control form-control-lg" id="password" value="admin123" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100">登录</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主应用 -->
+  <div id="app">
+    <!-- 侧边栏 -->
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        <i class="bi bi-camera-fill me-2"></i>醒美闪图
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="#" data-page="dashboard" class="active"><i class="bi bi-speedometer2"></i>仪表盘</a></li>
+        <li><a href="#" data-page="users"><i class="bi bi-people"></i>用户管理</a></li>
+        <li><a href="#" data-page="points"><i class="bi bi-coin"></i>醒币流水</a></li>
+        <li><a href="#" data-page="photos"><i class="bi bi-images"></i>照片记录</a></li>
+        <li><a href="#" data-page="settings"><i class="bi bi-gear"></i>系统设置</a></li>
+      </ul>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h4 class="mb-0" id="pageTitle">仪表盘</h4>
+        <div class="env-switch">
+          <span class="text-muted">当前环境:</span>
+          <span id="currentEnvBadge" class="env-badge test">测试环境</span>
+          <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm" onclick="switchEnv('test')">测试</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="switchEnv('production')">正式</button>
+          </div>
+          <button class="btn btn-outline-danger btn-sm ms-3" onclick="logout()">
+            <i class="bi bi-box-arrow-right"></i> 退出
+          </button>
+        </div>
+      </div>
+
+      <!-- 仪表盘页面 -->
+      <div id="page-dashboard" class="page-content">
+        <div class="row g-4 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="icon users"><i class="bi bi-people-fill"></i></div>
+              <div class="value" id="totalUsers">0</div>
+              <div class="label">总用户数</div>
+              <div class="sub-stats">今日新增: <span id="todayUsers">0</span></div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="icon points"><i class="bi bi-coin"></i></div>
+              <div class="value" id="totalPoints">0</div>
+              <div class="label">醒币总量</div>
+              <div class="sub-stats">
+                今日充值: <span id="todayRecharge">0</span> | 消费: <span id="todayConsume">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="icon photos"><i class="bi bi-images"></i></div>
+              <div class="value" id="totalPhotos">0</div>
+              <div class="label">照片总数</div>
+              <div class="sub-stats">
+                成功: <span id="successPhotos">0</span> | 失败: <span id="failedPhotos">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="icon invites"><i class="bi bi-share-fill"></i></div>
+              <div class="value" id="totalInvites">0</div>
+              <div class="label">邀请成功</div>
+              <div class="sub-stats">今日邀请: <span id="todayInvites">0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>最近注册用户</span>
+                <a href="#" onclick="showPage('users')" class="btn btn-sm btn-outline-primary">查看全部</a>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>用户</th>
+                      <th>醒币</th>
+                      <th>注册时间</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentUsers"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>最近照片生成</span>
+                <a href="#" onclick="showPage('photos')" class="btn btn-sm btn-outline-primary">查看全部</a>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>用户</th>
+                      <th>状态</th>
+                      <th>时间</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentPhotos"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户管理页面 -->
+      <div id="page-users" class="page-content" style="display:none;">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <input type="text" class="form-control" id="userKeyword" placeholder="搜索用户昵称/ID...">
+              </div>
+              <div class="col-md-2">
+                <select class="form-select" id="userStatus">
+                  <option value="">全部状态</option>
+                  <option value="active">正常</option>
+                  <option value="disabled">已禁用</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadUsers()">
+                  <i class="bi bi-search"></i> 搜索
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>OpenID</th>
+                  <th>醒币余额</th>
+                  <th>状态</th>
+                  <th>注册时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="usersList"></tbody>
+            </table>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted">共 <span id="usersTotal">0</span> 条</span>
+            <nav id="usersPagination"></nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- 醒币流水页面 -->
+      <div id="page-points" class="page-content" style="display:none;">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-2">
+                <select class="form-select" id="pointsType">
+                  <option value="">全部类型</option>
+                  <option value="new_user">新用户赠送</option>
+                  <option value="recharge">充值</option>
+                  <option value="consume">消费</option>
+                  <option value="invite_reward">邀请奖励</option>
+                  <option value="refund">退还</option>
+                  <option value="admin_adjust">管理员调整</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <input type="date" class="form-control" id="pointsStartDate">
+              </div>
+              <div class="col-md-2">
+                <input type="date" class="form-control" id="pointsEndDate">
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadPointsRecords()">
+                  <i class="bi bi-search"></i> 搜索
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>类型</th>
+                  <th>金额</th>
+                  <th>余额</th>
+                  <th>描述</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody id="pointsList"></tbody>
+            </table>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted">共 <span id="pointsTotal">0</span> 条</span>
+            <nav id="pointsPagination"></nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- 照片记录页面 -->
+      <div id="page-photos" class="page-content" style="display:none;">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-2">
+                <select class="form-select" id="photoStatus">
+                  <option value="">全部状态</option>
+                  <option value="generating">生成中</option>
+                  <option value="done">已完成</option>
+                  <option value="failed">失败</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <input type="date" class="form-control" id="photoStartDate">
+              </div>
+              <div class="col-md-2">
+                <input type="date" class="form-control" id="photoEndDate">
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadPhotos()">
+                  <i class="bi bi-search"></i> 搜索
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>场景</th>
+                  <th>规格</th>
+                  <th>消耗醒币</th>
+                  <th>状态</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody id="photosList"></tbody>
+            </table>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted">共 <span id="photosTotal">0</span> 条</span>
+            <nav id="photosPagination"></nav>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统设置页面 -->
+      <div id="page-settings" class="page-content" style="display:none;">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">环境配置</div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">当前运行环境</label>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-warning flex-fill env-btn" data-env="test">
+                      <i class="bi bi-bug"></i> 测试环境
+                    </button>
+                    <button class="btn btn-outline-success flex-fill env-btn" data-env="production">
+                      <i class="bi bi-rocket"></i> 正式环境
+                    </button>
+                  </div>
+                </div>
+                <div class="config-info" id="envConfig">
+                  <div class="item">
+                    <span class="label">新用户赠送</span>
+                    <span class="value" id="cfgNewUserPoints">-</span>
+                  </div>
+                  <div class="item">
+                    <span class="label">邀请奖励</span>
+                    <span class="value" id="cfgInviteReward">-</span>
+                  </div>
+                  <div class="item">
+                    <span class="label">每张照片消耗</span>
+                    <span class="value" id="cfgPointsPerPhoto">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">数据库信息</div>
+              <div class="card-body">
+                <div class="config-info">
+                  <div class="item">
+                    <span class="label">测试数据库</span>
+                    <span class="value">flashphoto_test.db</span>
+                  </div>
+                  <div class="item">
+                    <span class="label">正式数据库</span>
+                    <span class="value">flashphoto_prod.db</span>
+                  </div>
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                  <i class="bi bi-info-circle"></i>
+                  切换环境只会影响后台数据查看，不会影响小程序的正常运行。
+                  小程序默认连接测试环境。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 调整醒币弹窗 -->
+  <div class="modal fade" id="adjustPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">调整醒币</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">用户</label>
+            <input type="text" class="form-control" id="adjustUserName" readonly>
+            <input type="hidden" id="adjustUserId">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">当前余额</label>
+            <input type="text" class="form-control" id="adjustCurrentPoints" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">调整数量</label>
+            <div class="amount-input">
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary" onclick="toggleAdjustType('add')">+增加</button>
+                <button type="button" class="btn btn-outline-secondary active" onclick="toggleAdjustType('subtract')">-扣除</button>
+              </div>
+              <input type="number" class="form-control" id="adjustAmount" min="1" value="100">
+            </div>
+            <input type="hidden" id="adjustType" value="subtract">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">调整原因</label>
+            <input type="text" class="form-control" id="adjustReason" placeholder="请输入调整原因">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" onclick="confirmAdjustPoints()">确认调整</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_BASE = '/api';
+    let currentEnv = 'test';
+    let adminToken = '';
+
+    // 类型映射
+    const TYPE_MAP = {
+      'new_user': '新用户赠送',
+      'recharge': '充值',
+      'consume': '消费',
+      'invite_reward': '邀请奖励',
+      'refund': '退还',
+      'admin_adjust': '管理员调整'
+    };
+
+    const STATUS_MAP = {
+      'generating': '生成中',
+      'done': '已完成',
+      'failed': '失败'
+    };
+
+    // 登录
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.code === 0) {
+          adminToken = data.data.token;
+          localStorage.setItem('adminToken', adminToken);
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          loadEnvInfo();
+          loadDashboard();
+        } else {
+          alert(data.msg || '登录失败');
+        }
+      } catch (error) {
+        alert('网络错误');
+      }
+    });
+
+    // 退出登录
+    function logout() {
+      localStorage.removeItem('adminToken');
+      location.reload();
+    }
+
+    // 检查登录状态
+    function checkAuth() {
+      adminToken = localStorage.getItem('adminToken');
+      if (adminToken) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadEnvInfo();
+        loadDashboard();
+      }
+    }
+
+    // 加载环境信息
+    async function loadEnvInfo() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/env`);
+        const data = await res.json();
+        if (data.code === 0) {
+          currentEnv = data.data.currentEnv;
+          updateEnvDisplay();
+          updateConfigDisplay(data.data.config);
+        }
+      } catch (error) {
+        console.error('加载环境信息失败', error);
+      }
+    }
+
+    // 切换环境
+    async function switchEnv(env) {
+      try {
+        const res = await fetch(`${API_BASE}/admin/env/switch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ env })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          currentEnv = env;
+          updateEnvDisplay();
+          updateConfigDisplay(data.data.config);
+          loadDashboard();
+        }
+      } catch (error) {
+        alert('切换环境失败');
+      }
+    }
+
+    // 更新环境显示
+    function updateEnvDisplay() {
+      const badge = document.getElementById('currentEnvBadge');
+      badge.className = `env-badge ${currentEnv}`;
+      badge.textContent = currentEnv === 'test' ? '测试环境' : '正式环境';
+
+      // 更新设置页面的按钮状态
+      document.querySelectorAll('.env-btn').forEach(btn => {
+        btn.classList.remove('active', 'btn-warning', 'btn-success');
+        btn.classList.add('btn-outline-warning', 'btn-outline-success');
+        if (btn.dataset.env === currentEnv) {
+          btn.classList.add('active');
+          btn.classList.remove('btn-outline-warning', 'btn-outline-success');
+          btn.classList.add(currentEnv === 'test' ? 'btn-warning' : 'btn-success');
+        }
+      });
+    }
+
+    // 更新配置显示
+    function updateConfigDisplay(config) {
+      document.getElementById('cfgNewUserPoints').textContent = config.newUserPoints + ' 醒币';
+      document.getElementById('cfgInviteReward').textContent = config.inviteReward + ' 醒币';
+      document.getElementById('cfgPointsPerPhoto').textContent = config.pointsPerPhoto + ' 醒币';
+    }
+
+    // 页面导航
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = e.currentTarget.dataset.page;
+        showPage(page);
+      });
+    });
+
+    function showPage(page) {
+      // 更新导航状态
+      document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+      // 显示对应页面
+      document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+      document.getElementById(`page-${page}`).style.display = 'block';
+
+      // 更新标题
+      const titles = {
+        dashboard: '仪表盘',
+        users: '用户管理',
+        points: '醒币流水',
+        photos: '照片记录',
+        settings: '系统设置'
+      };
+      document.getElementById('pageTitle').textContent = titles[page];
+
+      // 加载数据
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'users') loadUsers();
+      if (page === 'points') loadPointsRecords();
+      if (page === 'photos') loadPhotos();
+    }
+
+    // 加载仪表盘
+    async function loadDashboard() {
+      try {
+        const res = await fetch(`${API_BASE}/admin/dashboard?env=${currentEnv}`);
+        const data = await res.json();
+        if (data.code === 0) {
+          const { users, points, photos, invites } = data.data;
+          document.getElementById('totalUsers').textContent = users.total;
+          document.getElementById('todayUsers').textContent = users.today;
+          document.getElementById('totalPoints').textContent = points.total.toLocaleString();
+          document.getElementById('todayRecharge').textContent = points.todayRecharge;
+          document.getElementById('todayConsume').textContent = points.todayConsume;
+          document.getElementById('totalPhotos').textContent = photos.total;
+          document.getElementById('successPhotos').textContent = photos.success;
+          document.getElementById('failedPhotos').textContent = photos.failed;
+          document.getElementById('totalInvites').textContent = invites.total;
+          document.getElementById('todayInvites').textContent = invites.today;
+        }
+
+        // 加载最近用户
+        const usersRes = await fetch(`${API_BASE}/admin/users?env=${currentEnv}&pageSize=5`);
+        const usersData = await usersRes.json();
+        if (usersData.code === 0) {
+          const tbody = document.getElementById('recentUsers');
+          tbody.innerHTML = usersData.data.list.map(u => `
+            <tr>
+              <td>
+                <img src="${u.avatar_url || 'https://via.placeholder.com/36'}" class="user-avatar me-2">
+                ${u.nickname || '未设置'}
+              </td>
+              <td>${u.points}</td>
+              <td>${formatTime(u.created_at)}</td>
+            </tr>
+          `).join('');
+        }
+
+        // 加载最近照片
+        const photosRes = await fetch(`${API_BASE}/admin/photos?env=${currentEnv}&pageSize=5`);
+        const photosData = await photosRes.json();
+        if (photosData.code === 0) {
+          const tbody = document.getElementById('recentPhotos');
+          tbody.innerHTML = photosData.data.list.map(p => `
+            <tr>
+              <td>${p.nickname || '未设置'}</td>
+              <td><span class="badge-status ${p.status}">${STATUS_MAP[p.status] || p.status}</span></td>
+              <td>${formatTime(p.created_at)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('加载仪表盘失败', error);
+      }
+    }
+
+    // 加载用户列表
+    let usersPage = 1;
+    async function loadUsers(page = 1) {
+      usersPage = page;
+      const keyword = document.getElementById('userKeyword').value;
+      const status = document.getElementById('userStatus').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/users?env=${currentEnv}&page=${page}&keyword=${keyword}&status=${status}`);
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('usersTotal').textContent = data.data.total;
+          const tbody = document.getElementById('usersList');
+          tbody.innerHTML = data.data.list.map(u => `
+            <tr>
+              <td>
+                <img src="${u.avatar_url || 'https://via.placeholder.com/36'}" class="user-avatar me-2">
+                ${u.nickname || '未设置'}
+              </td>
+              <td><small class="text-muted">${u.openid.substr(0, 20)}...</small></td>
+              <td><strong>${u.points}</strong></td>
+              <td><span class="badge-status ${u.status}">${u.status === 'active' ? '正常' : '已禁用'}</span></td>
+              <td>${formatTime(u.created_at)}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="showAdjustPoints('${u.id}', '${u.nickname || '未设置'}', ${u.points})">
+                  <i class="bi bi-coin"></i> 调整
+                </button>
+                <button class="btn btn-sm btn-outline-${u.status === 'active' ? 'danger' : 'success'}" onclick="toggleUserStatus('${u.id}')">
+                  ${u.status === 'active' ? '禁用' : '启用'}
+                </button>
+              </td>
+            </tr>
+          `).join('');
+
+          // 分页
+          renderPagination('usersPagination', data.data.total, data.data.page, data.data.pageSize, loadUsers);
+        }
+      } catch (error) {
+        console.error('加载用户失败', error);
+      }
+    }
+
+    // 加载醒币流水
+    let pointsPage = 1;
+    async function loadPointsRecords(page = 1) {
+      pointsPage = page;
+      const type = document.getElementById('pointsType').value;
+      const startDate = document.getElementById('pointsStartDate').value;
+      const endDate = document.getElementById('pointsEndDate').value;
+
+      let url = `${API_BASE}/admin/points-records?env=${currentEnv}&page=${page}`;
+      if (type) url += `&type=${type}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('pointsTotal').textContent = data.data.total;
+          const tbody = document.getElementById('pointsList');
+          tbody.innerHTML = data.data.list.map(r => `
+            <tr>
+              <td>${r.nickname || '未设置'}</td>
+              <td>${TYPE_MAP[r.type] || r.type}</td>
+              <td class="${r.amount > 0 ? 'text-success' : 'text-danger'}">${r.amount > 0 ? '+' : ''}${r.amount}</td>
+              <td>${r.balance_after}</td>
+              <td>${r.description || '-'}</td>
+              <td>${formatTime(r.created_at)}</td>
+            </tr>
+          `).join('');
+
+          renderPagination('pointsPagination', data.data.total, data.data.page, data.data.pageSize, loadPointsRecords);
+        }
+      } catch (error) {
+        console.error('加载醒币流水失败', error);
+      }
+    }
+
+    // 加载照片记录
+    let photosPage = 1;
+    async function loadPhotos(page = 1) {
+      photosPage = page;
+      const status = document.getElementById('photoStatus').value;
+      const startDate = document.getElementById('photoStartDate').value;
+      const endDate = document.getElementById('photoEndDate').value;
+
+      let url = `${API_BASE}/admin/photos?env=${currentEnv}&page=${page}`;
+      if (status) url += `&status=${status}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('photosTotal').textContent = data.data.total;
+          const tbody = document.getElementById('photosList');
+          tbody.innerHTML = data.data.list.map(p => `
+            <tr>
+              <td>${p.nickname || '未设置'}</td>
+              <td>${p.scene || '-'}</td>
+              <td>${p.spec || '-'}</td>
+              <td>${p.points_cost || 0}</td>
+              <td><span class="badge-status ${p.status}">${STATUS_MAP[p.status] || p.status}</span></td>
+              <td>${formatTime(p.created_at)}</td>
+            </tr>
+          `).join('');
+
+          renderPagination('photosPagination', data.data.total, data.data.page, data.data.pageSize, loadPhotos);
+        }
+      } catch (error) {
+        console.error('加载照片记录失败', error);
+      }
+    }
+
+    // 分页渲染
+    function renderPagination(containerId, total, page, pageSize, callback) {
+      const totalPages = Math.ceil(total / pageSize);
+      if (totalPages <= 1) {
+        document.getElementById(containerId).innerHTML = '';
+        return;
+      }
+
+      let html = '<ul class="pagination pagination-sm">';
+      html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();${callback.name}(${page - 1})">上一页</a>
+      </li>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+          html += `<li class="page-item ${i === page ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="event.preventDefault();${callback.name}(${i})">${i}</a>
+          </li>`;
+        } else if (i === page - 3 || i === page + 3) {
+          html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+      }
+
+      html += `<li class="page-item ${page === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();${callback.name}(${page + 1})">下一页</a>
+      </li>`;
+      html += '</ul>';
+
+      document.getElementById(containerId).innerHTML = html;
+    }
+
+    // 显示调整醒币弹窗
+    function showAdjustPoints(userId, nickname, currentPoints) {
+      document.getElementById('adjustUserId').value = userId;
+      document.getElementById('adjustUserName').value = nickname;
+      document.getElementById('adjustCurrentPoints').value = currentPoints + ' 醒币';
+      document.getElementById('adjustAmount').value = 100;
+      document.getElementById('adjustReason').value = '';
+      toggleAdjustType('subtract');
+      new bootstrap.Modal(document.getElementById('adjustPointsModal')).show();
+    }
+
+    // 切换调整类型
+    function toggleAdjustType(type) {
+      document.getElementById('adjustType').value = type;
+      const btns = document.querySelectorAll('.amount-input .btn-group .btn');
+      btns.forEach(btn => btn.classList.remove('active'));
+      if (type === 'add') {
+        btns[0].classList.add('active');
+      } else {
+        btns[1].classList.add('active');
+      }
+    }
+
+    // 确认调整醒币
+    async function confirmAdjustPoints() {
+      const userId = document.getElementById('adjustUserId').value;
+      const type = document.getElementById('adjustType').value;
+      let amount = parseInt(document.getElementById('adjustAmount').value);
+      const reason = document.getElementById('adjustReason').value;
+
+      if (!amount || amount <= 0) {
+        alert('请输入有效的调整数量');
+        return;
+      }
+
+      if (type === 'subtract') {
+        amount = -amount;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/users/${userId}/adjust-points?env=${currentEnv}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, reason })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          bootstrap.Modal.getInstance(document.getElementById('adjustPointsModal')).hide();
+          alert('调整成功');
+          loadUsers(usersPage);
+        } else {
+          alert(data.msg || '调整失败');
+        }
+      } catch (error) {
+        alert('操作失败');
+      }
+    }
+
+    // 切换用户状态
+    async function toggleUserStatus(userId) {
+      if (!confirm('确定要切换该用户的状态吗？')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/users/${userId}/toggle-status?env=${currentEnv}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          loadUsers(usersPage);
+        } else {
+          alert(data.msg || '操作失败');
+        }
+      } catch (error) {
+        alert('操作失败');
+      }
+    }
+
+    // 格式化时间
+    function formatTime(timestamp) {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hour = String(date.getHours()).padStart(2, '0');
+      const minute = String(date.getMinutes()).padStart(2, '0');
+      return `${month}-${day} ${hour}:${minute}`;
+    }
+
+    // 设置页面环境按钮点击
+    document.querySelectorAll('.env-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchEnv(btn.dataset.env);
+      });
+    });
+
+    // 初始化
+    checkAuth();
+  </script>
+</body>
+</html>

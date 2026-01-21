@@ -1,0 +1,158 @@
+<view class="container">
+  <view class="policy-content">
+    <view class="section">
+      <view class="title">{{lang.privacy_title}}</view>
+      <view class="paragraph">
+        {{lang.privacy_welcome}}
+        {{lang.privacy_intro}}
+      </view>
+      <view class="paragraph">
+        {{lang.privacy_read_tip}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section1_title}}</view>
+      <view class="paragraph">
+        {{lang.privacy_section1_intro}}
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s1_1_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_1_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s1_1_item1}}</view>
+        <view class="list-item">{{lang.privacy_s1_1_item2}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_1_purpose}}
+        </view>
+        <view class="paragraph note">
+          {{lang.privacy_s1_1_note}}
+        </view>
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s1_2_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_2_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s1_2_item1}}</view>
+        <view class="list-item">{{lang.privacy_s1_2_item2}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_2_purpose}}
+        </view>
+        <view class="paragraph note">
+          {{lang.privacy_s1_2_note}}
+        </view>
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s1_3_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_3_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s1_3_item1}}</view>
+        <view class="list-item">{{lang.privacy_s1_3_item2}}</view>
+        <view class="list-item">{{lang.privacy_s1_3_item3}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_3_purpose}}
+        </view>
+        <view class="paragraph note">
+          {{lang.privacy_s1_3_note}}
+        </view>
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s1_4_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_4_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s1_4_item1}}</view>
+        <view class="list-item">{{lang.privacy_s1_4_item2}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_4_purpose}}
+        </view>
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s1_5_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_5_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s1_5_item1}}</view>
+        <view class="list-item">{{lang.privacy_s1_5_item2}}</view>
+        <view class="list-item">{{lang.privacy_s1_5_item3}}</view>
+        <view class="list-item">{{lang.privacy_s1_5_item4}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s1_5_purpose}}
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section2_title}}</view>
+      <view class="list-item">{{lang.privacy_section2_item1}}</view>
+      <view class="list-item">{{lang.privacy_section2_item2}}</view>
+      <view class="list-item">{{lang.privacy_section2_item3}}</view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section3_title}}</view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s3_1_title}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s3_1_desc}}
+        </view>
+        <view class="list-item">{{lang.privacy_s3_1_item1}}</view>
+        <view class="list-item">{{lang.privacy_s3_1_item2}}</view>
+        <view class="paragraph note">
+          {{lang.privacy_s3_1_note}}
+        </view>
+      </view>
+
+      <view class="sub-section">
+        <view class="sub-title">{{lang.privacy_s3_2_title}}</view>
+        <view class="list-item">{{lang.privacy_s3_2_item1}}</view>
+        <view class="list-item">{{lang.privacy_s3_2_item2}}</view>
+        <view class="list-item">{{lang.privacy_s3_2_item3}}</view>
+        <view class="paragraph">
+          {{lang.privacy_s3_2_note}}
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section4_title}}</view>
+      <view class="paragraph">{{lang.privacy_section4_intro}}</view>
+      <view class="list-item">{{lang.privacy_section4_item1}}</view>
+      <view class="list-item">{{lang.privacy_section4_item2}}</view>
+      <view class="list-item">{{lang.privacy_section4_item3}}</view>
+      <view class="paragraph">
+        {{lang.privacy_section4_contact}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section5_title}}</view>
+      <view class="paragraph">
+        {{lang.privacy_section5_content}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section6_title}}</view>
+      <view class="paragraph">
+        {{lang.privacy_section6_content}}
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="subtitle">{{lang.privacy_section7_title}}</view>
+      <view class="paragraph">
+        {{lang.privacy_section7_content}}
+      </view>
+    </view>
+  </view>
+</view>

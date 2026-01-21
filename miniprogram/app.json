@@ -1,0 +1,47 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/history/history",
+    "pages/mine/mine",
+    "pages/scene/scene",
+    "pages/recharge/recharge",
+    "pages/invite/invite",
+    "pages/orders/orders",
+    "pages/points-record/points-record",
+    "pages/privacy/privacy",
+    "pages/terms/terms",
+    "pages/about/about",
+    "pages/feedback/feedback",
+    "pages/feedback-submit/feedback-submit",
+    "pages/webview/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#E8B686",
+    "navigationBarTitleText": "醒美闪图",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#999999",
+    "selectedColor": "#C68B4D",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "历史"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

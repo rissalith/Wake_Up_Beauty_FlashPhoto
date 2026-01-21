@@ -1,0 +1,39 @@
+<view class="container">
+  <view class="feedback-form">
+    <view class="section-title">{{isEdit ? i18n.editFeedback : i18n.submitNewFeedback}}</view>
+    <textarea 
+      class="content-input" 
+      placeholder="{{i18n.feedbackPlaceholder}}" 
+      bindinput="onContentInput" 
+      value="{{content}}"
+      maxlength="500"
+    ></textarea>
+    
+    <view class="image-section">
+      <view class="section-subtitle">{{i18n.uploadImageOptional}}</view>
+      <view class="image-list">
+        <view class="image-item" wx:for="{{images}}" wx:key="*this">
+          <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}"></image>
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="upload-btn" bindtap="chooseImage" wx:if="{{images.length < 3}}">
+          <text class="plus">+</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="contact-section">
+      <view class="section-subtitle">{{i18n.contactOptional}}</view>
+      <input 
+        class="contact-input" 
+        placeholder="{{i18n.contactPlaceholder}}" 
+        bindinput="onContactInput" 
+        value="{{contact}}"
+      />
+    </view>
+
+    <button class="submit-btn" bindtap="submitFeedback" loading="{{submitting}}" disabled="{{!content}}">
+      {{isEdit ? i18n.confirmEdit : i18n.submitFeedback}}
+    </button>
+  </view>
+</view>

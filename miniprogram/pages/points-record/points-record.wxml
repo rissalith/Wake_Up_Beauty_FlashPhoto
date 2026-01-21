@@ -1,0 +1,42 @@
+<!-- 醒币明细页面 -->
+<view class="container">
+  <!-- 记录列表 -->
+  <view class="records-section">
+    <view class="section-title">{{i18n.pointsHistory || '醒币记录'}}</view>
+
+    <view class="record-list" wx:if="{{records.length > 0}}">
+      <view class="record-item" wx:for="{{records}}" wx:key="id">
+        <view class="record-left">
+          <view class="record-icon {{item.iconClass}}"></view>
+          <view class="record-info">
+            <text class="record-desc">{{item.typeText}}</text>
+            <text class="record-time">{{item.formattedTime}}</text>
+          </view>
+        </view>
+        <view class="record-right">
+          <text class="record-amount {{item.amount > 0 ? 'positive' : 'negative'}}">
+            {{item.amount > 0 ? '+' : ''}}{{item.amount}}
+          </text>
+          <text class="record-balance">{{i18n.pr_balance || '余额'}}: {{item.balance}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{records.length === 0 && !loading}}">
+      <view class="empty-icon">✦</view>
+      <text class="empty-text">{{i18n.noRecords || '暂无醒币记录'}}</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>{{i18n.loading || '加载中...'}}</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!hasMore && records.length > 0}}">
+      <text>— {{i18n.pr_noMore || '没有更多了'}} —</text>
+    </view>
+  </view>
+</view>

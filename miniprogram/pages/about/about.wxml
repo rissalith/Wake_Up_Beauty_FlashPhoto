@@ -1,0 +1,73 @@
+<view class="container">
+  <view class="about-content">
+    <!-- Logo和应用名 -->
+    <view class="app-header">
+      <image class="app-logo" src="{{logoUrl}}" mode="aspectFit"></image>
+      <view class="app-name">{{lang.about_appName || '醒美闪图'}}</view>
+      <view class="app-slogan">{{lang.about_slogan || '一键上传，秒出好照片'}}</view>
+    </view>
+
+    <!-- 产品介绍 -->
+    <view class="section">
+      <view class="section-title">{{lang.about_intro_title || '产品介绍'}}</view>
+      <view class="paragraph">
+        {{lang.about_intro_content || '醒美闪图是一款基于先进AI技术的智能照片生成工具。我们致力于为用户提供便捷、高质量的照片制作服务，支持证件照、写真照、全家福、宠物写真、婚纱照等多种场景，让您足不出户即可获得专业级别的精美照片。'}}
+      </view>
+    </view>
+
+    <!-- 核心功能 -->
+    <view class="section">
+      <view class="section-title">{{lang.about_features_title || '核心功能'}}</view>
+      <view class="feature-list">
+        <view class="feature-item">
+          <view class="feature-icon-css beauty-feature"></view>
+          <view class="feature-text">
+            <view class="feature-name">{{lang.about_feature1_name || 'AI智能美颜'}}</view>
+            <view class="feature-desc">{{lang.about_feature1_desc || '智能优化肤色、自然磨皮、去除瑕疵，呈现最美的你'}}</view>
+          </view>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon-css scene-feature"></view>
+          <view class="feature-text">
+            <view class="feature-name">{{lang.about_feature2_name || '多种场景'}}</view>
+            <view class="feature-desc">{{lang.about_feature2_desc || '证件照、写真照、全家福、宠物写真、婚纱照等丰富场景'}}</view>
+          </view>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon-css spec-feature"></view>
+          <view class="feature-text">
+            <view class="feature-name">{{lang.about_feature3_name || '专业规格'}}</view>
+            <view class="feature-desc">{{lang.about_feature3_desc || '一寸、二寸、签证照等多种尺寸，满足各类证件需求'}}</view>
+          </view>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon-css outfit-feature"></view>
+          <view class="feature-text">
+            <view class="feature-name">{{lang.about_feature4_name || '智能换装'}}</view>
+            <view class="feature-desc">{{lang.about_feature4_desc || '海量服装模板，一键更换专业着装或时尚穿搭'}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系我们 -->
+    <view class="section">
+      <view class="section-title">{{lang.about_contact_title || '联系我们'}}</view>
+      <view class="contact-list">
+        <view class="contact-item" bindtap="copyEmail">
+          <view class="contact-label">{{lang.about_email || '客服邮箱'}}</view>
+          <view class="contact-value">{{supportEmail}}</view>
+          <view class="contact-copy">{{lang.copy || '复制'}}</view>
+        </view>
+      </view>
+      <view class="paragraph contact-tips">
+        {{lang.about_contact_tips || '如有任何问题或建议，欢迎通过邮箱与我们联系，我们将在24小时内回复您。'}}
+      </view>
+    </view>
+
+    <!-- 版权信息 -->
+    <view class="copyright">
+      <view class="copyright-text">{{copyrightText || lang.about_copyright || '© 2026 上海醒美元子网络科技工作室（个人独资）所有'}}</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,7 @@
+module.exports = {
+  t: function (key, ownerInstance) {
+    console.log(key)
+    // return ownerInstance.callMethod('t', {key: key})
+    return '123'
+  },
+};

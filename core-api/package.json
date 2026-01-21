@@ -1,0 +1,22 @@
+{
+  "name": "flashphoto-core-api",
+  "version": "1.0.0",
+  "description": "醒美闪图统一后端服务 - 合并小程序API和后台管理API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5",
+    "cos-nodejs-sdk-v5": "^2.12.6",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}

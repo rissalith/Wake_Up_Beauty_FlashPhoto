@@ -1,0 +1,118 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      skip_backup:
+        description: '跳过部署前备份'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  DOMAIN: pop-pub.com
+  DEPLOY_PATH: /www/wwwroot/pop-pub.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Admin Frontend Dependencies
+        working-directory: admin-server/admin-web
+        run: npm ci
+
+      - name: Build Admin Frontend
+        working-directory: admin-server/admin-web
+        run: npm run build
+
+      - name: Pre-deploy Backup
+        if: ${{ github.event.inputs.skip_backup != 'true' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+            bash docker/deploy-optimized.sh backup || echo "备份跳过（可能是首次部署）"
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+            git fetch origin
+            git reset --hard origin/${{ github.ref_name }}
+            bash docker/deploy-optimized.sh update
+
+      - name: Verify Deployment
+        id: verify
+        run: |
+          echo "等待服务启动..."
+          sleep 45
+
+          # 检查各服务健康状态
+          NGINX_OK=$(curl -sf "https://${{ env.DOMAIN }}/health" && echo "1" || echo "0")
+          API_OK=$(curl -sf "https://${{ env.DOMAIN }}/api/health" && echo "1" || echo "0")
+
+          if [ "$NGINX_OK" = "1" ] && [ "$API_OK" = "1" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "所有服务健康检查通过"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "健康检查失败: Nginx=$NGINX_OK, API=$API_OK"
+            exit 1
+          fi
+
+      - name: Notify Success
+        if: success()
+        run: |
+          if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "msgtype": "markdown",
+                "markdown": {
+                  "content": "## FlashPhoto 部署成功\n> **分支**: ${{ github.ref_name }}\n> **提交**: ${{ github.sha }}\n> **触发者**: ${{ github.actor }}"
+                }
+              }'
+          fi
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.WECHAT_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.WECHAT_WEBHOOK }}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "msgtype": "markdown",
+                "markdown": {
+                  "content": "## FlashPhoto 部署失败\n> **分支**: ${{ github.ref_name }}\n> **提交**: ${{ github.sha }}\n> **触发者**: ${{ github.actor }}\n> [查看日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                }
+              }'
+          fi
+
+      - name: Rollback on Failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+            echo "部署失败，尝试回滚..."
+            bash docker/deploy-optimized.sh rollback || echo "回滚失败或无备份可用"

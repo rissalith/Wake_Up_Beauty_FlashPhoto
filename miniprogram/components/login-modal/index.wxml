@@ -1,0 +1,56 @@
+<view class="login-modal" wx:if="{{show}}" catchtouchmove="preventTouchMove">
+  <view class="modal-mask"></view>
+
+  <view class="modal-box">
+    <!-- 流光背景层 -->
+    <view class="shimmer-bg"></view>
+    <view class="shimmer-overlay"></view>
+
+    <!-- 内容层 -->
+    <view class="modal-content">
+      <!-- 顶部装饰 -->
+      <view class="top-decoration">
+        <view class="sparkle sparkle-1"></view>
+        <view class="sparkle sparkle-2"></view>
+        <view class="sparkle sparkle-3"></view>
+      </view>
+
+      <!-- 标题 -->
+      <view class="modal-title">{{i18n.wechatLogin || '微信登录'}}</view>
+      <view class="modal-desc">{{i18n.loginTips || '登录后可使用完整功能'}}</view>
+
+      <!-- 图标区域：Logo + 交换 + 微信 -->
+      <view class="icons-area">
+        <!-- 应用Logo -->
+        <view class="icon-wrapper">
+          <view class="icon-glow logo-glow"></view>
+          <view class="icon-circle logo-circle">
+            <image class="app-logo-img" src="{{logoUrl}}" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <!-- 交换图标 -->
+        <view class="exchange-icon">
+          <view class="exchange-arrows">
+            <view class="arrow arrow-right"></view>
+            <view class="arrow arrow-left"></view>
+          </view>
+        </view>
+
+        <!-- 微信图标 -->
+        <view class="icon-wrapper">
+          <view class="icon-glow wechat-glow"></view>
+          <view class="icon-circle wechat-circle">
+            <image class="wechat-icon" src="/images/wechat-white.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+
+      <!-- 登录按钮 -->
+      <button class="btn-login" bindtap="onLogin" loading="{{loading}}">
+        <view class="btn-shimmer"></view>
+        <text class="btn-text">{{i18n.loginConfirmBtn || '确认登录'}}</text>
+      </button>
+    </view>
+  </view>
+</view>

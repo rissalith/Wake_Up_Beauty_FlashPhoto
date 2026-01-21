@@ -1,0 +1,79 @@
+{
+    "description": "项目配置文件，详见文档：https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
+    "packOptions": {
+        "ignore": [
+            {
+                "type": "file",
+                "value": ".DS_Store"
+            },
+            {
+                "type": "folder",
+                "value": "node_modules"
+            },
+            {
+                "type": "suffix",
+                "value": ".md"
+            },
+            {
+                "type": "suffix",
+                "value": ".map"
+            }
+        ],
+        "include": []
+    },
+    "setting": {
+        "urlCheck": false,
+        "es6": true,
+        "enhance": true,
+        "postcss": true,
+        "preloadBackgroundData": false,
+        "minified": true,
+        "newFeature": false,
+        "coverView": true,
+        "nodeModules": true,
+        "autoAudits": false,
+        "showShadowRootInWxmlPanel": true,
+        "scopeDataCheck": false,
+        "uglifyFileName": false,
+        "checkInvalidKey": true,
+        "checkSiteMap": true,
+        "uploadWithSourceMap": true,
+        "compileHotReLoad": false,
+        "lazyloadPlaceholderEnable": false,
+        "useMultiFrameRuntime": false,
+        "useApiHook": false,
+        "useApiHostProcess": false,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        },
+        "useIsolateContext": false,
+        "userConfirmedBundleSwitch": false,
+        "minifyWXSS": true,
+        "disableUseStrict": false,
+        "minifyWXML": true,
+        "showES6CompileOption": false,
+        "useCompilerPlugins": false,
+        "ignoreUploadUnusedFiles": true,
+        "condition": false,
+        "packNpmRelationList": [],
+        "compileWorklet": false,
+        "packNpmManually": false,
+        "localPlugins": false,
+        "swc": false,
+        "disableSWC": true
+    },
+    "miniprogramRoot": "miniprogram/",
+    "compileType": "miniprogram",
+    "libVersion": "3.13.0",
+    "appid": "wxf67c9b6c7b94a9bb",
+    "projectname": "webar-template",
+    "srcMiniprogramRoot": "miniprogram/",
+    "editorSetting": {
+        "tabIndent": "insertSpaces",
+        "tabSize": 4
+    },
+    "condition": {},
+    "simulatorPluginLibVersion": {}
+}

@@ -1,0 +1,88 @@
+<!-- 充值页面 -->
+<view class="container">
+  <!-- iOS 提示 -->
+  <view class="ios-notice" wx:if="{{isVirtualPayment}}">
+    <view class="ios-notice-icon">📱</view>
+    <view class="ios-notice-content">
+      <view class="ios-notice-title">{{i18n.iosPaymentNotice || 'iOS虚拟支付暂未开放'}}</view>
+      <view class="ios-notice-desc">{{i18n.iosPaymentDesc || '您可以通过以下方式获取醒币：'}}</view>
+      <view class="ios-notice-tips">
+        <view class="ios-tip-item">• {{i18n.iosPaymentTip1 || '使用安卓设备充值'}}</view>
+        <view class="ios-tip-item">• {{i18n.iosPaymentTip2 || '分享小程序给好友'}}</view>
+        <view class="ios-tip-item">• {{i18n.iosPaymentTip3 || '邀请好友注册获得奖励'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 当前余额 -->
+  <view class="balance-section">
+    <view class="balance-icon">✦</view>
+    <view class="balance-info">
+      <text class="balance-label">{{i18n.currentPoints || '当前醒币'}}</text>
+      <text class="balance-value">{{userPoints}}</text>
+    </view>
+  </view>
+
+  <!-- 充值套餐 -->
+  <view class="section-title">{{i18n.selectPackage || '选择充值金额'}}</view>
+  <view class="packages-grid">
+    <view
+      class="package-item {{selectedPackage && selectedPackage.id === item.id ? 'selected' : ''}}"
+      wx:for="{{packages}}"
+      wx:key="id"
+      data-package="{{item}}"
+      bindtap="selectPackage"
+    >
+      <view class="package-amount">¥{{item.amount}}</view>
+      <view class="package-points">{{item.points}}{{i18n.pointsUnit || '醒币'}}</view>
+      <view class="package-bonus" wx:if="{{item.bonus_points > 0}}">
+        +{{item.bonus_points}}
+      </view>
+      <view class="package-check" wx:if="{{selectedPackage && selectedPackage.id === item.id}}">✓</view>
+    </view>
+  </view>
+
+  <!-- 自定义金额 -->
+  <view class="custom-section">
+    <view class="custom-header" bindtap="selectCustom">
+      <view class="custom-radio {{isCustom ? 'selected' : ''}}">
+        <view class="radio-inner" wx:if="{{isCustom}}"></view>
+      </view>
+      <text class="custom-label">{{i18n.customAmount || '自定义金额'}}</text>
+    </view>
+    <view class="custom-input-wrap" wx:if="{{isCustom}}">
+      <text class="input-prefix">¥</text>
+      <input
+        class="custom-input"
+        type="number"
+        placeholder="{{i18n.enterAmount || '输入金额（1-10000整数）'}}"
+        value="{{customAmount}}"
+        bindinput="onCustomAmountInput"
+      />
+      <view class="input-suffix-wrap" wx:if="{{customAmount}}">
+        <text class="input-suffix">= {{customPoints}}{{i18n.pointsUnit || '醒币'}}</text>
+        <text class="input-bonus" wx:if="{{customBonusPoints > 0}}">+{{customBonusPoints}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 说明 -->
+  <view class="tips-section">
+    <view class="tips-title">{{i18n.rechargeTips || '充值说明'}}</view>
+    <view class="tips-item">• {{i18n.rechargeTip1 || '1元 = 10醒币'}}</view>
+    <view class="tips-item">• {{i18n.rechargeTip2 || '充值金额越大，赠送醒币越多'}}</view>
+    <view class="tips-item">• {{i18n.rechargeTip3 || '醒币可用于购买小程序内所有服务'}}</view>
+    <view class="tips-item">• {{i18n.rechargeTip4 || '充值成功后立即到账'}}</view>
+  </view>
+</view>
+
+<!-- 底部按钮 -->
+<view class="footer-btn">
+  <view class="btn-amount" wx:if="{{selectedPackage || (isCustom && customAmount)}}">
+    <text>{{i18n.payAmount || '支付金额'}}：</text>
+    <text class="amount-value">¥{{isCustom ? customAmount : selectedPackage.amount}}</text>
+  </view>
+  <view class="recharge-btn {{loading ? 'disabled' : ''}}" bindtap="doRecharge">
+    {{loading ? (i18n.processing || '处理中...') : (i18n.rechargeNow || '立即充值')}}
+  </view>
+</view>
