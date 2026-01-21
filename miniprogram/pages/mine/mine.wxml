@@ -83,15 +83,6 @@
       <view class="card-shimmer"></view>
       <view class="card-glow"></view>
     </view>
-    <view class="feature-card order-card" bindtap="goToOrders">
-      <view class="card-icon-wrap">
-        <view class="css-icon order-icon"></view>
-      </view>
-      <view class="card-text">
-        <view class="card-title">{{i18n.myOrders || '我的订单'}}</view>
-        <view class="card-desc">{{i18n.myOrdersDesc || '快去制作吧'}}</view>
-      </view>
-    </view>
   </view>
 
   <!-- 功能菜单 -->

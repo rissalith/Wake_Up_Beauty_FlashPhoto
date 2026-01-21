@@ -718,17 +718,6 @@ Page({
     });
   },
 
-  // 跳转到订单记录
-  goToOrders() {
-    if (!this.data.isLoggedIn) {
-      this.showLoginPrompt();
-      return;
-    }
-    wx.navigateTo({
-      url: '/pages/orders/orders'
-    });
-  },
-
   // 意见反馈
   goToFeedback() {
     if (!this.data.isLoggedIn) {

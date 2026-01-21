@@ -743,10 +743,6 @@ page {
   }
 }
 
-.order-card {
-  background: #fff;
-}
-
 /* 卡片图标容器 */
 .card-icon-wrap {
   width: 48rpx;
@@ -815,24 +811,6 @@ page {
   width: 4rpx;
   height: 100%;
   background: #E8B686;
-}
-
-/* 订单图标 */
-.order-icon {
-  border: 4rpx solid #E8B686;
-  border-radius: 4rpx;
-  box-sizing: border-box;
-}
-
-.order-icon::before {
-  content: '';
-  position: absolute;
-  top: 12rpx;
-  left: 10rpx;
-  right: 10rpx;
-  height: 4rpx;
-  background: #E8B686;
-  box-shadow: 0 10rpx 0 #E8B686, 0 20rpx 0 #E8B686;
 }
 
 /* 菜单图标容器 */

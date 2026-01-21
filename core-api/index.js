@@ -65,6 +65,7 @@ const miniprogramPhotoRoutes = require('./routes/miniprogram/photo');
 const miniprogramInviteRoutes = require('./routes/miniprogram/invite');
 const miniprogramConfigRoutes = require('./routes/miniprogram/config');
 const miniprogramVirtualPayRoutes = require('./routes/miniprogram/virtual-pay');
+const miniprogramFeedbackRoutes = require('./routes/miniprogram/feedback');
 
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
@@ -91,6 +92,7 @@ app.use('/api/photo', miniprogramPhotoRoutes);
 app.use('/api/invite', miniprogramInviteRoutes);
 app.use('/api/config', miniprogramConfigRoutes);
 app.use('/api/virtual-pay', miniprogramVirtualPayRoutes);
+app.use('/api/feedback', miniprogramFeedbackRoutes);
 
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);
@@ -110,6 +112,92 @@ if (adminTranslateRoutes) app.use('/api/translate', adminTranslateRoutes);
 if (adminPhotosRoutes) app.use('/api/photos', adminPhotosRoutes);
 
 // ==================== 额外兼容路由 ====================
+
+// 同步照片到服务器
+app.post('/api/sync/photo', (req, res) => {
+  try {
+    const db = getDb();
+    const { photo_id, user_id, original_image, result_image, spec, bg_color, status, created_at } = req.body;
+
+    if (!photo_id || !user_id) {
+      return res.status(400).json({ code: -1, msg: '缺少必要参数' });
+    }
+
+    // 检查是否已存在
+    const existing = db.prepare('SELECT id FROM photo_history WHERE id = ?').get(photo_id);
+
+    if (existing) {
+      // 更新
+      dbRun(db, `
+        UPDATE photo_history
+        SET original_url = COALESCE(?, original_url),
+            result_url = COALESCE(?, result_url),
+            spec = COALESCE(?, spec),
+            bg_color = COALESCE(?, bg_color),
+            status = COALESCE(?, status)
+        WHERE id = ?
+      `, [original_image || null, result_image || null, spec || null, bg_color || null, status || null, photo_id]);
+    } else {
+      // 插入
+      dbRun(db, `
+        INSERT INTO photo_history (id, user_id, original_url, result_url, spec, bg_color, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [photo_id, user_id, original_image || null, result_image || null, spec || null, bg_color || null, status || 'done', created_at || new Date().toISOString()]);
+    }
+
+    saveDatabase();
+    res.json({ code: 0, msg: 'success' });
+  } catch (error) {
+    console.error('同步照片错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 图片上传接口（用于反馈等）
+app.post('/api/upload/image', async (req, res) => {
+  try {
+    const { isCOSConfigured, uploadToAssetBucket, ASSET_COS_CONFIG } = require('./config/cos');
+    const { userId, imageData, type = 'feedback' } = req.body;
+
+    if (!userId || !imageData) {
+      return res.status(400).json({ code: -1, msg: '缺少必要参数' });
+    }
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: -1, msg: 'COS 未配置' });
+    }
+
+    // 解析 base64 图片
+    const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!matches) {
+      return res.status(400).json({ code: -1, msg: '无效的图片格式' });
+    }
+
+    const ext = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // 生成文件名
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substr(2, 9);
+    const fileName = `${timestamp}_${randomStr}.${ext}`;
+    const key = `${type}/${userId}/${fileName}`;
+
+    // 上传到 COS
+    const result = await uploadToAssetBucket(buffer, key, `image/${ext}`);
+
+    res.json({
+      code: 200,
+      data: {
+        url: result.url || `${ASSET_COS_CONFIG.baseUrl}/${key}`,
+        key
+      }
+    });
+  } catch (error) {
+    console.error('上传图片错误:', error);
+    res.status(500).json({ code: -1, msg: '上传失败: ' + error.message });
+  }
+});
 
 // 积分管理相关 API
 app.get('/api/points/packages/all', (req, res) => {
