@@ -184,7 +184,15 @@ app.get('/api/orders/stats/summary', (req, res) => {
 
 // 照片 COS 状态
 app.get('/api/photos/cos/status', (req, res) => {
-  res.json({ code: 0, data: { configured: false, message: 'COS 未配置' } });
+  const { isCOSConfigured } = require('./config/cos');
+  const configured = isCOSConfigured();
+  res.json({
+    code: 0,
+    data: {
+      configured,
+      message: configured ? 'COS 已配置' : 'COS 未配置'
+    }
+  });
 });
 
 // 反馈列表
