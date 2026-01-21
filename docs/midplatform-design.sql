@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS system_config (
   config_value TEXT NOT NULL,             -- 配置值
   config_type TEXT DEFAULT 'string',      -- string/number/boolean/json
   description TEXT,                       -- 配置说明
+  is_public INTEGER DEFAULT 1,            -- 是否公开给小程序端
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

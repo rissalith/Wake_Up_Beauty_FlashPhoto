@@ -283,7 +283,7 @@ const api = {
   // 获取照片历史（从服务器恢复）
   getPhotoHistory(userId, options = {}) {
     const { status, page = 1, pageSize = 100 } = options;
-    let url = `/sync/photos/${userId}?page=${page}&pageSize=${pageSize}`;
+    let url = `/photo/history/${userId}?page=${page}&pageSize=${pageSize}`;
     if (status) {
       url += `&status=${status}`;
     }
