@@ -71,8 +71,8 @@ jobs:
             sleep 30
 
             # 在服务器本地检查健康状态
-            NGINX_OK=$(curl -sfL "http://localhost/health" && echo "1" || echo "0")
-            API_OK=$(curl -sfk "https://localhost/api/health" && echo "1" || echo "0")
+            NGINX_OK=$(curl -sfL "http://localhost/health" > /dev/null && echo "1" || echo "0")
+            API_OK=$(curl -sfk "https://localhost/api/health" > /dev/null && echo "1" || echo "0")
 
             echo "健康检查结果: Nginx=$NGINX_OK, API=$API_OK"
 
