@@ -119,6 +119,27 @@ router.get('/scene/:sceneId', (req, res) => {
   }
 });
 
+// 获取系统配置（关于我们页面使用）
+router.get('/system', (req, res) => {
+  try {
+    const db = getDb();
+    const configs = db.prepare("SELECT config_key, config_value FROM system_config WHERE config_key IN ('support_email', 'copyright_text')").all();
+
+    const result = {};
+    configs.forEach(c => {
+      result[c.config_key] = c.config_value;
+    });
+
+    res.json({
+      code: 200,
+      data: result
+    });
+  } catch (error) {
+    console.error('获取系统配置错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // 获取公开配置
 router.get('/public', (req, res) => {
   try {
