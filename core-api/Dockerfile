@@ -14,9 +14,10 @@ FROM base AS deps
 # 复制 package 文件
 COPY package*.json ./
 
-# 配置 npm 镜像和 better-sqlite3 预编译二进制下载地址
+# 配置 npm 镜像并安装依赖
+# 使用环境变量设置 better-sqlite3 预编译二进制下载地址
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm config set better_sqlite3_binary_host https://registry.npmmirror.com/-/binary/better-sqlite3 && \
+    npm_config_better_sqlite3_binary_host=https://registry.npmmirror.com/-/binary/better-sqlite3 \
     npm install --omit=dev && npm cache clean --force
 
 # ==================== 生产运行阶段 ====================
