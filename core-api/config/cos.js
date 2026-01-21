@@ -218,6 +218,174 @@ async function batchGetUploadCredentials(keys, expireSeconds = 900) {
   return credentials;
 }
 
+// 列出指定前缀下的所有对象
+async function listObjects(prefix = '', marker = '', maxKeys = 1000) {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化，请配置COS密钥');
+  }
+
+  return new Promise((resolve, reject) => {
+    cosClient.getBucket({
+      Bucket: COS_CONFIG.bucket,
+      Region: COS_CONFIG.region,
+      Prefix: prefix,
+      Marker: marker,
+      MaxKeys: maxKeys
+    }, (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+}
+
+// 获取所有用户的照片
+async function getAllUserPhotos(scene = '') {
+  const photos = [];
+  let marker = '';
+  let isTruncated = true;
+
+  // 根据场景确定扫描前缀
+  let prefix = 'users/';
+  if (scene && scene !== 'default') {
+    // 新版目录结构: users/{userId}/{scene}/{type}/{filename}
+    // 但我们仍然需要扫描整个 users/ 目录，然后按场景筛选
+  }
+
+  while (isTruncated) {
+    try {
+      const data = await listObjects(prefix, marker);
+
+      for (const item of data.Contents || []) {
+        const parts = item.Key.split('/');
+        // 支持两种目录结构:
+        // 旧版: users/{userId}/{type}/{filename} (type = temp/output)
+        // 新版: users/{userId}/{scene}/{type}/{filename}
+
+        if (parts.length >= 4) {
+          const userId = parts[1];
+          let photoScene = 'default';
+          let type = parts[2];
+          let fileName = parts[3];
+
+          // 检测是否为新版目录结构（5层）
+          if (parts.length >= 5) {
+            photoScene = parts[2];
+            type = parts[3];
+            fileName = parts[4];
+          }
+
+          // 场景筛选
+          if (scene && scene !== photoScene) {
+            continue;
+          }
+
+          // 只处理图片文件
+          if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
+            photos.push({
+              key: item.Key,
+              userId: userId,
+              type: type,
+              scene: photoScene,
+              fileName: fileName,
+              url: `${COS_CONFIG.baseUrl}/${item.Key}`,
+              size: item.Size,
+              lastModified: item.LastModified
+            });
+          }
+        }
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      console.log('[COS] users/ 目录扫描完成或不存在');
+      break;
+    }
+  }
+
+  return photos;
+}
+
+// 获取指定用户的照片
+async function getUserPhotos(userId) {
+  const photos = [];
+  let marker = '';
+  let isTruncated = true;
+  const prefix = `users/${userId}/`;
+
+  while (isTruncated) {
+    const data = await listObjects(prefix, marker);
+
+    for (const item of data.Contents || []) {
+      const parts = item.Key.split('/');
+      // 支持两种目录结构
+      if (parts.length >= 4) {
+        let scene = 'default';
+        let type = parts[2];
+        let fileName = parts[3];
+
+        if (parts.length >= 5) {
+          scene = parts[2];
+          type = parts[3];
+          fileName = parts[4];
+        }
+
+        if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
+          photos.push({
+            key: item.Key,
+            userId: userId,
+            type: type,
+            scene: scene,
+            fileName: fileName,
+            url: `${COS_CONFIG.baseUrl}/${item.Key}`,
+            size: item.Size,
+            lastModified: item.LastModified
+          });
+        }
+      }
+    }
+
+    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+  }
+
+  return photos;
+}
+
+// 获取所有用户ID列表
+async function getAllUserIds() {
+  const userIds = new Set();
+  let marker = '';
+  let isTruncated = true;
+
+  while (isTruncated) {
+    const data = await listObjects('users/', marker, 1000);
+
+    for (const item of data.Contents || []) {
+      const parts = item.Key.split('/');
+      if (parts.length >= 2 && parts[1]) {
+        userIds.add(parts[1]);
+      }
+    }
+
+    // 也检查CommonPrefixes（目录）
+    for (const prefix of data.CommonPrefixes || []) {
+      const parts = prefix.Prefix.split('/');
+      if (parts.length >= 2 && parts[1]) {
+        userIds.add(parts[1]);
+      }
+    }
+
+    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+  }
+
+  return Array.from(userIds);
+}
+
 module.exports = {
   COS_CONFIG,
   ASSET_COS_CONFIG,
@@ -228,5 +396,9 @@ module.exports = {
   deleteObjects,
   generateUploadSignature,
   getPresignedUploadUrl,
-  batchGetUploadCredentials
+  batchGetUploadCredentials,
+  listObjects,
+  getAllUserPhotos,
+  getUserPhotos,
+  getAllUserIds
 };

@@ -184,15 +184,104 @@ app.get('/api/orders/stats/summary', (req, res) => {
 
 // 照片 COS 状态
 app.get('/api/photos/cos/status', (req, res) => {
-  const { isCOSConfigured } = require('./config/cos');
+  const { isCOSConfigured, COS_CONFIG } = require('./config/cos');
   const configured = isCOSConfigured();
   res.json({
     code: 0,
     data: {
       configured,
+      bucket: COS_CONFIG.bucket,
+      region: COS_CONFIG.region,
+      baseUrl: COS_CONFIG.baseUrl,
       message: configured ? 'COS 已配置' : 'COS 未配置'
     }
   });
+});
+
+// COS 用户列表
+app.get('/api/photos/cos/users', async (req, res) => {
+  try {
+    const { isCOSConfigured, getAllUserIds } = require('./config/cos');
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    const userIds = await getAllUserIds();
+    const db = getDb();
+
+    // 获取用户详情
+    const users = userIds.map(userId => {
+      const user = db.prepare('SELECT id as user_id, nickname, avatar_url FROM users WHERE id = ?').get(userId);
+      return user || { user_id: userId, nickname: userId, fromCOS: true };
+    });
+
+    res.json({ code: 0, data: users });
+  } catch (error) {
+    console.error('获取COS用户失败:', error);
+    res.status(500).json({ code: 500, message: '获取用户列表失败: ' + error.message });
+  }
+});
+
+// COS 照片列表
+app.get('/api/photos/cos/list', async (req, res) => {
+  try {
+    const { isCOSConfigured, getAllUserPhotos, getUserPhotos } = require('./config/cos');
+    const { page = 1, pageSize = 20, userId = '', type = '', scene = '' } = req.query;
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    let photos = [];
+    if (userId) {
+      photos = await getUserPhotos(userId);
+    } else {
+      photos = await getAllUserPhotos(scene);
+    }
+
+    // 按类型筛选
+    if (type) {
+      photos = photos.filter(p => p.type === type);
+    }
+
+    // 按场景筛选（如果还没在 getAllUserPhotos 中筛选）
+    if (scene && !userId) {
+      // 已在 getAllUserPhotos 中筛选
+    } else if (scene && userId) {
+      photos = photos.filter(p => p.scene === scene);
+    }
+
+    // 按时间排序（最新的在前）
+    photos.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+
+    // 分页
+    const total = photos.length;
+    const offset = (parseInt(page) - 1) * parseInt(pageSize);
+    const pagedPhotos = photos.slice(offset, offset + parseInt(pageSize));
+
+    // 获取用户信息
+    const db = getDb();
+    const organizedPhotos = pagedPhotos.map(photo => {
+      const user = db.prepare('SELECT id as user_id, nickname, avatar_url FROM users WHERE id = ?').get(photo.userId);
+      return {
+        ...photo,
+        user: user || { user_id: photo.userId, nickname: photo.userId }
+      };
+    });
+
+    res.json({
+      code: 0,
+      data: {
+        list: organizedPhotos,
+        total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    });
+  } catch (error) {
+    console.error('获取COS照片失败:', error);
+    res.status(500).json({ code: 500, message: '获取COS照片失败: ' + error.message });
+  }
 });
 
 // 反馈列表
