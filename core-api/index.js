@@ -528,7 +528,7 @@ app.post('/api/assets/upload', assetUpload.single('file'), async (req, res) => {
     console.log(`[Assets] 素材上传成功: ${result.url}`);
 
     res.json({
-      code: 0,
+      code: 200,
       message: '上传成功',
       data: {
         key: result.key,

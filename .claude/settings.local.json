@@ -291,7 +291,8 @@
       "Bash(npm run dev)",
       "Bash(pip install:*)",
       "Bash(docker info:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Read(//c/Users/28218/Pictures/醒美闪图/商户微信支付相关/1105214064_20260122_cert/**)"
     ]
   }
 }
