@@ -199,6 +199,51 @@ app.post('/api/upload/image', async (req, res) => {
   }
 });
 
+// 兼容路由：/api/users/sign-agreement -> /api/user/sign-agreement
+app.post('/api/users/sign-agreement', (req, res) => {
+  try {
+    const db = getDb();
+    const { userId, agreementType } = req.body;
+
+    if (!userId || !agreementType) {
+      return res.status(400).json({ code: -1, msg: '缺少参数' });
+    }
+
+    // 查找用户
+    let user = db.prepare('SELECT * FROM users WHERE id = ? OR openid = ?').get(userId, userId);
+    if (!user) {
+      return res.status(404).json({ code: -1, msg: '用户不存在' });
+    }
+
+    const now = new Date().toISOString();
+
+    if (agreementType === 'privacy') {
+      dbRun(db, 'UPDATE users SET privacy_agreed = 1, agreement_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [now, user.id]);
+    } else if (agreementType === 'terms') {
+      dbRun(db, 'UPDATE users SET terms_agreed = 1, agreement_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [now, user.id]);
+    } else if (agreementType === 'all') {
+      dbRun(db, 'UPDATE users SET privacy_agreed = 1, terms_agreed = 1, agreement_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [now, user.id]);
+    }
+
+    saveDatabase();
+
+    const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+
+    res.json({
+      code: 0,
+      msg: 'success',
+      data: {
+        privacyAgreed: updatedUser?.privacy_agreed === 1,
+        termsAgreed: updatedUser?.terms_agreed === 1,
+        agreementTime: updatedUser?.agreement_time || now
+      }
+    });
+  } catch (error) {
+    console.error('签署协议错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // 积分管理相关 API
 app.get('/api/points/packages/all', (req, res) => {
   try {
