@@ -767,6 +767,320 @@ app.get('/api/scenes/:sceneId/prompts', (req, res) => {
   }
 });
 
+// 批量保存场景配置（步骤+选项+Prompt）
+app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
+  try {
+    const db = getDb();
+    const { sceneId } = req.params;
+    const { steps, prompt } = req.body;
+
+    console.log('[batch-save] 开始保存场景配置, sceneId:', sceneId);
+
+    // 使用事务
+    const transaction = db.transaction(() => {
+      const stepIdMap = {}; // 用于映射前端临时ID到数据库ID
+
+      // 1. 先删除不在列表中的步骤和选项
+      if (steps && steps.length > 0) {
+        const keepStepIds = steps
+          .filter(s => s.id && !String(s.id).startsWith('temp_') && typeof s.id === 'number')
+          .map(s => s.id);
+
+        if (keepStepIds.length > 0) {
+          // 先删除被移除步骤的选项
+          db.prepare(`DELETE FROM step_options WHERE step_id IN (
+            SELECT id FROM scene_steps WHERE scene_id = ? AND id NOT IN (${keepStepIds.join(',')})
+          )`).run(sceneId);
+          // 再删除被移除的步骤
+          db.prepare(`DELETE FROM scene_steps WHERE scene_id = ? AND id NOT IN (${keepStepIds.join(',')})`).run(sceneId);
+        } else {
+          // 如果没有保留的步骤（全是新步骤），先删除该场景所有旧步骤
+          db.prepare(`DELETE FROM step_options WHERE step_id IN (SELECT id FROM scene_steps WHERE scene_id = ?)`).run(sceneId);
+          db.prepare(`DELETE FROM scene_steps WHERE scene_id = ?`).run(sceneId);
+        }
+      }
+
+      // 2. 保存所有步骤
+      if (steps && steps.length > 0) {
+        console.log('[batch-save] 开始保存步骤, 步骤数:', steps.length);
+
+        for (const step of steps) {
+          const title = step.title || step.step_name || 'Untitled';
+          const titleEn = step.title_en || step.step_name_en || 'Untitled';
+          const titleTw = step.title_tw || step.step_name_tw || '未命名';
+          const componentType = step.component_type || step.step_type || 'select';
+          const isVisible = step.is_visible !== undefined ? step.is_visible : (step.is_active !== false);
+          const configStr = step.config ? JSON.stringify(step.config) : '';
+
+          if (step.id && !String(step.id).startsWith('temp_') && typeof step.id === 'number') {
+            // 更新现有步骤
+            db.prepare(`UPDATE scene_steps SET
+              step_key = ?,
+              title = ?,
+              title_en = ?,
+              title_tw = ?,
+              component_type = ?,
+              step_order = ?,
+              is_required = ?,
+              is_visible = ?,
+              icon = ?,
+              gender_based = ?,
+              config = ?
+              WHERE id = ?`).run(
+              step.step_key || '',
+              title,
+              titleEn,
+              titleTw,
+              componentType,
+              step.step_order || 0,
+              step.is_required ? 1 : 0,
+              isVisible ? 1 : 0,
+              step.icon || '',
+              step.gender_based ? 1 : 0,
+              configStr,
+              step.id
+            );
+            stepIdMap[step.id] = step.id;
+          } else {
+            // 插入新步骤
+            const result = db.prepare(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, step_name_tw, title, title_en, title_tw, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`).run(
+              sceneId,
+              step.step_key || '',
+              title,
+              titleEn,
+              titleTw,
+              title,
+              titleEn,
+              titleTw,
+              componentType,
+              step.step_order || 0,
+              step.is_required ? 1 : 0,
+              isVisible ? 1 : 0,
+              step.icon || '',
+              step.gender_based ? 1 : 0,
+              configStr
+            );
+            stepIdMap[step.id || `temp_${step.step_order}`] = result.lastInsertRowid;
+          }
+        }
+
+        // 获取所有步骤的ID映射（用于新步骤）
+        const savedSteps = db.prepare(`SELECT id, step_key, step_order FROM scene_steps WHERE scene_id = ? ORDER BY step_order ASC`).all(sceneId);
+        steps.forEach((step, index) => {
+          if (!step.id || String(step.id).startsWith('temp_')) {
+            const matchedStep = savedSteps.find(s => s.step_order === (step.step_order || index));
+            if (matchedStep) {
+              stepIdMap[step.id || `temp_${index}`] = matchedStep.id;
+            }
+          }
+        });
+
+        // 3. 保存所有选项
+        for (const step of steps) {
+          const realStepId = stepIdMap[step.id] || step.id;
+          if (!realStepId) continue;
+
+          // 获取要保留的选项ID列表
+          const keepOptionIds = (step.options || [])
+            .filter(o => o.id && !String(o.id).startsWith('temp_') && typeof o.id === 'number')
+            .map(o => o.id);
+
+          // 删除该步骤下被移除的选项
+          if (keepOptionIds.length > 0) {
+            db.prepare(`DELETE FROM step_options WHERE step_id = ? AND id NOT IN (${keepOptionIds.join(',')})`).run(realStepId);
+          } else {
+            db.prepare(`DELETE FROM step_options WHERE step_id = ?`).run(realStepId);
+          }
+
+          if (!step.options) continue;
+
+          for (const opt of step.options) {
+            const label = opt.label || opt.name || '';
+            const labelEn = opt.label_en || opt.name_en || '';
+            const labelTw = opt.label_tw || opt.name_tw || '';
+            const image = opt.image || opt.image_url || '';
+            const color = opt.color || opt.option_value || '';
+            const promptText = opt.prompt_text || '';
+            const isVisible = opt.is_visible !== undefined ? opt.is_visible : (opt.is_active !== false);
+
+            const metadata = {};
+            if (opt.width) metadata.width = opt.width;
+            if (opt.height) metadata.height = opt.height;
+            const metadataStr = Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : '';
+
+            if (opt.id && !String(opt.id).startsWith('temp_') && typeof opt.id === 'number') {
+              db.prepare(`UPDATE step_options SET
+                option_key = ?,
+                label = ?,
+                label_en = ?,
+                label_tw = ?,
+                color = ?,
+                image = ?,
+                prompt_text = ?,
+                sort_order = ?,
+                is_visible = ?,
+                is_default = ?,
+                gender = ?,
+                extra_points = ?,
+                metadata = ?
+                WHERE id = ?`).run(
+                opt.option_key || '',
+                label,
+                labelEn,
+                labelTw,
+                color,
+                image,
+                promptText,
+                opt.sort_order || 0,
+                isVisible ? 1 : 0,
+                opt.is_default ? 1 : 0,
+                opt.gender || null,
+                opt.extra_points || 0,
+                metadataStr,
+                opt.id
+              );
+            } else {
+              db.prepare(`INSERT INTO step_options (step_id, option_key, label, label_en, label_tw, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+                realStepId,
+                opt.option_key || '',
+                label,
+                labelEn,
+                labelTw,
+                color,
+                image,
+                promptText,
+                opt.sort_order || 0,
+                isVisible ? 1 : 0,
+                opt.is_default ? 1 : 0,
+                opt.gender || null,
+                opt.extra_points || 0,
+                metadataStr
+              );
+            }
+          }
+        }
+      }
+
+      // 4. 保存Prompt模板
+      if (prompt && prompt.template) {
+        const templateContent = prompt.template;
+        const templateName = prompt.name || prompt.template_name || '';
+        const negativePrompt = prompt.negative_prompt || '';
+        const existing = db.prepare(`SELECT id FROM prompt_templates WHERE scene_id = ?`).get(sceneId);
+        if (existing) {
+          db.prepare(`UPDATE prompt_templates SET template = ?, name = ?, negative_prompt = ?, updated_at = datetime('now') WHERE scene_id = ?`).run(
+            templateContent, templateName, negativePrompt, sceneId
+          );
+        } else {
+          db.prepare(`INSERT INTO prompt_templates (scene_id, name, template, negative_prompt) VALUES (?, ?, ?, ?)`).run(
+            sceneId, templateName, templateContent, negativePrompt
+          );
+        }
+      }
+    });
+
+    // 执行事务
+    transaction();
+    saveDatabase();
+
+    console.log('[batch-save] 保存成功');
+    res.json({ code: 200, message: '批量保存成功' });
+  } catch (error) {
+    console.error('[batch-save] 保存失败:', error);
+    res.status(500).json({ code: 500, message: '批量保存失败: ' + error.message });
+  }
+});
+
+// 保存场景基本信息
+app.post('/api/config/admin/scene', (req, res) => {
+  try {
+    const db = getDb();
+    const data = req.body;
+
+    const sceneKey = data.scene_key || data.id;
+    if (!sceneKey) {
+      return res.status(400).json({ code: -1, msg: '场景ID不能为空' });
+    }
+
+    // 检查是否存在
+    const existing = db.prepare('SELECT id FROM scenes WHERE scene_key = ? OR id = ?').get(sceneKey, sceneKey);
+
+    if (existing) {
+      // 更新
+      db.prepare(`UPDATE scenes SET
+        name = COALESCE(?, name),
+        name_en = COALESCE(?, name_en),
+        description = COALESCE(?, description),
+        description_en = COALESCE(?, description_en),
+        icon = COALESCE(?, icon),
+        price = COALESCE(?, price),
+        status = COALESCE(?, status),
+        is_review_safe = COALESCE(?, is_review_safe),
+        use_dynamic_render = COALESCE(?, use_dynamic_render),
+        sort_order = COALESCE(?, sort_order),
+        updated_at = CURRENT_TIMESTAMP
+        WHERE scene_key = ? OR id = ?`).run(
+        data.name || null,
+        data.name_en || null,
+        data.description || null,
+        data.description_en || null,
+        data.icon || null,
+        data.price || data.points_cost || null,
+        data.status || null,
+        data.is_review_safe !== undefined ? data.is_review_safe : null,
+        data.use_dynamic_render !== undefined ? data.use_dynamic_render : null,
+        data.sort_order !== undefined ? data.sort_order : null,
+        sceneKey,
+        sceneKey
+      );
+    } else {
+      // 插入
+      db.prepare(`INSERT INTO scenes (scene_key, name, name_en, description, description_en, icon, price, status, is_review_safe, use_dynamic_render, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        sceneKey,
+        data.name || '',
+        data.name_en || '',
+        data.description || '',
+        data.description_en || '',
+        data.icon || '',
+        data.price || data.points_cost || 50,
+        data.status || 'inactive',
+        data.is_review_safe || 0,
+        data.use_dynamic_render || 1,
+        data.sort_order || 0
+      );
+    }
+
+    saveDatabase();
+    res.json({ code: 200, message: '保存成功' });
+  } catch (error) {
+    console.error('保存场景失败:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误: ' + error.message });
+  }
+});
+
+// 更新场景状态
+app.post('/api/config/admin/scene/status', (req, res) => {
+  try {
+    const db = getDb();
+    const { id, status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({ code: -1, msg: '参数错误' });
+    }
+
+    db.prepare('UPDATE scenes SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE scene_key = ? OR id = ?').run(status, id, id);
+    saveDatabase();
+
+    res.json({ code: 200, message: '状态更新成功' });
+  } catch (error) {
+    console.error('更新场景状态失败:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // 订单列表
 app.get('/api/orders', (req, res) => {
   try {
