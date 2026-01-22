@@ -433,7 +433,7 @@ function beforeIconUpload(file) {
 
 // Banner上传成功
 function handleBannerUpload(response) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     banners.value.push({
       key: response.data.key,
       url: response.data.url,
@@ -471,7 +471,7 @@ async function deleteBanner(banner, index) {
 
 // 特色功能图上传
 function handleFeatureUpload(response, lang) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     featureImages[lang] = response.data.url + '?t=' + Date.now()
     ElMessage.success('上传成功')
   } else {
@@ -481,7 +481,7 @@ function handleFeatureUpload(response, lang) {
 
 // 标题图片上传
 function handleTitleUpload(response, lang) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     titleImages[lang] = response.data.url + '?t=' + Date.now()
     ElMessage.success('上传成功')
   } else {
@@ -491,7 +491,7 @@ function handleTitleUpload(response, lang) {
 
 // TabBar图标上传
 function handleTabbarUpload(response, name, state) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     const tab = tabbarIcons.value.find(t => t.name === name)
     if (tab) {
       tab[state] = response.data.url + '?t=' + Date.now()
@@ -504,7 +504,7 @@ function handleTabbarUpload(response, name, state) {
 
 // UI图标上传
 function handleUiIconUpload(response) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     uiIcons.value.push({
       key: response.data.key,
       url: response.data.url,
@@ -570,7 +570,7 @@ async function loadSceneAssets() {
 
 // 场景素材上传成功
 function handleSceneAssetUpload(response) {
-  if (response.code === 200 && response.data?.url) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
     sceneAssets.value.push({
       key: response.data.key,
       url: response.data.url,
