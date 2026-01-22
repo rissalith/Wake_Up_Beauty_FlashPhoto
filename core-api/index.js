@@ -1015,7 +1015,7 @@ app.post('/api/config/admin/scene', (req, res) => {
         description = COALESCE(?, description),
         description_en = COALESCE(?, description_en),
         icon = COALESCE(?, icon),
-        price = COALESCE(?, price),
+        points_cost = COALESCE(?, points_cost),
         status = COALESCE(?, status),
         is_review_safe = COALESCE(?, is_review_safe),
         use_dynamic_render = COALESCE(?, use_dynamic_render),
@@ -1027,7 +1027,7 @@ app.post('/api/config/admin/scene', (req, res) => {
         data.description || null,
         data.description_en || null,
         data.icon || null,
-        data.price || data.points_cost || null,
+        data.points_cost || data.price || null,
         data.status || null,
         data.is_review_safe !== undefined ? data.is_review_safe : null,
         data.use_dynamic_render !== undefined ? data.use_dynamic_render : null,
@@ -1037,7 +1037,7 @@ app.post('/api/config/admin/scene', (req, res) => {
       );
     } else {
       // 插入
-      db.prepare(`INSERT INTO scenes (scene_key, name, name_en, description, description_en, icon, price, status, is_review_safe, use_dynamic_render, sort_order)
+      db.prepare(`INSERT INTO scenes (scene_key, name, name_en, description, description_en, icon, points_cost, status, is_review_safe, use_dynamic_render, sort_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         sceneKey,
         data.name || '',
@@ -1045,7 +1045,7 @@ app.post('/api/config/admin/scene', (req, res) => {
         data.description || '',
         data.description_en || '',
         data.icon || '',
-        data.price || data.points_cost || 50,
+        data.points_cost || data.price || 50,
         data.status || 'inactive',
         data.is_review_safe || 0,
         data.use_dynamic_render || 1,
