@@ -73,6 +73,7 @@ const adminUsersRoutes = require('./routes/admin/users');
 const adminStatsRoutes = require('./routes/admin/stats');
 const adminConfigRoutes = require('./routes/admin/config');
 const adminScenesRoutes = require('./routes/admin/scenes');
+const adminMonitorRoutes = require('./routes/admin/monitor');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -100,12 +101,14 @@ app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin/stats', adminStatsRoutes);
 app.use('/api/admin/config', adminConfigRoutes);
 app.use('/api/admin/scenes', adminScenesRoutes);
+app.use('/api/admin/monitor', adminMonitorRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);
 app.use('/api/users', adminUsersRoutes);
 app.use('/api/stats', adminStatsRoutes);
 app.use('/api/scenes', adminScenesRoutes); // 场景管理
+app.use('/api/monitor', adminMonitorRoutes); // 服务监控
 
 // 注册额外路由（如果存在）
 if (adminTranslateRoutes) app.use('/api/translate', adminTranslateRoutes);
