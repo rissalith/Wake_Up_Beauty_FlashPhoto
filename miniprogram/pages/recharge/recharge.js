@@ -181,14 +181,9 @@ Page({
       // 测试模式：模拟支付
       this.mockPaySuccess(amount, points);
     } else if (isVirtualPayment) {
-      console.log('[充值] 虚拟支付模式（iOS），显示提示');
-      // iOS: 虚拟支付暂未开放，显示提示
-      wx.showModal({
-        title: i18n.iosPaymentNotice || 'iOS虚拟支付暂未开放',
-        content: i18n.iosPaymentModalContent || '请使用安卓设备充值，或通过分享、邀请好友等方式获取醒币',
-        showCancel: false,
-        confirmText: i18n.iKnow || '我知道了'
-      });
+      console.log('[充值] 虚拟支付模式（iOS），调用虚拟支付');
+      // iOS: 使用虚拟支付
+      this.doVirtualPayment(amount, points);
     } else {
       console.log('[充值] 使用标准微信支付');
       // Android / 开发者工具: 标准微信支付

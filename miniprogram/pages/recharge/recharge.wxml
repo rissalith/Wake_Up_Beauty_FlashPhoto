@@ -1,19 +1,5 @@
 <!-- 充值页面 -->
 <view class="container">
-  <!-- iOS 提示 -->
-  <view class="ios-notice" wx:if="{{isVirtualPayment}}">
-    <view class="ios-notice-icon">📱</view>
-    <view class="ios-notice-content">
-      <view class="ios-notice-title">{{i18n.iosPaymentNotice || 'iOS虚拟支付暂未开放'}}</view>
-      <view class="ios-notice-desc">{{i18n.iosPaymentDesc || '您可以通过以下方式获取醒币：'}}</view>
-      <view class="ios-notice-tips">
-        <view class="ios-tip-item">• {{i18n.iosPaymentTip1 || '使用安卓设备充值'}}</view>
-        <view class="ios-tip-item">• {{i18n.iosPaymentTip2 || '分享小程序给好友'}}</view>
-        <view class="ios-tip-item">• {{i18n.iosPaymentTip3 || '邀请好友注册获得奖励'}}</view>
-      </view>
-    </view>
-  </view>
-
   <!-- 当前余额 -->
   <view class="balance-section">
     <view class="balance-icon">✦</view>

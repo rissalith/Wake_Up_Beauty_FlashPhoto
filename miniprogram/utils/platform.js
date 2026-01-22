@@ -98,10 +98,10 @@ function getPlatform() {
 function getPlatformTips() {
   if (isIOS()) {
     return {
-      rechargeDisabled: true,
-      rechargeTip: 'iOS 支付功能即将开放，敬请期待',
-      rechargeTipEn: 'iOS payment coming soon',
-      freeWays: ['邀请好友', '分享获取', '新用户奖励']
+      rechargeDisabled: false,  // iOS 现在支持虚拟支付，不再禁用
+      rechargeTip: '',
+      rechargeTipEn: '',
+      freeWays: []
     };
   }
   return {

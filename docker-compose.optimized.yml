@@ -179,6 +179,11 @@ services:
       - WX_PAY_CERT_SERIAL=${WX_PAY_CERT_SERIAL}
       - WX_PAY_PRIVATE_KEY_PATH=/app/certs/apiclient_key.pem
       - WX_PAY_NOTIFY_URL=${WX_PAY_NOTIFY_URL:-https://pop-pub.com/api/pay/notify}
+      # 虚拟支付配置 (iOS)
+      - VIRTUAL_PAY_ENV=${VIRTUAL_PAY_ENV:-production}
+      - VIRTUAL_PAY_OFFER_ID=${VIRTUAL_PAY_OFFER_ID}
+      - VIRTUAL_PAY_APPKEY_PROD=${VIRTUAL_PAY_APPKEY_PROD}
+      - VIRTUAL_PAY_APPKEY_SANDBOX=${VIRTUAL_PAY_APPKEY_SANDBOX}
     volumes:
       - ./docker/certs:/app/certs:ro
     depends_on:
