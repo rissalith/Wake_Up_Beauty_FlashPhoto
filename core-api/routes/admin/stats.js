@@ -200,7 +200,7 @@ router.get('/orders', (req, res) => {
     const { page = 1, pageSize = 20, status, userId, startDate, endDate } = req.query;
 
     let sql = `
-      SELECT o.*, u.nickname, u.openid
+      SELECT o.id as order_id, o.*, u.nickname, u.openid, u.avatar_url
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       WHERE 1=1

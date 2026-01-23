@@ -291,14 +291,14 @@ app.get('/api/points/records', (req, res) => {
   try {
     const db = getDb();
     const { page = 1, pageSize = 20, userId, type } = req.query;
-    let sql = 'SELECT pr.*, u.nickname, u.openid FROM points_records pr LEFT JOIN users u ON pr.user_id = u.id WHERE 1=1';
+    let sql = 'SELECT pr.id as record_id, pr.*, u.nickname, u.openid, u.avatar_url FROM points_records pr LEFT JOIN users u ON pr.user_id = u.id WHERE 1=1';
     const params = [];
     if (userId) { sql += ' AND pr.user_id = ?'; params.push(userId); }
     if (type) { sql += ' AND pr.type = ?'; params.push(type); }
     sql += ' ORDER BY pr.created_at DESC';
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
     const records = db.prepare(sql + ' LIMIT ? OFFSET ?').all(...params, parseInt(pageSize), offset);
-    const total = db.prepare(sql.replace(/SELECT pr\.\*, u\.nickname, u\.openid/i, 'SELECT COUNT(*) as count')).get(...params).count;
+    const total = db.prepare(sql.replace(/SELECT pr\.id as record_id, pr\.\*, u\.nickname, u\.openid, u\.avatar_url/i, 'SELECT COUNT(*) as count')).get(...params).count;
     res.json({ code: 0, data: { list: records, total, page: parseInt(page), pageSize: parseInt(pageSize) } });
   } catch (error) {
     res.status(500).json({ code: -1, msg: '服务器错误' });
