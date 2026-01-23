@@ -121,6 +121,7 @@
   show="{{showLoginModal}}"
   bind:close="onLoginModalClose"
   bind:loginsuccess="onLoginSuccess"
+  bind:skip="onLoginSkip"
 />
 
 <!-- 隐私政策弹窗 -->

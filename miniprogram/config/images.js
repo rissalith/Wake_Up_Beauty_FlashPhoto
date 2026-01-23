@@ -5,7 +5,7 @@
 const CDN_BASE = 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com';
 
 // 版本号 - 更新此值可强制刷新图片缓存
-const IMG_VERSION = 'v7';
+const IMG_VERSION = 'v8';
 
 // 图片资源映射
 const images = {
@@ -17,7 +17,7 @@ const images = {
   // 主要大图
   titleZhCN: `${CDN_BASE}/title-zh-cn.png?${IMG_VERSION}`,            // 导航栏标题图-简体
   titleEn: `${CDN_BASE}/title-en.png?${IMG_VERSION}`,                  // 导航栏标题图-英文
-  camera: `${CDN_BASE}/camera.png?${IMG_VERSION}`,                    // Banner背景图(旧)
+  camera: `${CDN_BASE}/share-cover.png?${IMG_VERSION}`,              // Banner背景图(使用分享封面替代)
   featureZhCN: `${CDN_BASE}/feature-zh-cn.png?${IMG_VERSION}`,       // 特色功能图-简体
   featureEn: `${CDN_BASE}/feature-en.png?${IMG_VERSION}`,            // 特色功能图-英文
 

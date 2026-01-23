@@ -9,6 +9,7 @@ const configManager = require('../../utils/configManager.js');
 
 Page({
   data: {
+    isLoggedIn: false,     // 登录状态
     historyList: [],       // 当前显示的列表（经过筛选）
     allHistoryList: [],    // 完整历史列表（未筛选）
     // 类型筛选（动态从历史记录中提取）
@@ -16,13 +17,14 @@ Page({
     typeFilters: [],       // 动态类型筛选列表 [{id, name, count}]
     allHistoryCount: 0,    // 全部数量
     // 状态筛选
-    currentStatus: 'all',  // 当前状态筛选: all / pending / done / failed / remake
+    currentStatus: 'all',  // 当前状态筛选: all / pending / done / failed
+    currentSource: 'all',  // 当前来源筛选: all / original / remake
     statusCounts: {        // 各状态数量
       all: 0,
       pending: 0,
-      done: 0,
+      done: 0,      // 原创已完成数量
       failed: 0,
-      remake: 0
+      remake: 0     // 重制数量
     },
     // 视图模式: list / grid
     viewMode: 'list',
@@ -93,6 +95,17 @@ Page({
       this.getTabBar().loadLanguage();
       this.getTabBar().updateGeneratingCount();
     }
+
+    // 检查登录状态
+    const userId = wx.getStorageSync('userId');
+    const isLoggedIn = !!userId;
+    this.setData({ isLoggedIn });
+
+    // 未登录时不加载数据
+    if (!isLoggedIn) {
+      return;
+    }
+
     // 先刷新语言（确保 i18n 数据是最新的）
     this.loadLanguage();
     // 确保 configManager 配置已加载后再刷新数据
@@ -102,6 +115,17 @@ Page({
         this.loadHistory();
       });
     });
+  },
+
+  // 跳转到首页登录
+  goToLogin() {
+    wx.switchTab({
+      url: '/pages/index/index'
+    });
+    // 通知首页显示登录弹窗
+    if (app && app.emit) {
+      app.emit('showLoginModal');
+    }
   },
 
   // 从服务器恢复历史记录（本地缓存为空时）
@@ -203,7 +227,7 @@ Page({
   setFilter(e) {
     const filter = e.currentTarget.dataset.filter;
     if (filter === this.data.currentFilter) return;
-    
+
     this.setData({ currentFilter: filter });
     this.applyCurrentFilters();
   },
@@ -212,26 +236,41 @@ Page({
   setStatusFilter(e) {
     const status = e.currentTarget.dataset.status;
     if (status === this.data.currentStatus) return;
-    
-    this.setData({ currentStatus: status });
+
+    // 切换状态时重置来源和类型筛选
+    this.setData({
+      currentStatus: status,
+      currentSource: 'all',
+      currentFilter: 'all'
+    });
+    this.applyCurrentFilters();
+  },
+
+  // 设置来源筛选条件（原创/重制）
+  setSourceFilter(e) {
+    const source = e.currentTarget.dataset.source;
+    if (source === this.data.currentSource) return;
+
+    this.setData({ currentSource: source });
     this.applyCurrentFilters();
   },
 
   // 重置筛选（回到全部）
   resetFilter() {
-    this.setData({ 
+    this.setData({
       currentFilter: 'all',
-      currentStatus: 'all'
+      currentStatus: 'all',
+      currentSource: 'all'
     });
     this.applyCurrentFilters();
   },
 
   // 应用当前筛选条件（统一入口）
   applyCurrentFilters() {
-    const { allHistoryList, currentFilter, currentStatus } = this.data;
-    const historyList = this.applyFilters(allHistoryList, currentFilter, currentStatus);
+    const { allHistoryList, currentFilter, currentStatus, currentSource } = this.data;
+    const historyList = this.applyFilters(allHistoryList, currentFilter, currentStatus, currentSource);
 
-    this.setData({ 
+    this.setData({
       historyList,
       selectedCount: 0,
       isAllSelected: false,
@@ -240,26 +279,32 @@ Page({
   },
 
   // 应用筛选逻辑
-  applyFilters(list, typeFilter, statusFilter) {
+  applyFilters(list, typeFilter, statusFilter, sourceFilter = 'all') {
     let filteredList = list;
 
     // 先按状态筛选
     if (statusFilter === 'pending') {
       filteredList = filteredList.filter(item => item.displayStatus === 'pending');
     } else if (statusFilter === 'done') {
-      filteredList = filteredList.filter(item => item.displayStatus === 'done' && !item.isRemake);
+      filteredList = filteredList.filter(item => item.displayStatus === 'done');
     } else if (statusFilter === 'failed') {
       filteredList = filteredList.filter(item => item.displayStatus === 'failed');
-    } else if (statusFilter === 'remake') {
-      filteredList = filteredList.filter(item => item.displayStatus === 'done' && item.isRemake);
+    }
+    // statusFilter === 'all' 时不过滤状态
+
+    // 按来源筛选（对全部和已完成状态生效）
+    if (sourceFilter !== 'all' && (statusFilter === 'all' || statusFilter === 'done')) {
+      if (sourceFilter === 'original') {
+        filteredList = filteredList.filter(item => item.displayStatus !== 'done' || !item.isRemake);
+      } else if (sourceFilter === 'remake') {
+        filteredList = filteredList.filter(item => item.displayStatus === 'done' && item.isRemake);
+      }
     }
 
-    // 再按类型筛选（仅对已完成状态生效）
-    if (typeFilter !== 'all' && statusFilter !== 'pending' && statusFilter !== 'failed') {
-      // 按场景类型ID筛选
-      filteredList = filteredList.filter(item => 
-        item.displayStatus !== 'done' ||  // 非已完成的不过滤
-        this.getItemTypeId(item) === typeFilter
+    // 按类型筛选（对全部和已完成状态生效，只筛选已完成的照片）
+    if (typeFilter !== 'all' && (statusFilter === 'all' || statusFilter === 'done')) {
+      filteredList = filteredList.filter(item =>
+        item.displayStatus !== 'done' || this.getItemTypeId(item) === typeFilter
       );
     }
 
@@ -409,9 +454,11 @@ Page({
         pendingCount++;
       } else if (item.status === 'done' && item.resultImage) {
         displayStatus = 'done';
-        doneCount++;
+        // 重制照片单独计数，不计入已完成
         if (item.isRemade === true) {
           remakeCount++;
+        } else {
+          doneCount++;
         }
       } else if (item.status === 'failed') {
         displayStatus = 'failed';
@@ -452,7 +499,7 @@ Page({
     }
 
     // 应用当前筛选条件
-    const historyList = this.applyFilters(allHistoryList, currentFilter, this.data.currentStatus);
+    const historyList = this.applyFilters(allHistoryList, currentFilter, this.data.currentStatus, this.data.currentSource);
 
     this.setData({
       allHistoryList,
@@ -802,14 +849,18 @@ Page({
   // 详情弹窗 - 分享
   detailSharePhoto() {
     const photo = this.data.currentDetailPhoto;
+    console.log('[分享] detailSharePhoto 被调用, photo:', photo ? { id: photo.id, resultImage: photo.resultImage } : null);
     if (!photo) return;
     this.hidePhotoDetail();
+    // 保存到实例变量，避免 setData 异步问题
+    this._shareItem = photo;
     // 复用原有的分享逻辑
     this.setData({
       showShareModal: true,
       shareItem: photo,
       posterImage: ''
     });
+    console.log('[分享] setData 完成, _shareItem:', this._shareItem ? { id: this._shareItem.id } : null);
     this.generatePoster(photo);
   },
 
@@ -1465,6 +1516,8 @@ Page({
       return;
     }
 
+    // 保存到实例变量，避免 setData 异步问题
+    this._shareItem = item;
     this.setData({
       showShareModal: true,
       shareItem: item,
@@ -1477,6 +1530,16 @@ Page({
 
   // 隐藏分享弹窗
   hideShareModal() {
+    console.log('[分享] hideShareModal 被调用, 当前 _shareItem:', this._shareItem ? { id: this._shareItem.id } : null);
+    // 保存 posterImage 到实例变量，供 onShareAppMessage 使用
+    this._posterImage = this.data.posterImage;
+    // 延迟清除，确保 onShareAppMessage 能获取到数据
+    const that = this;
+    setTimeout(() => {
+      that._shareItem = null;
+      that._posterImage = null;
+      console.log('[分享] _shareItem 和 _posterImage 已清除');
+    }, 500);
     this.setData({ showShareModal: false, shareItem: null, posterImage: '' });
   },
 
@@ -1682,8 +1745,13 @@ Page({
 
   // 发放分享奖励（醒币）
   async grantShareCoupon() {
-    const item = this.data.shareItem;
-    if (!item) return;
+    // 优先使用实例变量（因为 hideShareModal 可能已清除 data.shareItem）
+    const item = this._shareItem || this.data.shareItem;
+    console.log('[分享奖励] grantShareCoupon 被调用, item:', item ? { id: item.id, isRemake: item.isRemake, hasShared: item.hasShared } : null);
+    if (!item) {
+      console.log('[分享奖励] item 为空，跳过');
+      return;
+    }
 
     // 重制的照片不发放分享奖励
     if (item.isRemake) {
@@ -1756,22 +1824,40 @@ Page({
   // 分享给好友
   onShareAppMessage(e) {
     const userId = wx.getStorageSync('userId') || '';
+    console.log('[分享] onShareAppMessage 触发, from:', e.from);
+
+    // 默认分享封面（确保使用存在的图片）
+    const defaultShareImage = imageConfig.images.shareCover || imageConfig.images.logo;
 
     // 如果是从分享弹窗点击分享按钮
     if (e.from === 'button' && e.target && e.target.dataset && e.target.dataset.shareType === 'poster') {
-      // 分享海报
-      const item = this.data.shareItem;
+      // 使用实例变量获取分享数据（避免 setData 异步问题）
+      const item = this._shareItem || this.data.shareItem;
+      // 优先使用实例变量（因为 hideShareModal 可能已清除 data.posterImage）
+      const posterImage = this._posterImage || this.data.posterImage;
+      console.log('[分享] shareItem:', item ? { id: item.id, resultImage: item.resultImage } : null);
+      console.log('[分享] posterImage:', posterImage);
+
       if (item) {
         // 分享成功后发放优惠券
         this.grantShareCoupon();
-        // 注意：微信分享的 imageUrl 必须是网络图片（http/https 开头）
-        // 本地文件路径（wxfile://）无法用于分享
-        let shareImage = imageConfig.images.shareCover; // 默认使用分享封面
-        if (item.resultImage && (item.resultImage.startsWith('http://') || item.resultImage.startsWith('https://'))) {
+
+        // 确定分享图片：优先使用生成的海报，其次使用结果图片，最后使用默认封面
+        let shareImage = defaultShareImage;
+        if (posterImage) {
+          // 优先使用生成的海报图片
+          shareImage = posterImage;
+          console.log('[分享] 使用海报图片:', shareImage);
+        } else if (item.resultImage && (item.resultImage.startsWith('http://') || item.resultImage.startsWith('https://'))) {
+          // 海报未生成时，使用结果图片
           shareImage = item.resultImage;
+          console.log('[分享] 使用结果图片:', shareImage);
+        } else {
+          console.log('[分享] 使用默认封面:', shareImage);
         }
+
         return {
-          title: lang.t('hist_posterShareTitle') || '我用醒美闪图制作了一张证件照，效果超赞！',
+          title: lang.t('hist_posterShareTitle') || '我用醒美闪图制作了一张证件照，效果太棒了！',
           path: `/pages/index/index?inviter=${userId}`,
           imageUrl: shareImage
         };
@@ -1779,10 +1865,11 @@ Page({
     }
 
     // 默认分享
+    console.log('[分享] 使用默认分享, 图片:', defaultShareImage);
     return {
-      title: lang.t('historyShareTitle'),
+      title: lang.t('historyShareTitle') || '醒美闪图 - AI证件照',
       path: `/pages/index/index?inviter=${userId}`,
-      imageUrl: imageConfig.images.camera
+      imageUrl: defaultShareImage
     };
   }
 });

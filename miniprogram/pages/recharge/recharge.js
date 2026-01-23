@@ -19,7 +19,8 @@ Page({
     isTestMode: false,    // 测试模式关闭，使用真实支付
     // 虚拟支付相关
     isVirtualPayment: false,  // 是否使用虚拟支付
-    paymentMethod: 'normal'   // 'virtual' | 'normal'
+    paymentMethod: 'normal',  // 'virtual' | 'normal'
+    isIOSPlatform: false      // 是否为 iOS 平台
   },
 
   onLoad() {
@@ -39,12 +40,14 @@ Page({
     const platformTips = getPlatformTips();
     const isVirtualPayment = shouldUseVirtualPayment();
     const paymentMethod = getPaymentMethod();
+    const isIOSPlatform = isIOS();
 
     this.setData({
       showRecharge,
       platformTips,
       isVirtualPayment,
-      paymentMethod
+      paymentMethod,
+      isIOSPlatform
     });
   },
 

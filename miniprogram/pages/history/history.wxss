@@ -11,6 +11,57 @@ page {
   box-sizing: border-box;
 }
 
+/* 未登录提示 */
+.login-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 120rpx 60rpx 160rpx;
+  min-height: 50vh;
+}
+
+.login-required .login-icon {
+  width: 180rpx;
+  height: 180rpx;
+  margin-bottom: 48rpx;
+  opacity: 0.8;
+}
+
+.login-required .login-title {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.login-required .login-desc {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 48rpx;
+  text-align: center;
+}
+
+.login-required .login-btn {
+  width: 280rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #D4A574 0%, #C4956A 100%);
+  color: #fff;
+  font-size: 30rpx;
+  border-radius: 40rpx;
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(196, 149, 106, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.login-required .login-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
 /* 底部安全区占位 - 确保最后一行内容不被TabBar遮挡 */
 .container::after {
   content: '';
@@ -36,7 +87,44 @@ page {
   line-height: 1.5;
 }
 
-/* 筛选区块 */
+/* 筛选区域 */
+.filter-area {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 24rpx;
+}
+
+/* 筛选行 */
+.filter-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
+}
+
+.filter-label {
+  font-size: 26rpx;
+  color: #666;
+  min-width: 70rpx;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.filter-scroll {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.status-tabs {
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* 筛选区块（旧样式保留兼容） */
 .filter-section {
   background: #fff;
   border-radius: 20rpx;
@@ -47,19 +135,25 @@ page {
 /* 筛选标签 */
 .filter-tabs {
   display: flex;
-  gap: 16rpx;
+  gap: 12rpx;
+  flex-wrap: nowrap;
+}
+
+.type-tabs {
+  display: inline-flex;
 }
 
 .filter-tab {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 24rpx;
-  border-radius: 32rpx;
-  font-size: 26rpx;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 28rpx;
+  font-size: 24rpx;
   color: #666;
   background: #f5f5f5;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .filter-tab.active {
@@ -73,9 +167,9 @@ page {
 }
 
 .filter-count {
-  font-size: 22rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 16rpx;
+  font-size: 20rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 12rpx;
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -1043,6 +1137,68 @@ page {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
+}
+
+.grid-spec.pending {
+  color: #e8b686;
+}
+
+.grid-spec.failed {
+  color: #e74c3c;
+}
+
+/* 网格视图 - 进行中任务 */
+.pending-grid-item {
+  position: relative;
+}
+
+.grid-cancel-btn {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.grid-cancel-btn .cancel-x {
+  color: #fff;
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+/* 网格视图 - 失败任务 */
+.failed-grid-item {
+  position: relative;
+}
+
+.grid-action-btns {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  display: flex;
+  gap: 8rpx;
+  z-index: 10;
+}
+
+.grid-action-btn {
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-action-btn .action-icon {
+  width: 24rpx;
+  height: 24rpx;
 }
 
 /* 列表视图图片容器 */

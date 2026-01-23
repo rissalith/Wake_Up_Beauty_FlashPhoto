@@ -51,6 +51,9 @@
         <view class="btn-shimmer"></view>
         <text class="btn-text">{{i18n.loginConfirmBtn || '确认登录'}}</text>
       </button>
+
+      <!-- 稍后再说 -->
+      <view class="skip-link" bindtap="onSkip">{{i18n.loginLater || '稍后再说'}}</view>
     </view>
   </view>
 </view>

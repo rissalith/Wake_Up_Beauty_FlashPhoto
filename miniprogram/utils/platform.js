@@ -18,11 +18,22 @@ function getSystemInfo() {
 
 /**
  * 判断是否为 iOS 平台
+ * 在开发者工具中，通过 system 字段判断模拟的机型
  * @returns {boolean}
  */
 function isIOS() {
   const systemInfo = getSystemInfo();
-  return systemInfo.platform === 'ios';
+  // 真机直接判断 platform
+  if (systemInfo.platform === 'ios') {
+    return true;
+  }
+  // 开发者工具中，通过 system 字段判断模拟的机型
+  // system 字段示例: "iOS 15.0" 或 "Android 12"
+  if (isDevtools()) {
+    const system = (systemInfo.system || '').toLowerCase();
+    return system.includes('ios');
+  }
+  return false;
 }
 
 /**
@@ -31,7 +42,15 @@ function isIOS() {
  */
 function isAndroid() {
   const systemInfo = getSystemInfo();
-  return systemInfo.platform === 'android';
+  if (systemInfo.platform === 'android') {
+    return true;
+  }
+  // 开发者工具中，通过 system 字段判断
+  if (isDevtools()) {
+    const system = (systemInfo.system || '').toLowerCase();
+    return system.includes('android');
+  }
+  return false;
 }
 
 /**
@@ -63,16 +82,11 @@ function canShowRecharge() {
  * 判断是否应使用虚拟支付
  * iOS 必须使用虚拟支付
  * Android 使用标准微信支付
- * 开发者工具走标准微信支付流程
+ * 开发者工具模拟 iOS 时也走虚拟支付逻辑
  * @returns {boolean}
  */
 function shouldUseVirtualPayment() {
-  // 开发者工具走标准微信支付流程（需要配置商户号）
-  // 只有 iOS 真机才使用虚拟支付
-  if (isDevtools()) {
-    return false;  // 开发工具走标准微信支付
-  }
-  // iOS 使用虚拟支付
+  // iOS（包括开发者工具模拟 iOS）使用虚拟支付
   return isIOS();
 }
 

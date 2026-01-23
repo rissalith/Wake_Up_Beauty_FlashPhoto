@@ -385,3 +385,16 @@
 .btn-guest:active {
   opacity: 0.7;
 }
+
+/* 稍后再说链接 */
+.skip-link {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #A08050;
+  text-align: center;
+  padding: 12rpx 24rpx;
+}
+
+.skip-link:active {
+  opacity: 0.7;
+}

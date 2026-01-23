@@ -1,46 +1,77 @@
 <!-- 历史记录页面 -->
 <view class="container">
-  <!-- AI生成免责声明 -->
-  <view class="ai-disclaimer" wx:if="{{statusCounts.all > 0}}">
-    <text class="disclaimer-text">{{i18n.hist_aiDisclaimer}}</text>
+  <!-- 未登录提示 -->
+  <view class="login-required" wx:if="{{!isLoggedIn}}">
+    <image class="login-icon" src="{{images.logo || '/images/logo.png'}}" mode="aspectFit" />
+    <text class="login-title">{{i18n.loginRequired || '请先登录'}}</text>
+    <text class="login-desc">{{i18n.loginRequiredHistoryDesc || '登录后可查看您的照片生成记录'}}</text>
+    <button class="login-btn" bindtap="goToLogin">{{i18n.goLogin || '去登录'}}</button>
   </view>
 
-  <!-- 状态筛选标签 -->
-  <view class="filter-section" wx:if="{{statusCounts.all > 0}}">
-    <view class="filter-tabs status-tabs">
-      <view class="filter-tab {{currentStatus === 'all' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="all">
-        <text>{{i18n.hist_statusAll || '全部'}}</text>
-        <text class="filter-count" wx:if="{{statusCounts.all > 0}}">{{statusCounts.all}}</text>
-      </view>
-      <view class="filter-tab {{currentStatus === 'pending' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="pending" wx:if="{{statusCounts.pending > 0}}">
-        <text>{{i18n.hist_statusPending || '进行中'}}</text>
-        <text class="filter-count pending-count">{{statusCounts.pending}}</text>
-      </view>
-      <view class="filter-tab {{currentStatus === 'done' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="done">
-        <text>{{i18n.hist_statusDone || '已完成'}}</text>
-        <text class="filter-count" wx:if="{{statusCounts.done > 0}}">{{statusCounts.done}}</text>
-      </view>
-      <view class="filter-tab {{currentStatus === 'failed' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="failed" wx:if="{{statusCounts.failed > 0}}">
-        <text>{{i18n.hist_statusFailed || '失败'}}</text>
-        <text class="filter-count failed-count">{{statusCounts.failed}}</text>
-      </view>
-      <view class="filter-tab {{currentStatus === 'remake' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="remake" wx:if="{{statusCounts.remake > 0}}">
-        <text>{{i18n.hist_statusRemake || '重制'}}</text>
-        <text class="filter-count">{{statusCounts.remake}}</text>
+  <!-- 已登录内容 -->
+  <view wx:else>
+    <!-- AI生成免责声明 -->
+    <view class="ai-disclaimer" wx:if="{{statusCounts.all > 0}}">
+      <text class="disclaimer-text">{{i18n.hist_aiDisclaimer}}</text>
+    </view>
+
+  <!-- 筛选区域 -->
+  <view class="filter-area" wx:if="{{statusCounts.all > 0}}">
+    <!-- 第一行：状态筛选 -->
+    <view class="filter-row">
+      <view class="filter-label">{{i18n.hist_filterStatus || '状态'}}</view>
+      <view class="filter-tabs status-tabs">
+        <view class="filter-tab {{currentStatus === 'all' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="all">
+          <text>{{i18n.hist_statusAll || '全部'}}</text>
+          <text class="filter-count" wx:if="{{statusCounts.all > 0}}">{{statusCounts.all}}</text>
+        </view>
+        <view class="filter-tab {{currentStatus === 'pending' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="pending" wx:if="{{statusCounts.pending > 0}}">
+          <text>{{i18n.hist_statusPending || '进行中'}}</text>
+          <text class="filter-count pending-count">{{statusCounts.pending}}</text>
+        </view>
+        <view class="filter-tab {{currentStatus === 'done' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="done" wx:if="{{statusCounts.done > 0 || statusCounts.remake > 0}}">
+          <text>{{i18n.hist_statusDone || '已完成'}}</text>
+          <text class="filter-count" wx:if="{{statusCounts.done + statusCounts.remake > 0}}">{{statusCounts.done + statusCounts.remake}}</text>
+        </view>
+        <view class="filter-tab {{currentStatus === 'failed' ? 'active' : ''}}" bindtap="setStatusFilter" data-status="failed" wx:if="{{statusCounts.failed > 0}}">
+          <text>{{i18n.hist_statusFailed || '失败'}}</text>
+          <text class="filter-count failed-count">{{statusCounts.failed}}</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 类型筛选标签（仅在已完成/重制状态或全部状态时显示，且有多种类型时才显示） -->
-  <view class="filter-section type-filter" wx:if="{{(currentStatus === 'all' || currentStatus === 'done' || currentStatus === 'remake') && allHistoryCount > 0 && typeFilters.length > 1}}">
-    <view class="filter-tabs">
-      <view class="filter-tab {{currentFilter === 'all' ? 'active' : ''}}" bindtap="setFilter" data-filter="all">
-        <text>{{i18n.hist_filterAll || '全部'}}</text>
+    <!-- 第二行：来源筛选（在全部或已完成状态下显示，且有重制照片时） -->
+    <view class="filter-row" wx:if="{{(currentStatus === 'all' || currentStatus === 'done') && statusCounts.remake > 0}}">
+      <view class="filter-label">{{i18n.hist_filterSource || '来源'}}</view>
+      <view class="filter-tabs source-tabs">
+        <view class="filter-tab {{currentSource === 'all' ? 'active' : ''}}" bindtap="setSourceFilter" data-source="all">
+          <text>{{i18n.hist_sourceAll || '全部'}}</text>
+        </view>
+        <view class="filter-tab {{currentSource === 'original' ? 'active' : ''}}" bindtap="setSourceFilter" data-source="original">
+          <text>{{i18n.hist_sourceOriginal || '原创'}}</text>
+          <text class="filter-count">{{statusCounts.done}}</text>
+        </view>
+        <view class="filter-tab {{currentSource === 'remake' ? 'active' : ''}}" bindtap="setSourceFilter" data-source="remake">
+          <text>{{i18n.hist_sourceRemake || '重制'}}</text>
+          <text class="filter-count">{{statusCounts.remake}}</text>
+        </view>
       </view>
-      <view class="filter-tab {{currentFilter === item.id ? 'active' : ''}}" wx:for="{{typeFilters}}" wx:key="id" bindtap="setFilter" data-filter="{{item.id}}">
-        <text>{{item.name}}</text>
-        <text class="filter-count">{{item.count}}</text>
-      </view>
+    </view>
+
+    <!-- 第三行：场景类型筛选（在全部或已完成状态下显示，且有多种类型时） -->
+    <view class="filter-row" wx:if="{{(currentStatus === 'all' || currentStatus === 'done') && typeFilters.length > 1}}">
+      <view class="filter-label">{{i18n.hist_filterType || '类型'}}</view>
+      <scroll-view class="filter-scroll" scroll-x enable-flex>
+        <view class="filter-tabs type-tabs">
+          <view class="filter-tab {{currentFilter === 'all' ? 'active' : ''}}" bindtap="setFilter" data-filter="all">
+            <text>{{i18n.hist_filterAll || '全部'}}</text>
+          </view>
+          <view class="filter-tab {{currentFilter === item.id ? 'active' : ''}}" wx:for="{{typeFilters}}" wx:key="id" bindtap="setFilter" data-filter="{{item.id}}">
+            <text>{{item.name}}</text>
+            <text class="filter-count">{{item.count}}</text>
+          </view>
+        </view>
+      </scroll-view>
     </view>
   </view>
 
@@ -177,10 +208,48 @@
       </block>
     </view>
 
-    <!-- 统一列表 - 网格视图（仅显示已完成的） -->
-    <view class="history-grid" wx:if="{{historyList.length > 0 && viewMode === 'grid' && currentStatus !== 'pending' && currentStatus !== 'failed'}}">
+    <!-- 统一列表 - 网格视图 -->
+    <view class="history-grid" wx:if="{{historyList.length > 0 && viewMode === 'grid'}}">
       <block wx:for="{{historyList}}" wx:key="id">
-        <view class="grid-item {{item.selected ? 'selected' : ''}}" wx:if="{{item.displayStatus === 'done'}}" bindtap="{{selectMode ? 'toggleSelect' : 'showPhotoDetail'}}" data-index="{{index}}" data-id="{{item.id}}">
+        <!-- 进行中的任务（网格视图） -->
+        <view class="grid-item pending-grid-item" wx:if="{{item.displayStatus === 'pending'}}" data-id="{{item.id}}">
+          <view class="grid-img-wrap">
+            <image class="grid-img" src="{{item.originalImage}}" mode="aspectFill"></image>
+            <view class="status-overlay pending">
+              <view class="loading-spinner small"></view>
+            </view>
+          </view>
+          <view class="grid-info">
+            <text class="grid-spec pending">{{i18n.hist_aiGenerating || '生成中...'}}</text>
+          </view>
+          <view class="grid-cancel-btn" catchtap="cancelPendingTask" data-id="{{item.id}}">
+            <text class="cancel-x">✕</text>
+          </view>
+        </view>
+
+        <!-- 失败的任务（网格视图） -->
+        <view class="grid-item failed-grid-item" wx:elif="{{item.displayStatus === 'failed'}}" data-id="{{item.id}}">
+          <view class="grid-img-wrap">
+            <image class="grid-img" src="{{item.originalImage}}" mode="aspectFill"></image>
+            <view class="status-overlay failed">
+              <text class="failed-x">✕</text>
+            </view>
+          </view>
+          <view class="grid-info">
+            <text class="grid-spec failed">{{i18n.hist_failedTitle || '失败'}}</text>
+          </view>
+          <view class="grid-action-btns">
+            <view class="grid-action-btn retry" catchtap="retryFailedTask" data-id="{{item.id}}">
+              <image class="action-icon" src="./icons/retry.svg" mode="aspectFit"></image>
+            </view>
+            <view class="grid-action-btn delete" catchtap="deleteFailedTask" data-id="{{item.id}}">
+              <image class="action-icon" src="./icons/delete.svg" mode="aspectFit"></image>
+            </view>
+          </view>
+        </view>
+
+        <!-- 已完成的任务（网格视图） -->
+        <view class="grid-item {{item.selected ? 'selected' : ''}}" wx:else bindtap="{{selectMode ? 'toggleSelect' : 'showPhotoDetail'}}" data-index="{{index}}" data-id="{{item.id}}">
           <!-- 多选复选框 -->
           <view class="grid-checkbox" wx:if="{{selectMode}}" catchtap="toggleSelect" data-index="{{index}}">
             <view class="checkbox {{item.selected ? 'checked' : ''}}"></view>
@@ -203,6 +272,7 @@
 
   <!-- 底部占位，防止被TabBar遮挡 -->
   <view class="bottom-safe-area"></view>
+  </view><!-- 关闭 wx:else -->
 </view>
 
 <!-- 照片详情弹窗 -->
@@ -289,7 +359,7 @@
 
     <!-- 操作按钮 -->
     <view class="share-actions">
-      <button class="share-action-btn wechat" open-type="share" data-share-type="poster">
+      <button class="share-action-btn wechat" open-type="share" data-share-type="poster" catchtap="">
         <image class="share-btn-icon" src="./icons/wechat.svg" mode="aspectFit"></image>
         <text>{{i18n.hist_shareToFriend || '分享给好友'}}</text>
       </button>
