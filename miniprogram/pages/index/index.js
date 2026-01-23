@@ -62,8 +62,9 @@ Page({
       this.handleInvite(options.inviter);
     }
 
-    // 检查登录状态和隐私政策
-    this.checkLoginAndPrivacy();
+    // 延迟登录模式：不再强制检查登录，用户可以先浏览
+    // this.checkLoginAndPrivacy();
+    this.updateLoginState();
 
     // 检查是否显示滑动提示
     this.checkSwipeHint();
@@ -86,6 +87,12 @@ Page({
         this.onLanguageChanged(langCode);
       };
       app.on('languageChanged', this._languageChangeHandler);
+
+      // 监听显示登录弹窗事件（从其他页面触发，如历史记录页面）
+      this._showLoginModalHandler = () => {
+        this.setData({ showLoginModal: true });
+      };
+      app.on('showLoginModal', this._showLoginModalHandler);
     }
   },
 
@@ -263,7 +270,7 @@ Page({
       return;
     }
 
-    // 直接跳转(用户已在首页完成登录和协议签署)
+    // 直接跳转，登录检查移到场景页面生成时触发
     this._doNavigateToScene(scene);
   },
 
@@ -291,8 +298,11 @@ Page({
       if (this._languageChangeHandler) {
         app.off('languageChanged', this._languageChangeHandler);
       }
+      if (this._showLoginModalHandler) {
+        app.off('showLoginModal', this._showLoginModalHandler);
+      }
     }
-    
+
     // 内存清理
     this._cleanupMemory();
   },
@@ -335,12 +345,24 @@ Page({
     this.loadGeneratingCount();
     // 刷新语言
     this.loadLanguage();
-    // 检查登录状态（退出登录后再回来需要重新显示登录弹窗）
-    this.checkLoginStatus();
+    // 延迟登录模式：只更新状态，不强制弹窗
+    // this.checkLoginStatus();
+    this.updateLoginState();
     // 重置轮播图自动播放（解决长时间停留后卡顿问题）
     this.resetBannerAutoplay();
     // 每次进入页面都强制刷新配置，确保获取最新数据
     this.refreshConfig();
+    // 检查隐私弹窗状态：如果已签署协议但弹窗还在显示，关闭它
+    this.checkAndClosePrivacyModal();
+  },
+
+  // 检查并关闭不必要的隐私弹窗
+  checkAndClosePrivacyModal() {
+    const privacyConfirmed = wx.getStorageSync('privacyPolicyConfirmed');
+    if (privacyConfirmed && this.data.showPrivacyModal) {
+      this.setData({ showPrivacyModal: false });
+      this.notifyTabBarDisabled(false);
+    }
   },
 
   // 静默刷新配置（带节流，避免频繁请求）
@@ -597,8 +619,26 @@ Page({
     }
   },
 
+  // 静默更新登录状态（延迟登录模式：不弹窗，只更新状态）
+  updateLoginState() {
+    const app = getApp();
+    const userId = wx.getStorageSync('userId');
+    const sessionKey = wx.getStorageSync('session_key');
+    app.globalData.isLoggedIn = !!userId && !!sessionKey;
+  },
+
   // 登录成功后检查隐私政策
   checkPrivacyAfterLogin() {
+    // 获取当前页面路径，只有在 index 页面时才显示弹窗
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const currentRoute = currentPage ? currentPage.route : '';
+
+    // 如果当前不在 index 页面，不显示弹窗（其他页面会自己处理）
+    if (currentRoute !== 'pages/index/index') {
+      return;
+    }
+
     const privacyConfirmed = wx.getStorageSync('privacyPolicyConfirmed');
     if (!privacyConfirmed) {
       // 显示隐私政策弹窗并禁用TabBar
@@ -611,12 +651,16 @@ Page({
   },
 
   // 登录弹窗关闭（暂不登录 / 先逛逛）
-  // 强制模式：不允许关闭登录弹窗
+  // 延迟登录模式：允许关闭登录弹窗
   onLoginModalClose() {
-    wx.showToast({
-      title: '请先登录后使用',
-      icon: 'none'
-    });
+    this.setData({ showLoginModal: false });
+    this._pendingScene = null;
+  },
+
+  // 用户选择稍后登录（跳过登录）
+  onLoginSkip() {
+    this.setData({ showLoginModal: false });
+    this._pendingScene = null;
   },
 
   // 登录成功
