@@ -59,8 +59,8 @@ router.post('/create-order', async (req, res) => {
         amount,
         points,
         status: 'pending',
-        // 虚拟支付签名参数 - signData 是对象格式
-        signData: payParams.signData,
+        // 虚拟支付签名参数 - signData 必须是 JSON 字符串
+        signData: JSON.stringify(payParams.signData),
         paySig: payParams.paySig,
         signature: payParams.signature,
         sigMethod: payParams.sigMethod,

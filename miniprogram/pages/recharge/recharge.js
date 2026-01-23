@@ -260,18 +260,29 @@ Page({
 
       const payParams = res.data;
 
-      // 2. 调用微信虚拟支付 API
-      wx.requestVirtualPayment({
+      // 调试：打印虚拟支付参数
+      console.log('[虚拟支付] API 返回参数:', JSON.stringify(payParams, null, 2));
+
+      const virtualPayParams = {
         signData: payParams.signData,
         mode: payParams.mode || 'short_series_coin',
         paySig: payParams.paySig,
         signature: payParams.signature,
-        sigMethod: payParams.sigMethod || 'hmac_sha256',
+        sigMethod: payParams.sigMethod || 'hmac_sha256'
+      };
+
+      console.log('[虚拟支付] 调用 wx.requestVirtualPayment 参数:', JSON.stringify(virtualPayParams, null, 2));
+
+      // 2. 调用微信虚拟支付 API
+      wx.requestVirtualPayment({
+        ...virtualPayParams,
         success: async (payRes) => {
+          console.log('[虚拟支付] 支付成功:', payRes);
           // 支付成功，主动调用发货接口
           await this.deliverOrder(payParams.orderId);
         },
         fail: async (err) => {
+          console.error('[虚拟支付] 支付失败:', err);
           // 静默处理
           this.setData({ loading: false });
 
