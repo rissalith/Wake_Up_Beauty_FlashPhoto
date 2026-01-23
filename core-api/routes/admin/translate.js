@@ -7,8 +7,13 @@ const router = express.Router();
 const crypto = require('crypto');
 const https = require('https');
 
-// 腾讯云 API 签名
-function sign(secretKey, signStr) {
+// 腾讯云 API 签名 (中间步骤返回 Buffer)
+function signBuffer(secretKey, signStr) {
+  return crypto.createHmac('sha256', secretKey).update(signStr).digest();
+}
+
+// 最终签名返回 hex
+function signHex(secretKey, signStr) {
   return crypto.createHmac('sha256', secretKey).update(signStr).digest('hex');
 }
 
@@ -76,11 +81,11 @@ async function translateText(text, source = 'zh', target = 'en') {
     hashedCanonicalRequest
   ].join('\n');
 
-  // 计算签名
-  const secretDate = sign('TC3' + secretKey, date);
-  const secretService = sign(secretDate, service);
-  const secretSigning = sign(secretService, 'tc3_request');
-  const signature = sign(secretSigning, stringToSign);
+  // 计算签名 (中间步骤用 Buffer，最后一步用 hex)
+  const secretDate = signBuffer('TC3' + secretKey, date);
+  const secretService = signBuffer(secretDate, service);
+  const secretSigning = signBuffer(secretService, 'tc3_request');
+  const signature = signHex(secretSigning, stringToSign);
 
   const authorization = [
     `${algorithm} Credential=${secretId}/${credentialScope}`,
