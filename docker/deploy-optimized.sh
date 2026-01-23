@@ -197,6 +197,39 @@ ensure_resources() {
     print_success "Docker 资源检查完成"
 }
 
+# 构建管理后台前端
+build_admin_frontend() {
+    local admin_web_dir="$PROJECT_DIR/admin-server/admin-web"
+    local target_dir="$PROJECT_DIR/core-api/public/admin"
+
+    if [ ! -d "$admin_web_dir" ]; then
+        print_warning "管理后台前端目录不存在: $admin_web_dir"
+        return 1
+    fi
+
+    print_info "正在构建管理后台前端..."
+
+    # 安装依赖
+    cd "$admin_web_dir"
+    if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+        print_info "安装前端依赖..."
+        npm install --silent
+    fi
+
+    # 构建
+    print_info "执行前端构建..."
+    npm run build
+
+    # 清理旧文件并复制新文件
+    print_info "部署前端文件到 core-api..."
+    mkdir -p "$target_dir"
+    rm -rf "$target_dir"/*
+    cp -r dist/* "$target_dir/"
+
+    cd "$PROJECT_DIR"
+    print_success "管理后台前端构建完成"
+}
+
 # 更新服务
 update_services() {
     print_info "正在更新服务..."
@@ -206,6 +239,9 @@ update_services() {
 
     # 确保网络和卷存在
     ensure_resources
+
+    # 构建管理后台前端
+    build_admin_frontend || print_warning "前端构建失败，继续部署..."
 
     # 拉取最新镜像
     docker compose -f "$COMPOSE_FILE" pull
