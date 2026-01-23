@@ -52,9 +52,6 @@ router.post('/create-order', async (req, res) => {
       platform
     });
 
-    // signData 需要是 JSON 字符串格式
-    const signDataStr = JSON.stringify(payParams.signData);
-
     res.json({
       code: 200,
       data: {
@@ -62,8 +59,8 @@ router.post('/create-order', async (req, res) => {
         amount,
         points,
         status: 'pending',
-        // 虚拟支付签名参数 - signData 必须是字符串
-        signData: signDataStr,
+        // 虚拟支付签名参数 - signData 是对象格式
+        signData: payParams.signData,
         paySig: payParams.paySig,
         signature: payParams.signature,
         sigMethod: payParams.sigMethod,
