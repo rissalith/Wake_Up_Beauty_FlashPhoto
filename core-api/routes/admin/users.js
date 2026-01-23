@@ -385,7 +385,7 @@ router.get('/:userId/activities', (req, res) => {
     const photoRecords = db.prepare(`
       SELECT
         id, 'photo' as activity_type, status as sub_type,
-        scene, spec, bg_color, points_cost, created_at
+        spec, bg_color, created_at
       FROM photo_history
       WHERE user_id = ?
     `).all(userId);
