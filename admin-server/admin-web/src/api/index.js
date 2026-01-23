@@ -66,7 +66,8 @@ export const usersApi = {
   getActivities: (id, params) => api.get(`/users/${id}/activities`, { params }),
   adjustPoints: (userId, data) => api.post(`/users/${userId}/adjust-points`, data),
   toggleStatus: (userId) => api.post(`/users/${userId}/toggle-status`),
-  deleteUser: (userId) => api.delete(`/users/${userId}`)
+  deleteUser: (userId) => api.delete(`/users/${userId}`),
+  batchDeleteUsers: (userIds) => api.post('/users/batch-delete', { userIds })
 }
 
 // 照片管理

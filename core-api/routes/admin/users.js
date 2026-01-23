@@ -6,6 +6,49 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { getDb, dbRun, saveDatabase } = require('../../config/database');
 
+// 批量删除用户（注销）
+router.post('/batch-delete', (req, res) => {
+  try {
+    const db = getDb();
+    const { userIds } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ code: -1, msg: '请提供要注销的用户ID列表' });
+    }
+
+    if (userIds.length > 100) {
+      return res.status(400).json({ code: -1, msg: '单次最多注销100个用户' });
+    }
+
+    let deletedCount = 0;
+
+    for (const userId of userIds) {
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      if (user) {
+        // 删除用户相关数据
+        dbRun(db, 'DELETE FROM points_records WHERE user_id = ?', [userId]);
+        dbRun(db, 'DELETE FROM photo_history WHERE user_id = ?', [userId]);
+        dbRun(db, 'DELETE FROM orders WHERE user_id = ?', [userId]);
+        dbRun(db, 'DELETE FROM invites WHERE inviter_id = ? OR invitee_id = ?', [userId, userId]);
+        dbRun(db, 'DELETE FROM feedbacks WHERE user_id = ?', [userId]);
+        dbRun(db, 'DELETE FROM users WHERE id = ?', [userId]);
+        deletedCount++;
+      }
+    }
+
+    saveDatabase();
+
+    res.json({
+      code: 0,
+      msg: `成功注销 ${deletedCount} 个用户`,
+      data: { deletedCount }
+    });
+  } catch (error) {
+    console.error('批量删除用户错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // 获取用户列表
 router.get('/', (req, res) => {
   try {

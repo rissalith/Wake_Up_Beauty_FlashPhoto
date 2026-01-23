@@ -23,7 +23,26 @@
         </div>
       </template>
 
-      <el-table :data="users" v-loading="loading" stripe style="width: 100%">
+      <!-- 批量操作栏 -->
+      <div class="batch-actions" v-if="selectedUsers.length > 0">
+        <span class="selected-count">已选择 {{ selectedUsers.length }} 个用户</span>
+        <el-button type="danger" size="small" @click="batchDeleteUsers">
+          批量注销
+        </el-button>
+        <el-button size="small" @click="clearSelection">
+          取消选择
+        </el-button>
+      </div>
+
+      <el-table
+        ref="tableRef"
+        :data="users"
+        v-loading="loading"
+        stripe
+        style="width: 100%"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
         <el-table-column label="用户" min-width="320">
           <template #default="{ row }">
             <div class="user-cell">
@@ -376,6 +395,10 @@ const photosLoading = ref(false)
 const userPhotos = ref([])
 const currentPhotoUser = ref(null)
 
+// 多选相关
+const tableRef = ref(null)
+const selectedUsers = ref([])
+
 // 醒币修正相关
 const adjustPointsVisible = ref(false)
 const adjustLoading = ref(false)
@@ -640,6 +663,50 @@ const deleteUser = async (user) => {
   }
 }
 
+// 多选处理
+const handleSelectionChange = (selection) => {
+  selectedUsers.value = selection
+}
+
+// 清除选择
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+  selectedUsers.value = []
+}
+
+// 批量注销用户
+const batchDeleteUsers = async () => {
+  if (selectedUsers.value.length === 0) {
+    ElMessage.warning('请先选择要注销的用户')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量注销选中的 ${selectedUsers.value.length} 个用户吗？注销后这些用户的所有数据（醒币、订单、照片等）将被永久删除，下次登录将作为新用户。`,
+      '批量注销用户',
+      {
+        confirmButtonText: '确定注销',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+
+    const userIds = selectedUsers.value.map(u => u.user_id || u.id)
+    const res = await usersApi.batchDeleteUsers(userIds)
+    if (res.code === 200 || res.code === 0) {
+      ElMessage.success(`成功注销 ${res.data?.deletedCount || userIds.length} 个用户`)
+      clearSelection()
+      loadUsers()
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量注销失败: ' + (error.message || '未知错误'))
+    }
+  }
+}
+
 // 显示醒币修正弹窗
 const showAdjustPoints = () => {
   adjustForm.value = {
@@ -796,6 +863,24 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 批量操作栏 */
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef0f0;
+  border: 1px solid #fbc4c4;
+  border-radius: 4px;
+}
+
+.selected-count {
+  font-size: 14px;
+  color: #f56c6c;
+  font-weight: 500;
 }
 
 /* 用户详情样式 */
