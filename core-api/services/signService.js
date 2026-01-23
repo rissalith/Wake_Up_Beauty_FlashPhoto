@@ -18,8 +18,9 @@ function hmacSha256(key, data) {
 }
 
 // paySig 计算
+// 根据官方文档：如果是基础库的wx.requestVirtualPayment，uri固定为 requestVirtualPayment
 function calculatePaySig(signDataStr, appKey = virtualPayConfig.appKey) {
-  const uri = '/wxa/game/pay';
+  const uri = 'requestVirtualPayment';
   const dataToSign = uri + '&' + signDataStr;
   console.log('[signService] paySig 签名数据:', dataToSign.substring(0, 100) + '...');
   return hmacSha256(appKey, dataToSign);
