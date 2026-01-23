@@ -1750,10 +1750,12 @@ Page({
       if (item) {
         // 分享成功后发放优惠券
         this.grantShareCoupon();
+        // 注意：微信分享的 imageUrl 必须是网络图片或本地永久路径
+        // posterImage 是临时文件路径，无法用于分享，使用原始结果图片
         return {
           title: lang.t('hist_posterShareTitle') || '我用醒美闪图制作了一张证件照，效果超赞！',
           path: `/pages/index/index?inviter=${userId}`,
-          imageUrl: this.data.posterImage || item.resultImage
+          imageUrl: item.resultImage || imageConfig.images.shareCover
         };
       }
     }
