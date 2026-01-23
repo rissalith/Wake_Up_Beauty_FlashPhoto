@@ -117,12 +117,13 @@ Page({
       const res = await api.getPhotoHistory(userId, { pageSize: 100 });
       if ((res.code === 0 || res.code === 200) && res.data && res.data.list && res.data.list.length > 0) {
         // 转换服务器数据格式为本地格式
+        // 注意：后端返回的是 result_url 和 original_url，需要映射到前端的 resultImage 和 originalImage
         const serverHistory = res.data.list.map(item => ({
           id: item.photo_id || item.id,
           createTime: item.created_at ? new Date(item.created_at.replace(/-/g, '/')).getTime() : Date.now(),
           status: item.status || 'done',
-          resultImage: item.result_image || '',
-          originalImage: item.original_image || '',
+          resultImage: item.result_url || item.result_image || '',
+          originalImage: item.original_url || item.original_image || '',
           spec: item.spec || '证件照',
           bgName: item.bg_color || '',
           synced: true  // 标记为已同步
@@ -1696,13 +1697,18 @@ Page({
 
     try {
       // 调用服务端 API 发放分享奖励
-      const res = await api.grantPoints(userId, 'share_image', item.id);
+      // 注意：数据库中的类型是 share_photo
+      const res = await api.grantPoints(userId, 'share_photo', item.id);
+      console.log('[分享奖励] API 响应:', res);
 
       if (res.code === 200 && res.data) {
         // 检查是否已领取过
         if (res.data.alreadyGranted) {
+          console.log('[分享奖励] 已领取过，跳过');
           return;
         }
+
+        console.log('[分享奖励] 发放成功，积分:', res.data.points);
 
         // 标记本地已分享（避免重复提示）
         let history = wx.getStorageSync('photoHistory') || [];
@@ -1726,6 +1732,13 @@ Page({
           shareItem: { ...item, hasShared: true }
         });
 
+        // 更新详情页的状态（红点消失）
+        if (this.data.currentDetailPhoto && this.data.currentDetailPhoto.id === item.id) {
+          this.setData({
+            currentDetailPhoto: { ...this.data.currentDetailPhoto, hasShared: true }
+          });
+        }
+
         // 显示获得醒币提示
         wx.showModal({
           title: lang.t('hist_pointsGrantedTitle') || '恭喜获得醒币',
@@ -1735,6 +1748,7 @@ Page({
         });
       }
     } catch (error) {
+      console.error('[分享奖励] 发放失败:', error);
       // 静默处理
     }
   },
@@ -1750,12 +1764,16 @@ Page({
       if (item) {
         // 分享成功后发放优惠券
         this.grantShareCoupon();
-        // 注意：微信分享的 imageUrl 必须是网络图片或本地永久路径
-        // posterImage 是临时文件路径，无法用于分享，使用原始结果图片
+        // 注意：微信分享的 imageUrl 必须是网络图片（http/https 开头）
+        // 本地文件路径（wxfile://）无法用于分享
+        let shareImage = imageConfig.images.shareCover; // 默认使用分享封面
+        if (item.resultImage && (item.resultImage.startsWith('http://') || item.resultImage.startsWith('https://'))) {
+          shareImage = item.resultImage;
+        }
         return {
           title: lang.t('hist_posterShareTitle') || '我用醒美闪图制作了一张证件照，效果超赞！',
           path: `/pages/index/index?inviter=${userId}`,
-          imageUrl: item.resultImage || imageConfig.images.shareCover
+          imageUrl: shareImage
         };
       }
     }
