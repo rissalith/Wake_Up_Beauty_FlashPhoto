@@ -47,13 +47,15 @@ function isDevtools() {
 
 /**
  * 判断是否可以显示充值入口
- * iOS 使用虚拟支付，Android 使用标准支付
- * 两者都可以显示充值入口
+ * iOS 端隐藏充值入口，符合微信审核要求
+ * Android 使用标准支付，可以显示
  * @returns {boolean}
  */
 function canShowRecharge() {
-  // 所有平台都显示充值入口
-  // iOS 走虚拟支付，Android 走标准微信支付
+  // iOS 端隐藏充值入口，符合微信审核要求
+  if (isIOS()) {
+    return false;
+  }
   return true;
 }
 
