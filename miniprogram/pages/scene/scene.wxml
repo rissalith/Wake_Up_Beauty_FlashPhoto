@@ -259,12 +259,18 @@
         <!-- 余额不足提示 -->
         <view class="pay-warning" wx:if="{{userPoints < totalPoints}}">
           <view class="warning-icon">!</view>
-          <text>{{lang.insufficientBalance || '余额不足，请先充值'}}</text>
+          <text wx:if="{{isIOSPlatform}}">{{lang.iosInsufficientBalance || '余额不足，可通过邀请好友、分享照片等方式获取醒币'}}</text>
+          <text wx:else>{{lang.insufficientBalance || '余额不足，请先充值'}}</text>
         </view>
       </view>
 
       <view class="modal-footer">
-        <view class="pay-btn btn-recharge" bindtap="goToRecharge" wx:if="{{userPoints < totalPoints}}">
+        <!-- iOS用户余额不足时显示邀请好友按钮 -->
+        <view class="pay-btn btn-recharge" bindtap="goToInvite" wx:if="{{userPoints < totalPoints && isIOSPlatform}}">
+          <text>{{lang.inviteFriends || '邀请好友'}}</text>
+        </view>
+        <!-- 非iOS用户余额不足时显示充值按钮 -->
+        <view class="pay-btn btn-recharge" bindtap="goToRecharge" wx:elif="{{userPoints < totalPoints}}">
           <text>{{lang.goRecharge || '去充值'}}</text>
         </view>
         <view class="pay-btn btn-confirm" bindtap="confirmPayment" wx:else>
@@ -278,6 +284,7 @@
   <login-modal
     show="{{showLoginModal}}"
     bind:close="onLoginModalClose"
+    bind:skip="onLoginModalClose"
     bind:loginsuccess="onLoginSuccess"
   />
 

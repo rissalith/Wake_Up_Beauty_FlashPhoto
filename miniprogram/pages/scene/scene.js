@@ -6,6 +6,7 @@ const { checkImageSecurity, showSecurityAlert } = require('../../utils/security'
 const aiService = require('../../utils/ai-service');
 const configManager = require('../../utils/configManager');
 const preloader = require('../../utils/preloader');
+const { canShowRecharge, isIOS } = require('../../utils/platform');
 
 const HISTORY_KEY = 'photoHistory';
 
@@ -30,6 +31,9 @@ I18nPage({
     totalPoints: 100,
     // 用户余额
     userPoints: 0,
+    // 平台相关
+    showRecharge: true,
+    isIOSPlatform: false,
     // 弹窗
     showPayModal: false,
     showPrivacyModal: false,
@@ -51,14 +55,14 @@ I18nPage({
       return;
     }
 
-    this.setData({ sceneId });
+    // 初始化平台设置
+    this.setData({
+      sceneId,
+      showRecharge: canShowRecharge(),
+      isIOSPlatform: isIOS()
+    });
 
-    // 先检查登录和协议状态
-    const canProceed = await this.checkLoginAndPrivacy();
-    if (!canProceed) {
-      return; // 等待用户完成登录和协议签订
-    }
-
+    // 直接加载场景配置，登录检查移到生成时触发
     await this.loadSceneConfig(sceneId);
     this.loadHistory();
     this.loadUserPoints();
@@ -148,11 +152,11 @@ I18nPage({
     }
   },
 
-  // 登录弹窗关闭
+  // 登录弹窗关闭（用户点击稍后再说）
   onLoginModalClose() {
-    // 用户拒绝登录，启用TabBar并返回上一页
-    this.notifyTabBarDisabled(false);
-    wx.navigateBack();
+    this.setData({ showLoginModal: false });
+    // 清除待生成标记
+    this._pendingGenerate = false;
   },
 
   // 登录成功
@@ -167,11 +171,18 @@ I18nPage({
 
     if (!privacyConfirmed) {
       this.setData({ showPrivacyModal: true });
-      // TabBar保持禁用状态，等待隐私协议确认
-    } else {
-      // 已签订协议，启用TabBar并加载页面内容
-      this.notifyTabBarDisabled(false);
-      await this.loadPageContent();
+      return;
+    }
+
+    // 启用 TabBar
+    this.notifyTabBarDisabled(false);
+
+    // 如果是从生成流程触发的登录，继续生成
+    if (this._pendingGenerate) {
+      this._pendingGenerate = false;
+      this.loadUserPoints().then(() => {
+        this.setData({ showPayModal: true });
+      });
     }
   },
 
@@ -187,9 +198,16 @@ I18nPage({
   async onPrivacyAgree() {
     this.setData({ showPrivacyModal: false });
 
-    // 协议签订完成，启用TabBar并加载页面内容
+    // 启用 TabBar
     this.notifyTabBarDisabled(false);
-    await this.loadPageContent();
+
+    // 如果是从生成流程触发的协议确认，继续生成
+    if (this._pendingGenerate) {
+      this._pendingGenerate = false;
+      this.loadUserPoints().then(() => {
+        this.setData({ showPayModal: true });
+      });
+    }
   },
 
   // 加载页面内容
@@ -412,9 +430,7 @@ I18nPage({
   },
 
   onShow() {
-    // 每次显示页面时检查登录状态
-    this.checkLoginStatus();
-    // 加载历史和用户余额
+    // 加载历史和用户余额（登录检查移到生成时触发）
     this.loadHistory();
     this.loadUserPoints();
     if (this.data.pendingPayAfterRecharge) {
@@ -555,29 +571,8 @@ I18nPage({
     const prompt = this.buildPrompt();
   },
 
-  // 选择图片
+  // 选择图片（登录检查移到生成时触发）
   chooseImage() {
-    const userInfo = wx.getStorageSync('userInfo') || {};
-    const isLoggedIn = !!(userInfo.nickName || userInfo.avatarUrl);
-    if (!isLoggedIn) {
-      wx.showModal({
-        title: t('loginRequired') || '需要登录',
-        content: t('loginRequiredContent') || '请先登录后再使用此功能',
-        confirmText: t('goLogin') || '去登录',
-        cancelText: t('cancel') || '取消',
-        success: (res) => {
-          if (res.confirm) wx.switchTab({ url: '/pages/mine/mine' });
-        }
-      });
-      return;
-    }
-
-    const privacyConfirmed = wx.getStorageSync('privacyPolicyConfirmed');
-    if (!privacyConfirmed) {
-      this.showPrivacyRequiredTip();
-      return;
-    }
-
     const remainCount = 3 - this.data.uploadedImages.length;
     wx.chooseMedia({
       count: remainCount,
@@ -770,20 +765,16 @@ I18nPage({
 
     const userId = wx.getStorageSync('userId');
     if (!userId) {
-      wx.showModal({
-        title: t('loginRequired') || '需要登录',
-        content: t('loginRequiredContent') || '请先登录后再使用此功能',
-        confirmText: t('goLogin') || '去登录',
-        cancelText: t('cancel') || '取消',
-        success: (res) => {
-          if (res.confirm) wx.switchTab({ url: '/pages/mine/mine' });
-        }
-      });
+      // 标记：登录成功后继续生成流程
+      this._pendingGenerate = true;
+      this.setData({ showLoginModal: true });
       return;
     }
 
     const privacyConfirmed = wx.getStorageSync('privacyPolicyConfirmed');
     if (!privacyConfirmed) {
+      // 标记：同意协议后继续生成流程
+      this._pendingGenerate = true;
       this.showPrivacyConfirmModal();
       return;
     }
@@ -1265,6 +1256,12 @@ I18nPage({
   goToRecharge() {
     this.setData({ showPayModal: false, pendingPayAfterRecharge: true });
     wx.navigateTo({ url: '/pages/recharge/recharge' });
+  },
+
+  // 跳转邀请页面（iOS用户余额不足时使用）
+  goToInvite() {
+    this.setData({ showPayModal: false });
+    wx.navigateTo({ url: '/pages/invite/invite' });
   },
 
   // 隐私相关
