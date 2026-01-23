@@ -13,7 +13,7 @@ export async function translateToEnglish(text) {
   
   try {
     const res = await request.post('/translate/to-english', { text })
-    if (res.code === 200 && res.data) {
+    if (res.code === 0 && res.data) {
       return res.data.translated
     }
     console.warn('翻译失败:', res.message)
@@ -34,7 +34,7 @@ export async function batchTranslateToEnglish(texts) {
   
   try {
     const res = await request.post('/translate/batch', { texts, target: 'en' })
-    if (res.code === 200 && res.data) {
+    if (res.code === 0 && res.data) {
       return res.data
     }
     console.warn('批量翻译失败:', res.message)
