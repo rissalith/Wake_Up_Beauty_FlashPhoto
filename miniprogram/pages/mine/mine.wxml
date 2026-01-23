@@ -106,7 +106,7 @@
         <view class="css-icon privacy-icon"></view>
       </view>
       <text class="menu-text">{{i18n.privacyPolicy || '隐私政策'}}</text>
-      <view class="privacy-status" wx:if="{{privacyConfirmed}}">
+      <view class="privacy-status" wx:if="{{isLoggedIn && privacyConfirmed}}">
         <text class="privacy-check">{{i18n.confirmed || '已签订'}}</text>
         <text class="privacy-time" wx:if="{{privacyConfirmTimeStr}}">{{privacyConfirmTimeStr}}</text>
       </view>
@@ -117,7 +117,7 @@
         <view class="css-icon terms-icon"></view>
       </view>
       <text class="menu-text">{{i18n.userAgreement || '用户协议'}}</text>
-      <view class="privacy-status" wx:if="{{privacyConfirmed}}">
+      <view class="privacy-status" wx:if="{{isLoggedIn && privacyConfirmed}}">
         <text class="privacy-check">{{i18n.confirmed || '已签订'}}</text>
         <text class="privacy-time" wx:if="{{privacyConfirmTimeStr}}">{{privacyConfirmTimeStr}}</text>
       </view>
@@ -164,6 +164,7 @@
 <login-modal
   show="{{showLoginModal}}"
   bind:close="onLoginModalClose"
+  bind:skip="onLoginModalClose"
   bind:loginsuccess="onLoginSuccess"
 />
 
