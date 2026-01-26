@@ -1296,6 +1296,15 @@ Page({
       return;
     }
 
+    // 调试日志：输出重制时发送给AI的完整信息
+    console.log('========== 重制图片请求调试 ==========');
+    console.log('[重制请求] 历史记录ID:', historyId);
+    console.log('[重制请求] 完整Prompt:');
+    console.log(prompt);
+    console.log('[重制请求] 图片大小:', base64Data ? Math.round(base64Data.length / 1024) + 'KB' : '无图片');
+    console.log('[重制请求] 配置信息:', JSON.stringify(config));
+    console.log('======================================');
+
     try {
       // 使用后端代理调用 AI API（避免前端暴露密钥）
       const result = await aiService.generateImage(prompt, base64Data, 'image/jpeg');
