@@ -14,6 +14,7 @@ require('dotenv').config();
 // 核心模块
 const { initDatabase, getDb, dbRun, saveDatabase } = require('./config/database');
 const { redisMessageHandler } = require('./lib/redis-message-handler');
+const { cacheManager } = require('./lib/cache');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -347,11 +348,14 @@ app.get('/api/photos/cos/users', async (req, res) => {
     const userIds = await getAllUserIds();
     const db = getDb();
 
-    // 获取用户详情
-    const users = userIds.map(userId => {
-      const user = db.prepare('SELECT id as user_id, nickname, avatar_url FROM users WHERE id = ?').get(userId);
-      return user || { user_id: userId, nickname: userId, fromCOS: true };
-    });
+    // 批量查询用户详情，避免 N+1 查询
+    let users = [];
+    if (userIds.length > 0) {
+      const placeholders = userIds.map(() => '?').join(',');
+      const dbUsers = db.prepare(`SELECT id as user_id, nickname, avatar_url FROM users WHERE id IN (${placeholders})`).all(...userIds);
+      const userMap = new Map(dbUsers.map(u => [u.user_id, u]));
+      users = userIds.map(userId => userMap.get(userId) || { user_id: userId, nickname: userId, fromCOS: true });
+    }
 
     res.json({ code: 0, data: users });
   } catch (error) {
@@ -397,15 +401,19 @@ app.get('/api/photos/cos/list', async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
     const pagedPhotos = photos.slice(offset, offset + parseInt(pageSize));
 
-    // 获取用户信息
+    // 批量获取用户信息，避免 N+1 查询
     const db = getDb();
-    const organizedPhotos = pagedPhotos.map(photo => {
-      const user = db.prepare('SELECT id as user_id, nickname, avatar_url FROM users WHERE id = ?').get(photo.userId);
-      return {
-        ...photo,
-        user: user || { user_id: photo.userId, nickname: photo.userId }
-      };
-    });
+    const userIds = [...new Set(pagedPhotos.map(p => p.userId).filter(Boolean))];
+    let userMap = new Map();
+    if (userIds.length > 0) {
+      const placeholders = userIds.map(() => '?').join(',');
+      const dbUsers = db.prepare(`SELECT id as user_id, nickname, avatar_url FROM users WHERE id IN (${placeholders})`).all(...userIds);
+      userMap = new Map(dbUsers.map(u => [u.user_id, u]));
+    }
+    const organizedPhotos = pagedPhotos.map(photo => ({
+      ...photo,
+      user: userMap.get(photo.userId) || { user_id: photo.userId, nickname: photo.userId }
+    }));
 
     res.json({
       code: 0,
@@ -1191,7 +1199,7 @@ async function startServer() {
     // 初始化数据库
     await initDatabase();
     console.log('[Core API] 数据库初始化完成');
-    
+
     // 初始化 Redis 消息处理器
     try {
       await redisMessageHandler.connect(getDb, dbRun, saveDatabase);
@@ -1199,7 +1207,15 @@ async function startServer() {
     } catch (redisError) {
       console.warn('[Core API] Redis 连接失败，服务将在无 Redis 模式下运行:', redisError.message);
     }
-    
+
+    // 初始化缓存管理器
+    try {
+      await cacheManager.connect();
+      console.log('[Core API] 缓存管理器已连接');
+    } catch (cacheError) {
+      console.warn('[Core API] 缓存连接失败，将使用无缓存模式:', cacheError.message);
+    }
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log('==========================================');
       console.log('  Core API 服务已启动 (统一后端)');
@@ -1221,12 +1237,14 @@ async function startServer() {
 process.on('SIGTERM', async () => {
   console.log('[Core API] 收到 SIGTERM 信号，正在关闭...');
   await redisMessageHandler.disconnect();
+  await cacheManager.disconnect();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('[Core API] 收到 SIGINT 信号，正在关闭...');
   await redisMessageHandler.disconnect();
+  await cacheManager.disconnect();
   process.exit(0);
 });
 

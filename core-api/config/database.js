@@ -372,19 +372,28 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_users_unionid ON users(unionid)',
     'CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_users_status ON users(status)',
+    'CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at)',
     // 积分记录索引
     'CREATE INDEX IF NOT EXISTS idx_points_records_user ON points_records(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_points_records_type ON points_records(type)',
+    'CREATE INDEX IF NOT EXISTS idx_points_records_created_at ON points_records(created_at)',
+    'CREATE INDEX IF NOT EXISTS idx_points_records_user_type ON points_records(user_id, type)',
     // 照片历史索引
     'CREATE INDEX IF NOT EXISTS idx_photo_history_user ON photo_history(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_photo_history_status ON photo_history(status)',
     'CREATE INDEX IF NOT EXISTS idx_photo_history_task ON photo_history(task_id)',
+    'CREATE INDEX IF NOT EXISTS idx_photo_history_created_at ON photo_history(created_at)',
+    'CREATE INDEX IF NOT EXISTS idx_photo_history_user_status ON photo_history(user_id, status)',
     // 订单索引
     'CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)',
+    'CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)',
+    'CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at)',
     // 邀请索引
     'CREATE INDEX IF NOT EXISTS idx_invites_inviter ON invites(inviter_id)',
     'CREATE INDEX IF NOT EXISTS idx_invites_invitee ON invites(invitee_id)',
+    'CREATE INDEX IF NOT EXISTS idx_invites_status ON invites(status)',
+    'CREATE INDEX IF NOT EXISTS idx_invites_created_at ON invites(created_at)',
     // 用户绑定索引
     'CREATE INDEX IF NOT EXISTS idx_user_bindings_user ON user_bindings(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_user_bindings_app_openid ON user_bindings(app_id, openid)',
@@ -400,9 +409,11 @@ function createIndexes() {
     // 反馈索引
     'CREATE INDEX IF NOT EXISTS idx_feedbacks_user ON feedbacks(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_feedbacks_status ON feedbacks(status)',
+    'CREATE INDEX IF NOT EXISTS idx_feedbacks_created_at ON feedbacks(created_at)',
     // 操作日志索引
     'CREATE INDEX IF NOT EXISTS idx_operation_logs_admin ON operation_logs(admin_id)',
-    'CREATE INDEX IF NOT EXISTS idx_operation_logs_action ON operation_logs(action)'
+    'CREATE INDEX IF NOT EXISTS idx_operation_logs_action ON operation_logs(action)',
+    'CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(created_at)'
   ];
   
   indexes.forEach(sql => {

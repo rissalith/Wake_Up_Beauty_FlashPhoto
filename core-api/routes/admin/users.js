@@ -20,22 +20,36 @@ router.post('/batch-delete', (req, res) => {
       return res.status(400).json({ code: -1, msg: '单次最多注销100个用户' });
     }
 
-    let deletedCount = 0;
+    // 使用事务和批量删除优化性能
+    const transaction = db.transaction(() => {
+      // 先验证哪些用户存在
+      const placeholders = userIds.map(() => '?').join(',');
+      const existingUsers = db.prepare(`SELECT id FROM users WHERE id IN (${placeholders})`).all(...userIds);
+      const existingIds = existingUsers.map(u => u.id);
 
-    for (const userId of userIds) {
-      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-      if (user) {
-        // 删除用户相关数据
-        dbRun(db, 'DELETE FROM points_records WHERE user_id = ?', [userId]);
-        dbRun(db, 'DELETE FROM photo_history WHERE user_id = ?', [userId]);
-        dbRun(db, 'DELETE FROM orders WHERE user_id = ?', [userId]);
-        dbRun(db, 'DELETE FROM invites WHERE inviter_id = ? OR invitee_id = ?', [userId, userId]);
-        dbRun(db, 'DELETE FROM feedbacks WHERE user_id = ?', [userId]);
-        dbRun(db, 'DELETE FROM users WHERE id = ?', [userId]);
-        deletedCount++;
+      if (existingIds.length === 0) {
+        return 0;
       }
-    }
 
+      const existingPlaceholders = existingIds.map(() => '?').join(',');
+
+      // 批量删除相关数据
+      db.prepare(`DELETE FROM points_records WHERE user_id IN (${existingPlaceholders})`).run(...existingIds);
+      db.prepare(`DELETE FROM photo_history WHERE user_id IN (${existingPlaceholders})`).run(...existingIds);
+      db.prepare(`DELETE FROM orders WHERE user_id IN (${existingPlaceholders})`).run(...existingIds);
+      db.prepare(`DELETE FROM feedbacks WHERE user_id IN (${existingPlaceholders})`).run(...existingIds);
+
+      // 邀请表需要特殊处理（两个字段）
+      const invitePlaceholders = [...existingIds, ...existingIds].map(() => '?').join(',');
+      db.prepare(`DELETE FROM invites WHERE inviter_id IN (${existingPlaceholders}) OR invitee_id IN (${existingPlaceholders})`).run(...existingIds, ...existingIds);
+
+      // 最后删除用户
+      db.prepare(`DELETE FROM users WHERE id IN (${existingPlaceholders})`).run(...existingIds);
+
+      return existingIds.length;
+    });
+
+    const deletedCount = transaction();
     saveDatabase();
 
     res.json({
@@ -375,61 +389,69 @@ router.get('/:userId/activities', (req, res) => {
     const db = getDb();
     const { userId } = req.params;
     const { page = 1, pageSize = 20 } = req.query;
-
-    // 获取积分记录
-    const pointsRecords = db.prepare(`
-      SELECT
-        id, 'points' as activity_type, type as sub_type,
-        amount, balance_after, description, created_at
-      FROM points_records
-      WHERE user_id = ?
-    `).all(userId);
-
-    // 获取照片生成记录
-    const photoRecords = db.prepare(`
-      SELECT
-        id, 'photo' as activity_type, status as sub_type,
-        spec, bg_color, created_at
-      FROM photo_history
-      WHERE user_id = ?
-    `).all(userId);
-
-    // 获取订单记录
-    const orderRecords = db.prepare(`
-      SELECT
-        id, 'order' as activity_type, status as sub_type,
-        amount, points_amount, bonus_points, created_at
-      FROM orders
-      WHERE user_id = ?
-    `).all(userId);
-
-    // 获取邀请记录（作为邀请者）
-    const inviteRecords = db.prepare(`
-      SELECT
-        i.id, 'invite' as activity_type, i.status as sub_type,
-        i.reward_points, i.created_at, u.nickname as invitee_nickname
-      FROM invites i
-      LEFT JOIN users u ON i.invitee_id = u.id
-      WHERE i.inviter_id = ?
-    `).all(userId);
-
-    // 合并所有记录并按时间排序
-    const allActivities = [
-      ...pointsRecords.map(r => ({ ...r, activity_type: 'points' })),
-      ...photoRecords.map(r => ({ ...r, activity_type: 'photo' })),
-      ...orderRecords.map(r => ({ ...r, activity_type: 'order' })),
-      ...inviteRecords.map(r => ({ ...r, activity_type: 'invite' }))
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    // 分页
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
-    const paginatedActivities = allActivities.slice(offset, offset + parseInt(pageSize));
+    const limit = parseInt(pageSize);
+
+    // 使用 UNION ALL 在数据库层面合并和分页，避免内存中处理大量数据
+    const activities = db.prepare(`
+      SELECT * FROM (
+        SELECT
+          id, 'points' as activity_type, type as sub_type,
+          amount, balance_after, description, NULL as spec, NULL as bg_color,
+          NULL as points_amount, NULL as bonus_points, NULL as invitee_nickname,
+          NULL as reward_points, created_at
+        FROM points_records
+        WHERE user_id = ?
+
+        UNION ALL
+
+        SELECT
+          id, 'photo' as activity_type, status as sub_type,
+          NULL as amount, NULL as balance_after, NULL as description, spec, bg_color,
+          NULL as points_amount, NULL as bonus_points, NULL as invitee_nickname,
+          NULL as reward_points, created_at
+        FROM photo_history
+        WHERE user_id = ?
+
+        UNION ALL
+
+        SELECT
+          id, 'order' as activity_type, status as sub_type,
+          amount, NULL as balance_after, NULL as description, NULL as spec, NULL as bg_color,
+          points_amount, bonus_points, NULL as invitee_nickname,
+          NULL as reward_points, created_at
+        FROM orders
+        WHERE user_id = ?
+
+        UNION ALL
+
+        SELECT
+          i.id, 'invite' as activity_type, i.status as sub_type,
+          NULL as amount, NULL as balance_after, NULL as description, NULL as spec, NULL as bg_color,
+          NULL as points_amount, NULL as bonus_points, u.nickname as invitee_nickname,
+          i.reward_points, i.created_at
+        FROM invites i
+        LEFT JOIN users u ON i.invitee_id = u.id
+        WHERE i.inviter_id = ?
+      )
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(userId, userId, userId, userId, limit, offset);
+
+    // 获取总数
+    const totalResult = db.prepare(`
+      SELECT
+        (SELECT COUNT(*) FROM points_records WHERE user_id = ?) +
+        (SELECT COUNT(*) FROM photo_history WHERE user_id = ?) +
+        (SELECT COUNT(*) FROM orders WHERE user_id = ?) +
+        (SELECT COUNT(*) FROM invites WHERE inviter_id = ?) as total
+    `).get(userId, userId, userId, userId);
 
     res.json({
       code: 0,
       data: {
-        list: paginatedActivities,
-        total: allActivities.length,
+        list: activities,
+        total: totalResult.total,
         page: parseInt(page),
         pageSize: parseInt(pageSize)
       }
@@ -451,14 +473,17 @@ router.delete('/:userId', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    // 删除用户相关数据
-    dbRun(db, 'DELETE FROM points_records WHERE user_id = ?', [userId]);
-    dbRun(db, 'DELETE FROM photo_history WHERE user_id = ?', [userId]);
-    dbRun(db, 'DELETE FROM orders WHERE user_id = ?', [userId]);
-    dbRun(db, 'DELETE FROM invites WHERE inviter_id = ? OR invitee_id = ?', [userId, userId]);
-    dbRun(db, 'DELETE FROM feedbacks WHERE user_id = ?', [userId]);
-    dbRun(db, 'DELETE FROM users WHERE id = ?', [userId]);
+    // 使用事务删除用户相关数据
+    const transaction = db.transaction(() => {
+      db.prepare('DELETE FROM points_records WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM photo_history WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM orders WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM invites WHERE inviter_id = ? OR invitee_id = ?').run(userId, userId);
+      db.prepare('DELETE FROM feedbacks WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+    });
 
+    transaction();
     saveDatabase();
 
     res.json({
