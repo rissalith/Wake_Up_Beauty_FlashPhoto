@@ -791,7 +791,13 @@ Page({
     const photo = this.data.historyList.find(item => item.id === id);
     if (photo) {
       // 处理 config 显示
-      const configDisplay = this.formatConfigDisplay(photo.config);
+      let configDisplay = this.formatConfigDisplay(photo.config);
+
+      // 如果 config 为空，尝试从 photo 的其他字段构建基本配置
+      if ((!configDisplay || configDisplay.length === 0) && photo.spec) {
+        configDisplay = this.buildBasicConfigDisplay(photo);
+      }
+
       // 确保 specDisplay 使用当前语言（因为用户可能在页面内切换了语言）
       const specDisplay = this.getLocalizedSpec(photo);
       this.setData({
@@ -799,6 +805,43 @@ Page({
         currentDetailPhoto: { ...photo, configDisplay, specDisplay }
       });
     }
+  },
+
+  // 从 photo 的基本字段构建配置显示（用于旧数据兼容）
+  buildBasicConfigDisplay(photo) {
+    const currentLang = lang.getCurrentLang();
+    const result = [];
+
+    // 场景/类型
+    if (photo.spec) {
+      result.push({
+        key: 'scene',
+        label: currentLang === 'en' ? 'Scene' : '场景',
+        value: this.getLocalizedSpec(photo)
+      });
+    }
+
+    // 背景颜色
+    if (photo.bgName) {
+      const bgColorMap = {
+        '白底': { cn: '白底', en: 'White' },
+        '蓝底': { cn: '蓝底', en: 'Blue' },
+        '红底': { cn: '红底', en: 'Red' },
+        '灰底': { cn: '灰底', en: 'Gray' },
+        'white': { cn: '白底', en: 'White' },
+        'blue': { cn: '蓝底', en: 'Blue' },
+        'red': { cn: '红底', en: 'Red' },
+        'gray': { cn: '灰底', en: 'Gray' }
+      };
+      const bgTranslation = bgColorMap[photo.bgName];
+      result.push({
+        key: 'background',
+        label: currentLang === 'en' ? 'Background' : '背景颜色',
+        value: bgTranslation ? (currentLang === 'en' ? bgTranslation.en : bgTranslation.cn) : photo.bgName
+      });
+    }
+
+    return result;
   },
 
   // 格式化配置显示
