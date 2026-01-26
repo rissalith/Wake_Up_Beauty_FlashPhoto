@@ -164,6 +164,9 @@ I18nPage({
     const userData = e?.detail || {};
     this.setData({ showLoginModal: false });
 
+    // 先刷新用户积分
+    await this.loadUserPoints();
+
     // 优先使用登录返回的协议状态，其次使用本地存储
     const privacyAgreed = userData.privacyAgreed === true;
     const termsAgreed = userData.termsAgreed === true;
@@ -180,9 +183,8 @@ I18nPage({
     // 如果是从生成流程触发的登录，继续生成
     if (this._pendingGenerate) {
       this._pendingGenerate = false;
-      this.loadUserPoints().then(() => {
-        this.setData({ showPayModal: true });
-      });
+      // 直接显示支付弹窗（积分已在上面刷新）
+      this.setData({ showPayModal: true });
     }
   },
 
@@ -204,9 +206,8 @@ I18nPage({
     // 如果是从生成流程触发的协议确认，继续生成
     if (this._pendingGenerate) {
       this._pendingGenerate = false;
-      this.loadUserPoints().then(() => {
-        this.setData({ showPayModal: true });
-      });
+      await this.loadUserPoints();
+      this.setData({ showPayModal: true });
     }
   },
 
@@ -1147,6 +1148,10 @@ I18nPage({
     if (successCount > 0) {
       this.showNotice(`${successCount}张照片生成完成`);
       this.showCompletedStatus();
+      // 生成完成后自动跳转到历史页面，让用户查看结果
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/history/history' });
+      }, 1500);
     } else {
       this.showNotice(t('fp_generateFailed') || '生成失败');
     }
