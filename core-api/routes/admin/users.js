@@ -147,7 +147,7 @@ router.post('/:userId/adjust-points', (req, res) => {
     dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, userId]);
     dbRun(db,
       'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, operator) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), userId, 'admin_adjust', amount, newBalance, reason || '管理员调整', operator || 'admin']);
+      [uuidv4(), userId, 'admin_adjust', adjustAmount, newBalance, reason || '管理员调整', operator || 'admin']);
 
     saveDatabase();
 
