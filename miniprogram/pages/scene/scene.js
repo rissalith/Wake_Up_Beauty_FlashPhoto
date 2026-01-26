@@ -250,7 +250,7 @@ I18nPage({
     // 转换为前端格式（后端已经根据语言返回了正确的 label）
     return filteredOptions.map(opt => {
       const result = {
-        id: opt.id || '',                    // 后端统一使用 id
+        id: String(opt.id || ''),            // 统一转为字符串，避免类型比较问题
         name: opt.label || opt.name || '',   // 后端已根据语言返回正确的 label
         promptText: opt.prompt_text || '',
         isDefault: opt.is_default || false
@@ -822,14 +822,19 @@ I18nPage({
     Object.keys(selections).forEach(key => {
       const selectedId = selections[key];
       const options = stepOptions[key] || [];
-      const selected = options.find(o => o.id === selectedId);
+      // 修复：使用宽松比较或字符串转换，确保能匹配到选项
+      // 因为 selectedId 可能是字符串 "7"，而 option.id 可能是数字 7
+      const selected = options.find(o =>
+        String(o.id) === String(selectedId) || o.id == selectedId
+      );
 
       if (key === 'gender') {
         variables[key] = selectedId === 'male' ? (t('fp_male') || '男性') : (t('fp_female') || '女性');
-      } else if (typeof selectedId === 'number') {
-        // 滑块值
+      } else if (typeof selectedId === 'number' && !selected) {
+        // 滑块值（只有在没有匹配到选项时才当作滑块值处理）
         variables[key] = selectedId;
       } else {
+        // 优先使用 promptText，其次 name，最后才用 selectedId
         variables[key] = selected?.promptText || selected?.name || selectedId;
       }
     });
