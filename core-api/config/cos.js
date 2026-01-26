@@ -242,53 +242,164 @@ async function listObjects(prefix = '', marker = '', maxKeys = 1000) {
 }
 
 // 获取所有用户的照片
+// 支持三种存储结构:
+// 1. 旧版层级: users/{userId}/{type}/{filename}
+// 2. 旧版带场景: users/{userId}/{scene}/{type}/{filename}
+// 3. 新版扁平: {userId}_{type}_{timestamp}_{random}.jpg 或 {userId}_{scene}_{type}_{timestamp}_{random}.jpg
 async function getAllUserPhotos(scene = '') {
   const photos = [];
   let marker = '';
   let isTruncated = true;
 
-  // 根据场景确定扫描前缀
-  let prefix = 'users/';
-  if (scene && scene !== 'default') {
-    // 新版目录结构: users/{userId}/{scene}/{type}/{filename}
-    // 但我们仍然需要扫描整个 users/ 目录，然后按场景筛选
-  }
-
+  // 扫描整个存储桶根目录
   while (isTruncated) {
     try {
-      const data = await listObjects(prefix, marker);
+      const data = await listObjects('', marker);
+
+      for (const item of data.Contents || []) {
+        const key = item.Key;
+
+        // 跳过目录标记
+        if (key.endsWith('/')) continue;
+
+        // 只处理图片文件
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
+
+        let userId, photoScene, type, fileName;
+
+        // 判断是层级结构还是扁平结构
+        if (key.startsWith('users/')) {
+          // 旧版层级结构
+          const parts = key.split('/');
+          if (parts.length >= 4) {
+            userId = parts[1];
+            photoScene = 'default';
+            type = parts[2];
+            fileName = parts[3];
+
+            // 检测是否为带场景的目录结构（5层）
+            if (parts.length >= 5) {
+              photoScene = parts[2];
+              type = parts[3];
+              fileName = parts[4];
+            }
+          } else {
+            continue;
+          }
+        } else if (key.startsWith('id-photo/') || key.startsWith('banner')) {
+          // 跳过模板和素材目录
+          continue;
+        } else {
+          // 新版扁平结构: {userId}_{scene}_{type}_{timestamp}_{random}.jpg
+          // 或: {userId}_{type}_{timestamp}_{random}.jpg
+          const parts = key.replace(/\.[^.]+$/, '').split('_');
+
+          if (parts.length >= 4) {
+            // 检查是否是用户照片（userId 以 user_ 或 u_ 开头）
+            if (parts[0] === 'user' || parts[0] === 'u') {
+              // userId 格式: user_timestamp_random 或 u_timestamp_random
+              // 完整格式: user_xxx_xxx_type_timestamp_random.jpg
+              // 或: user_xxx_xxx_scene_type_timestamp_random.jpg
+
+              // 找到 userId 的结束位置（userId 通常是 user_数字_字母数字）
+              let userIdEndIndex = 2; // 默认 user_xxx_xxx
+              if (parts[0] === 'u') {
+                userIdEndIndex = 2; // u_xxx_xxx
+              }
+
+              userId = parts.slice(0, userIdEndIndex + 1).join('_');
+              const remaining = parts.slice(userIdEndIndex + 1);
+
+              if (remaining.length >= 3) {
+                // 判断是否有场景: scene_type_timestamp_random 或 type_timestamp_random
+                const possibleType = remaining[0];
+                if (['temp', 'output', 'avatar', 'feedback'].includes(possibleType)) {
+                  // 没有场景: type_timestamp_random
+                  type = possibleType;
+                  photoScene = 'default';
+                } else if (remaining.length >= 4 && ['temp', 'output', 'avatar', 'feedback'].includes(remaining[1])) {
+                  // 有场景: scene_type_timestamp_random
+                  photoScene = remaining[0];
+                  type = remaining[1];
+                } else {
+                  // 无法识别的格式，跳过
+                  continue;
+                }
+              } else {
+                continue;
+              }
+            } else {
+              // 不是用户照片格式，跳过
+              continue;
+            }
+          } else {
+            continue;
+          }
+
+          fileName = key;
+        }
+
+        // 场景筛选
+        if (scene && scene !== 'default' && scene !== photoScene) {
+          continue;
+        }
+
+        photos.push({
+          key: key,
+          userId: userId,
+          type: type,
+          scene: photoScene || 'default',
+          fileName: fileName,
+          url: `${COS_CONFIG.baseUrl}/${key}`,
+          size: item.Size,
+          lastModified: item.LastModified
+        });
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      console.log('[COS] 扫描完成或出错:', e.message);
+      break;
+    }
+  }
+
+  return photos;
+}
+
+// 获取指定用户的照片
+// 支持旧版层级结构和新版扁平结构
+async function getUserPhotos(userId) {
+  const photos = [];
+  let marker = '';
+  let isTruncated = true;
+
+  // 同时扫描旧版层级目录和新版扁平文件
+  // 1. 先扫描旧版层级目录
+  const oldPrefix = `users/${userId}/`;
+  while (isTruncated) {
+    try {
+      const data = await listObjects(oldPrefix, marker);
 
       for (const item of data.Contents || []) {
         const parts = item.Key.split('/');
-        // 支持两种目录结构:
-        // 旧版: users/{userId}/{type}/{filename} (type = temp/output)
-        // 新版: users/{userId}/{scene}/{type}/{filename}
-
         if (parts.length >= 4) {
-          const userId = parts[1];
-          let photoScene = 'default';
+          let scene = 'default';
           let type = parts[2];
           let fileName = parts[3];
 
-          // 检测是否为新版目录结构（5层）
           if (parts.length >= 5) {
-            photoScene = parts[2];
+            scene = parts[2];
             type = parts[3];
             fileName = parts[4];
           }
 
-          // 场景筛选
-          if (scene && scene !== photoScene) {
-            continue;
-          }
-
-          // 只处理图片文件
           if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
             photos.push({
               key: item.Key,
               userId: userId,
               type: type,
-              scene: photoScene,
+              scene: scene,
               fileName: fileName,
               url: `${COS_CONFIG.baseUrl}/${item.Key}`,
               size: item.Size,
@@ -301,7 +412,59 @@ async function getAllUserPhotos(scene = '') {
       isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
       marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
     } catch (e) {
-      console.log('[COS] users/ 目录扫描完成或不存在');
+      break;
+    }
+  }
+
+  // 2. 扫描新版扁平结构（以 userId_ 开头的文件）
+  marker = '';
+  isTruncated = true;
+  const flatPrefix = `${userId}_`;
+
+  while (isTruncated) {
+    try {
+      const data = await listObjects(flatPrefix, marker);
+
+      for (const item of data.Contents || []) {
+        const key = item.Key;
+        if (key.endsWith('/')) continue;
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
+
+        // 解析扁平文件名: {userId}_{type}_{timestamp}_{random}.jpg
+        // 或: {userId}_{scene}_{type}_{timestamp}_{random}.jpg
+        const nameParts = key.replace(/\.[^.]+$/, '').split('_');
+        const userIdParts = userId.split('_');
+        const remaining = nameParts.slice(userIdParts.length);
+
+        let type, scene = 'default';
+        if (remaining.length >= 3) {
+          if (['temp', 'output', 'avatar', 'feedback'].includes(remaining[0])) {
+            type = remaining[0];
+          } else if (remaining.length >= 4 && ['temp', 'output', 'avatar', 'feedback'].includes(remaining[1])) {
+            scene = remaining[0];
+            type = remaining[1];
+          } else {
+            continue;
+          }
+        } else {
+          continue;
+        }
+
+        photos.push({
+          key: key,
+          userId: userId,
+          type: type,
+          scene: scene,
+          fileName: key,
+          url: `${COS_CONFIG.baseUrl}/${key}`,
+          size: item.Size,
+          lastModified: item.LastModified
+        });
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
       break;
     }
   }
@@ -309,78 +472,75 @@ async function getAllUserPhotos(scene = '') {
   return photos;
 }
 
-// 获取指定用户的照片
-async function getUserPhotos(userId) {
-  const photos = [];
-  let marker = '';
-  let isTruncated = true;
-  const prefix = `users/${userId}/`;
-
-  while (isTruncated) {
-    const data = await listObjects(prefix, marker);
-
-    for (const item of data.Contents || []) {
-      const parts = item.Key.split('/');
-      // 支持两种目录结构
-      if (parts.length >= 4) {
-        let scene = 'default';
-        let type = parts[2];
-        let fileName = parts[3];
-
-        if (parts.length >= 5) {
-          scene = parts[2];
-          type = parts[3];
-          fileName = parts[4];
-        }
-
-        if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-          photos.push({
-            key: item.Key,
-            userId: userId,
-            type: type,
-            scene: scene,
-            fileName: fileName,
-            url: `${COS_CONFIG.baseUrl}/${item.Key}`,
-            size: item.Size,
-            lastModified: item.LastModified
-          });
-        }
-      }
-    }
-
-    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
-    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
-  }
-
-  return photos;
-}
-
 // 获取所有用户ID列表
+// 支持旧版层级结构和新版扁平结构
 async function getAllUserIds() {
   const userIds = new Set();
   let marker = '';
   let isTruncated = true;
 
+  // 1. 扫描旧版层级目录 users/
   while (isTruncated) {
-    const data = await listObjects('users/', marker, 1000);
+    try {
+      const data = await listObjects('users/', marker, 1000);
 
-    for (const item of data.Contents || []) {
-      const parts = item.Key.split('/');
-      if (parts.length >= 2 && parts[1]) {
-        userIds.add(parts[1]);
+      for (const item of data.Contents || []) {
+        const parts = item.Key.split('/');
+        if (parts.length >= 2 && parts[1]) {
+          userIds.add(parts[1]);
+        }
       }
-    }
 
-    // 也检查CommonPrefixes（目录）
-    for (const prefix of data.CommonPrefixes || []) {
-      const parts = prefix.Prefix.split('/');
-      if (parts.length >= 2 && parts[1]) {
-        userIds.add(parts[1]);
+      // 也检查CommonPrefixes（目录）
+      for (const prefix of data.CommonPrefixes || []) {
+        const parts = prefix.Prefix.split('/');
+        if (parts.length >= 2 && parts[1]) {
+          userIds.add(parts[1]);
+        }
       }
-    }
 
-    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
-    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      break;
+    }
+  }
+
+  // 2. 扫描新版扁平结构（以 user_ 或 u_ 开头的文件）
+  marker = '';
+  isTruncated = true;
+
+  while (isTruncated) {
+    try {
+      const data = await listObjects('', marker, 1000);
+
+      for (const item of data.Contents || []) {
+        const key = item.Key;
+        // 跳过目录和非图片文件
+        if (key.endsWith('/')) continue;
+        if (key.startsWith('users/') || key.startsWith('id-photo/') || key.startsWith('banner')) continue;
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
+
+        // 解析扁平文件名提取 userId
+        const parts = key.replace(/\.[^.]+$/, '').split('_');
+        if (parts.length >= 4) {
+          if (parts[0] === 'user' && parts.length >= 3) {
+            // user_timestamp_random_type_... -> userId = user_timestamp_random
+            const userId = `${parts[0]}_${parts[1]}_${parts[2]}`;
+            userIds.add(userId);
+          } else if (parts[0] === 'u' && parts.length >= 3) {
+            // u_timestamp_random_type_... -> userId = u_timestamp_random
+            const userId = `${parts[0]}_${parts[1]}_${parts[2]}`;
+            userIds.add(userId);
+          }
+        }
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      break;
+    }
   }
 
   return Array.from(userIds);

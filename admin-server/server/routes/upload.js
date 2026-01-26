@@ -88,24 +88,8 @@ router.post('/image', async (req, res) => {
     const random = Math.random().toString(36).substring(2, 8);
     const fileName = `${timestamp}_${random}.jpg`;
 
-    // 根据类型确定存储路径
-    let key;
-    switch (type) {
-      case 'feedback':
-        key = `users/${userId}/feedback/${fileName}`;
-        break;
-      case 'avatar':
-        key = `users/${userId}/avatar/${fileName}`;
-        break;
-      case 'temp':
-        key = `users/${userId}/temp/${fileName}`;
-        break;
-      case 'output':
-        key = `users/${userId}/output/${fileName}`;
-        break;
-      default:
-        key = `users/${userId}/${type}/${fileName}`;
-    }
+    // 扁平化存储路径: {userId}_{type}_{filename}
+    const key = `${userId}_${type}_${fileName}`;
 
     // 上传到COS
     const result = await uploadBase64ToCOS(imageData, key);

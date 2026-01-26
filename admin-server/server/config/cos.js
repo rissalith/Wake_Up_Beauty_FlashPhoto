@@ -59,34 +59,146 @@ async function listObjects(prefix = '', marker = '', maxKeys = 1000) {
   });
 }
 
-// 获取所有用户的照片（支持两种目录结构）
-// 结构1: users/{userId}/{type}/{filename} - 用户上传的照片
-// 结构2: id-photo/{gender}/{filename} - 证件照模板
+// 获取所有用户的照片
+// 支持三种存储结构:
+// 1. 旧版层级: users/{userId}/{type}/{filename}
+// 2. 新版扁平: {userId}_{type}_{timestamp}_{random}.jpg 或 {userId}_{scene}_{type}_{timestamp}_{random}.jpg
+// 3. 模板: id-photo/{gender}/{filename}
 async function getAllUserPhotos() {
   const photos = [];
-
-  // 扫描 users/ 目录（用户照片）
   let marker = '';
   let isTruncated = true;
 
+  // 扫描整个存储桶
   while (isTruncated) {
     try {
-      const data = await listObjects('users/', marker);
+      const data = await listObjects('', marker);
 
       for (const item of data.Contents || []) {
-        // 解析路径: users/{userId}/{type}/{filename}
+        const key = item.Key;
+
+        // 跳过目录标记
+        if (key.endsWith('/')) continue;
+
+        // 只处理图片文件
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
+
+        let userId, type, fileName, scene = 'default', gender = null;
+
+        if (key.startsWith('users/')) {
+          // 旧版层级结构: users/{userId}/{type}/{filename}
+          const parts = key.split('/');
+          if (parts.length >= 4) {
+            userId = parts[1];
+            type = parts[2];
+            fileName = parts[3];
+          } else {
+            continue;
+          }
+        } else if (key.startsWith('id-photo/')) {
+          // 模板结构: id-photo/{gender}/{filename}
+          const parts = key.split('/');
+          if (parts.length >= 3) {
+            gender = parts[1];
+            userId = gender;
+            type = 'template';
+            fileName = parts[2];
+          } else {
+            continue;
+          }
+        } else if (key.startsWith('banner') || key.startsWith('feature') || key.startsWith('title') || key.startsWith('tab-') || key.startsWith('icon/')) {
+          // 跳过素材文件
+          continue;
+        } else {
+          // 新版扁平结构: {userId}_{type}_{timestamp}_{random}.jpg
+          // 或: {userId}_{scene}_{type}_{timestamp}_{random}.jpg
+          const nameParts = key.replace(/\.[^.]+$/, '').split('_');
+
+          if (nameParts.length >= 4) {
+            // 检查是否是用户照片（userId 以 user_ 或 u_ 开头）
+            if (nameParts[0] === 'user' || nameParts[0] === 'u') {
+              // userId 格式: user_timestamp_random 或 u_timestamp_random
+              let userIdEndIndex = 2;
+              userId = nameParts.slice(0, userIdEndIndex + 1).join('_');
+              const remaining = nameParts.slice(userIdEndIndex + 1);
+
+              if (remaining.length >= 3) {
+                const possibleType = remaining[0];
+                if (['temp', 'output', 'avatar', 'feedback'].includes(possibleType)) {
+                  type = possibleType;
+                  scene = 'default';
+                } else if (remaining.length >= 4 && ['temp', 'output', 'avatar', 'feedback'].includes(remaining[1])) {
+                  scene = remaining[0];
+                  type = remaining[1];
+                } else {
+                  continue;
+                }
+              } else {
+                continue;
+              }
+              fileName = key;
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+
+        const photoObj = {
+          key: key,
+          userId: userId,
+          type: type,
+          scene: scene,
+          fileName: fileName,
+          url: `${COS_CONFIG.baseUrl}/${key}`,
+          size: item.Size,
+          lastModified: item.LastModified
+        };
+
+        if (gender) {
+          photoObj.gender = gender;
+        }
+
+        photos.push(photoObj);
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      console.log('[COS] 扫描完成或出错:', e.message);
+      break;
+    }
+  }
+
+  return photos;
+}
+
+// 获取指定用户的照片
+// 支持旧版层级结构和新版扁平结构
+async function getUserPhotos(userId) {
+  const photos = [];
+  let marker = '';
+  let isTruncated = true;
+
+  // 1. 扫描旧版层级目录
+  const oldPrefix = `users/${userId}/`;
+  while (isTruncated) {
+    try {
+      const data = await listObjects(oldPrefix, marker);
+
+      for (const item of data.Contents || []) {
         const parts = item.Key.split('/');
         if (parts.length >= 4) {
-          const userId = parts[1];
-          const type = parts[2]; // temp 或 output
+          const type = parts[2];
           const fileName = parts[3];
 
-          // 只处理图片文件
           if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
             photos.push({
               key: item.Key,
               userId: userId,
               type: type,
+              scene: 'default',
               fileName: fileName,
               url: `${COS_CONFIG.baseUrl}/${item.Key}`,
               size: item.Size,
@@ -99,38 +211,119 @@ async function getAllUserPhotos() {
       isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
       marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
     } catch (e) {
-      console.log('[COS] users/ 目录扫描完成或不存在');
       break;
     }
   }
 
-  // 扫描 id-photo/ 目录（证件照模板）
+  // 2. 扫描新版扁平结构
+  marker = '';
+  isTruncated = true;
+  const flatPrefix = `${userId}_`;
+
+  while (isTruncated) {
+    try {
+      const data = await listObjects(flatPrefix, marker);
+
+      for (const item of data.Contents || []) {
+        const key = item.Key;
+        if (key.endsWith('/')) continue;
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
+
+        const nameParts = key.replace(/\.[^.]+$/, '').split('_');
+        const userIdParts = userId.split('_');
+        const remaining = nameParts.slice(userIdParts.length);
+
+        let type, scene = 'default';
+        if (remaining.length >= 3) {
+          if (['temp', 'output', 'avatar', 'feedback'].includes(remaining[0])) {
+            type = remaining[0];
+          } else if (remaining.length >= 4 && ['temp', 'output', 'avatar', 'feedback'].includes(remaining[1])) {
+            scene = remaining[0];
+            type = remaining[1];
+          } else {
+            continue;
+          }
+        } else {
+          continue;
+        }
+
+        photos.push({
+          key: key,
+          userId: userId,
+          type: type,
+          scene: scene,
+          fileName: key,
+          url: `${COS_CONFIG.baseUrl}/${key}`,
+          size: item.Size,
+          lastModified: item.LastModified
+        });
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      break;
+    }
+  }
+
+  return photos;
+}
+
+// 获取所有用户ID列表
+// 支持旧版层级结构和新版扁平结构
+async function getAllUserIds() {
+  const userIds = new Set();
+  let marker = '';
+  let isTruncated = true;
+
+  // 1. 扫描旧版层级目录
+  while (isTruncated) {
+    try {
+      const data = await listObjects('users/', marker, 1000);
+
+      for (const item of data.Contents || []) {
+        const parts = item.Key.split('/');
+        if (parts.length >= 2 && parts[1]) {
+          userIds.add(parts[1]);
+        }
+      }
+
+      for (const prefix of data.CommonPrefixes || []) {
+        const parts = prefix.Prefix.split('/');
+        if (parts.length >= 2 && parts[1]) {
+          userIds.add(parts[1]);
+        }
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      break;
+    }
+  }
+
+  // 2. 扫描新版扁平结构
   marker = '';
   isTruncated = true;
 
   while (isTruncated) {
     try {
-      const data = await listObjects('id-photo/', marker);
+      const data = await listObjects('', marker, 1000);
 
       for (const item of data.Contents || []) {
-        // 解析路径: id-photo/{gender}/{filename}
-        const parts = item.Key.split('/');
-        if (parts.length >= 3) {
-          const gender = parts[1]; // female 或 male
-          const fileName = parts[2];
+        const key = item.Key;
+        if (key.endsWith('/')) continue;
+        if (key.startsWith('users/') || key.startsWith('id-photo/') || key.startsWith('banner')) continue;
+        if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(key)) continue;
 
-          // 只处理图片文件
-          if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-            photos.push({
-              key: item.Key,
-              userId: gender, // 用性别作为分类
-              type: 'template', // 模板类型
-              fileName: fileName,
-              url: `${COS_CONFIG.baseUrl}/${item.Key}`,
-              size: item.Size,
-              lastModified: item.LastModified,
-              gender: gender
-            });
+        const parts = key.replace(/\.[^.]+$/, '').split('_');
+        if (parts.length >= 4) {
+          if (parts[0] === 'user' && parts.length >= 3) {
+            const userId = `${parts[0]}_${parts[1]}_${parts[2]}`;
+            userIds.add(userId);
+          } else if (parts[0] === 'u' && parts.length >= 3) {
+            const userId = `${parts[0]}_${parts[1]}_${parts[2]}`;
+            userIds.add(userId);
           }
         }
       }
@@ -138,77 +331,8 @@ async function getAllUserPhotos() {
       isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
       marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
     } catch (e) {
-      console.log('[COS] id-photo/ 目录扫描完成或不存在');
       break;
     }
-  }
-
-  return photos;
-}
-
-// 获取指定用户的照片
-async function getUserPhotos(userId) {
-  const photos = [];
-  let marker = '';
-  let isTruncated = true;
-  const prefix = `users/${userId}/`;
-
-  while (isTruncated) {
-    const data = await listObjects(prefix, marker);
-
-    for (const item of data.Contents || []) {
-      const parts = item.Key.split('/');
-      if (parts.length >= 4) {
-        const type = parts[2];
-        const fileName = parts[3];
-
-        if (fileName && /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-          photos.push({
-            key: item.Key,
-            userId: userId,
-            type: type,
-            fileName: fileName,
-            url: `${COS_CONFIG.baseUrl}/${item.Key}`,
-            size: item.Size,
-            lastModified: item.LastModified
-          });
-        }
-      }
-    }
-
-    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
-    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
-  }
-
-  return photos;
-}
-
-// 获取所有用户ID列表
-async function getAllUserIds() {
-  const userIds = new Set();
-  let marker = '';
-  let isTruncated = true;
-
-  while (isTruncated) {
-    const data = await listObjects('users/', marker, 1000);
-
-    for (const item of data.Contents || []) {
-      const parts = item.Key.split('/');
-      if (parts.length >= 2 && parts[1]) {
-        userIds.add(parts[1]);
-      }
-    }
-
-    // 也检查CommonPrefixes（目录）
-    for (const prefix of data.CommonPrefixes || []) {
-      const parts = prefix.Prefix.split('/');
-      if (parts.length >= 2 && parts[1]) {
-        userIds.add(parts[1]);
-      }
-    }
-
-    isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
-    marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
   }
 
   return Array.from(userIds);

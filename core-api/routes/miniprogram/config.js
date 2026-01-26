@@ -304,12 +304,12 @@ router.post('/cos/upload-credential', async (req, res) => {
     const randomStr = Math.random().toString(36).substr(2, 9);
     const finalFileName = fileName || `${timestamp}_${randomStr}.jpg`;
 
-    // 构建 COS key
+    // 构建扁平化 COS key: {userId}_{scene}_{type}_{filename} 或 {userId}_{type}_{filename}
     let key;
     if (scene) {
-      key = `users/${userId}/${scene}/${type}/${finalFileName}`;
+      key = `${userId}_${scene}_${type}_${finalFileName}`;
     } else {
-      key = `users/${userId}/${type}/${finalFileName}`;
+      key = `${userId}_${type}_${finalFileName}`;
     }
 
     // 生成预签名上传 URL（有效期 15 分钟）
@@ -352,11 +352,12 @@ router.post('/cos/batch-upload-credentials', async (req, res) => {
       const randomStr = Math.random().toString(36).substr(2, 9);
       const finalFileName = fileName || `${timestamp}_${randomStr}.jpg`;
 
+      // 扁平化路径: {userId}_{scene}_{type}_{filename} 或 {userId}_{type}_{filename}
       let key;
       if (scene) {
-        key = `users/${userId}/${scene}/${type}/${finalFileName}`;
+        key = `${userId}_${scene}_${type}_${finalFileName}`;
       } else {
-        key = `users/${userId}/${type}/${finalFileName}`;
+        key = `${userId}_${type}_${finalFileName}`;
       }
 
       try {

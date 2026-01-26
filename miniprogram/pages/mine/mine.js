@@ -468,7 +468,8 @@ Page({
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).substr(2, 9);
         const fileName = `avatar_${timestamp}_${randomStr}.jpg`;
-        const key = `users/${cosUserId}/avatar/${fileName}`;
+        // 扁平化路径: {userId}_avatar_{filename}
+        const key = `${cosUserId}_avatar_${fileName}`;
 
         const cosUrl = await uploadWxTempFile(avatarUrl, key);
         newAvatarUrl = cosUrl;
@@ -587,7 +588,8 @@ Page({
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).substr(2, 9);
         const fileName = `avatar_${timestamp}_${randomStr}.jpg`;
-        const key = `users/${cosUserId}/avatar/${fileName}`;
+        // 扁平化路径: {userId}_avatar_{filename}
+        const key = `${cosUserId}_avatar_${fileName}`;
 
         // 上传到COS
         const cosUrl = await uploadToCOS(tempAvatarUrl, key);

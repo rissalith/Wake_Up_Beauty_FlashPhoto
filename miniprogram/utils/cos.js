@@ -26,9 +26,18 @@ function getUserId() {
   return userId;
 }
 
-// 获取用户的COS路径前缀
+// 获取用户的COS路径前缀（已废弃，保留兼容）
 function getUserPath() {
-  return `users/${getUserId()}`;
+  return getUserId();
+}
+
+// 生成扁平化的 COS key
+// 格式: {userId}_{type}_{timestamp}_{random}.jpg
+function generateFlatKey(userId, type, scene = '') {
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 11);
+  const scenePrefix = scene ? `${scene}_` : '';
+  return `${userId}_${scenePrefix}${type}_${timestamp}_${randomStr}.jpg`;
 }
 
 // ========== 安全上传方式（推荐）==========
@@ -166,7 +175,8 @@ function uploadImage(base64Data, type = 'temp', fileName = null) {
     const randomStr = Math.random().toString(36).substr(2, 9);
     const ext = 'jpg'; // 默认jpg格式
     const finalFileName = fileName || `${timestamp}_${randomStr}.${ext}`;
-    const key = `users/${userId}/${type}/${finalFileName}`;
+    // 扁平化路径: {userId}_{type}_{filename}
+    const key = `${userId}_${type}_${finalFileName}`;
 
     // 先将base64保存为临时文件
     const tempFilePath = `${wx.env.USER_DATA_PATH}/temp_upload_${timestamp}.${ext}`;
@@ -218,7 +228,8 @@ function uploadImageDirect(base64Data, type = 'temp') {
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substr(2, 9);
     const fileName = `${timestamp}_${randomStr}.jpg`;
-    const key = `users/${userId}/${type}/${fileName}`;
+    // 扁平化路径: {userId}_{type}_{filename}
+    const key = `${userId}_${type}_${fileName}`;
     const imageUrl = `${COS_CONFIG.baseUrl}/${key}`;
 
     // 先保存为本地临时文件
@@ -283,7 +294,8 @@ function saveImage(base64Data, type = 'temp') {
       encoding: 'base64',
       success: () => {
         // 尝试上传到COS（异步，不阻塞）
-        const key = `users/${userId}/${type}/${fileName}`;
+        // 扁平化路径: {userId}_{type}_{filename}
+        const key = `${userId}_${type}_${fileName}`;
         const cosUrl = `${COS_CONFIG.baseUrl}/${key}`;
 
         // 异步上传到COS作为备份
@@ -330,12 +342,12 @@ function saveImageToCOS(base64Data, type = 'output', scene = '') {
     const randomStr = Math.random().toString(36).substring(2, 11);
     const fileName = `${timestamp}_${randomStr}.jpg`;
 
-    // 兼容旧版调用：如果scene为空，使用旧的目录结构
+    // 扁平化路径: {userId}_{scene}_{type}_{filename} 或 {userId}_{type}_{filename}
     let key;
     if (scene) {
-      key = `users/${userId}/${scene}/${type}/${fileName}`;
+      key = `${userId}_${scene}_${type}_${fileName}`;
     } else {
-      key = `users/${userId}/${type}/${fileName}`;
+      key = `${userId}_${type}_${fileName}`;
     }
     const cosUrl = `${COS_CONFIG.baseUrl}/${key}`;
 

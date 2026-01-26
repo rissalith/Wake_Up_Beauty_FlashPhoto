@@ -80,7 +80,8 @@ Component({
           const cosUserId = getUserId();
           const timestamp = Date.now();
           const randomStr = Math.random().toString(36).substr(2, 9);
-          const key = `users/${cosUserId}/avatar/avatar_${timestamp}_${randomStr}.jpg`;
+          // 扁平化路径: {userId}_avatar_{timestamp}_{random}.jpg
+          const key = `${cosUserId}_avatar_${timestamp}_${randomStr}.jpg`;
           uploadedAvatarUrl = await uploadWxTempFile(avatarUrl, key);
           console.log('头像上传成功:', uploadedAvatarUrl);
         }
