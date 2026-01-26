@@ -125,7 +125,9 @@ router.post('/:userId/adjust-points', (req, res) => {
     const { userId } = req.params;
     const { amount, reason, operator } = req.body;
 
-    if (!amount || amount === 0) {
+    // 确保 amount 是数字
+    const adjustAmount = parseInt(amount, 10);
+    if (isNaN(adjustAmount) || adjustAmount === 0) {
       return res.status(400).json({ code: -1, msg: '调整数量不能为0' });
     }
 
@@ -134,7 +136,9 @@ router.post('/:userId/adjust-points', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    const newBalance = user.points + amount;
+    // 处理 points 为 NULL 的情况
+    const currentPoints = user.points || 0;
+    const newBalance = currentPoints + adjustAmount;
 
     if (newBalance < 0) {
       return res.status(400).json({ code: -1, msg: '调整后余额不能为负数' });
