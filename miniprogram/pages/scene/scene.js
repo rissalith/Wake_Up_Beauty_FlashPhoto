@@ -348,10 +348,10 @@ I18nPage({
 
         // 处理无依赖的步骤
         if (componentType === 'gender_select') {
-          // 性别选择 - 固定选项
+          // 性别选择 - 使用语言包获取翻译
           stepOptions[key] = [
-            { id: 'male', name: currentLang === 'en' ? 'Male' : '男' },
-            { id: 'female', name: currentLang === 'en' ? 'Female' : '女' }
+            { id: 'male', name: t('fp_male') },
+            { id: 'female', name: t('fp_female') }
           ];
           selections[key] = 'male';
         } else if (componentType === 'slider') {

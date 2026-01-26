@@ -391,20 +391,21 @@ Page({
     return { allHistoryCount: all, typeFilters: typeFilters };
   },
 
-  // 获取默认类型名称（后台配置中找不到时使用）
+  // 获取默认类型名称（后台配置中找不到时使用语言包）
   getDefaultTypeName(typeId, currentLang) {
-    const defaultNames = {
-      'idphoto': { 'zh-CN': '证件照', 'en': 'ID Photo' },
-      'professional': { 'zh-CN': '职业照', 'en': 'Professional' },
-      'portrait': { 'zh-CN': '写真', 'en': 'Portrait' },
-      'family': { 'zh-CN': '全家福', 'en': 'Family' },
-      'pet': { 'zh-CN': '宠物照', 'en': 'Pet' },
-      'wedding': { 'zh-CN': '婚纱照', 'en': 'Wedding' }
+    // 使用语言包获取翻译
+    const keyMap = {
+      'idphoto': 'hist_sceneIdPhoto',
+      'professional': 'hist_sceneProfessional',
+      'portrait': 'hist_scenePortrait',
+      'family': 'hist_sceneFamily',
+      'pet': 'hist_scenePet',
+      'wedding': 'hist_sceneWedding'
     };
-    
-    const names = defaultNames[typeId];
-    if (names) {
-      return names[currentLang] || names['zh-CN'] || typeId;
+
+    const langKey = keyMap[typeId];
+    if (langKey) {
+      return lang.t(langKey);
     }
     return typeId;
   },
