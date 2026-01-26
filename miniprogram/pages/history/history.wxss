@@ -1755,7 +1755,7 @@ page {
 .photo-detail-modal {
   position: fixed;
   left: 50%;
-  top: 50%;
+  top: 42%;
   transform: translate(-50%, -50%);
   width: 640rpx;
   background: #fff;

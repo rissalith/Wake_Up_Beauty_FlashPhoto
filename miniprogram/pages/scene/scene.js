@@ -996,6 +996,34 @@ I18nPage({
 
     const app = getApp();
     if (app && app.emit) app.emit('historyUpdated');
+
+    // 当状态变为 done 时，同步到服务器
+    if (updates.status === 'done') {
+      this.syncPhotoToServer(id, history.find(item => item.id === id));
+    }
+  },
+
+  // 同步照片记录到服务器
+  async syncPhotoToServer(photoId, historyItem) {
+    if (!historyItem) return;
+
+    const userId = wx.getStorageSync('userId');
+    if (!userId) return;
+
+    try {
+      const { api } = require('../../config/api');
+      await api.createPhoto({
+        userId,
+        taskId: photoId,
+        scene: historyItem.spec || historyItem.type || '',  // 场景名称
+        spec: historyItem.spec || '',
+        originalUrl: historyItem.originalImage || '',
+        pointsCost: this.data.pointsPerPhoto || 50
+      });
+    } catch (error) {
+      // 静默处理，不影响用户体验
+      console.log('[同步] 照片记录同步失败:', error.message);
+    }
   },
 
   // 加载历史

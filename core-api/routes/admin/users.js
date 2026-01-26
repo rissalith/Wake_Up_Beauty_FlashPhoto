@@ -397,7 +397,7 @@ router.get('/:userId/activities', (req, res) => {
       SELECT * FROM (
         SELECT
           id, 'points' as activity_type, type as sub_type,
-          amount, balance_after, description, NULL as spec, NULL as bg_color,
+          amount, balance_after, description, NULL as scene, NULL as spec, NULL as bg_color,
           NULL as points_amount, NULL as bonus_points, NULL as invitee_nickname,
           NULL as reward_points, created_at
         FROM points_records
@@ -407,7 +407,7 @@ router.get('/:userId/activities', (req, res) => {
 
         SELECT
           id, 'photo' as activity_type, status as sub_type,
-          NULL as amount, NULL as balance_after, NULL as description, spec, bg_color,
+          NULL as amount, NULL as balance_after, NULL as description, scene, spec, bg_color,
           NULL as points_amount, NULL as bonus_points, NULL as invitee_nickname,
           NULL as reward_points, created_at
         FROM photo_history
@@ -417,7 +417,7 @@ router.get('/:userId/activities', (req, res) => {
 
         SELECT
           id, 'order' as activity_type, status as sub_type,
-          amount, NULL as balance_after, NULL as description, NULL as spec, NULL as bg_color,
+          amount, NULL as balance_after, NULL as description, NULL as scene, NULL as spec, NULL as bg_color,
           points_amount, bonus_points, NULL as invitee_nickname,
           NULL as reward_points, created_at
         FROM orders
@@ -427,7 +427,7 @@ router.get('/:userId/activities', (req, res) => {
 
         SELECT
           i.id, 'invite' as activity_type, i.status as sub_type,
-          NULL as amount, NULL as balance_after, NULL as description, NULL as spec, NULL as bg_color,
+          NULL as amount, NULL as balance_after, NULL as description, NULL as scene, NULL as spec, NULL as bg_color,
           NULL as points_amount, NULL as bonus_points, u.nickname as invitee_nickname,
           i.reward_points, i.created_at
         FROM invites i

@@ -731,8 +731,8 @@ const getActivityDescription = (activity) => {
       return `${sign}${amount} 醒币${desc ? ' - ' + desc : ''}`
 
     case 'photo':
-      const scene = activity.scene || '未知场景'
-      const spec = activity.spec || ''
+      const scene = activity.scene || activity.spec || '照片'
+      const spec = activity.scene ? (activity.spec || '') : ''
       const bgColor = activity.bg_color || ''
       if (subType === 'done') {
         return `生成照片成功 - ${scene}${spec ? ' · ' + spec : ''}${bgColor ? ' · ' + bgColor : ''}`
