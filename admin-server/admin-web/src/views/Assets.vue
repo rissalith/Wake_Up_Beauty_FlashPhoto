@@ -305,14 +305,12 @@ const banners = ref([])
 // 特色功能图
 const featureImages = reactive({
   'zh-CN': '',
-  'zh-TW': '',
   'en': ''
 })
 
 // 标题图片
 const titleImages = reactive({
   'zh-CN': '',
-  'zh-TW': '',
   'en': ''
 })
 

@@ -173,10 +173,8 @@ function createTables() {
       scene_key TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       name_en TEXT,
-      name_tw TEXT,
       description TEXT,
       description_en TEXT,
-      description_tw TEXT,
       icon TEXT,
       cover_image TEXT,
       price INTEGER DEFAULT 0,
@@ -201,10 +199,8 @@ function createTables() {
       step_key TEXT NOT NULL,
       step_name TEXT NOT NULL,
       step_name_en TEXT,
-      step_name_tw TEXT,
       title TEXT,
       title_en TEXT,
-      title_tw TEXT,
       step_type TEXT DEFAULT 'select',
       component_type TEXT DEFAULT 'select',
       step_order INTEGER DEFAULT 0,
@@ -226,10 +222,8 @@ function createTables() {
       option_key TEXT NOT NULL,
       name TEXT NOT NULL,
       name_en TEXT,
-      name_tw TEXT,
       label TEXT,
       label_en TEXT,
-      label_tw TEXT,
       option_value TEXT,
       image_url TEXT,
       image TEXT,
@@ -267,7 +261,6 @@ function createTables() {
       spec_key TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       name_en TEXT,
-      name_tw TEXT,
       width INTEGER NOT NULL,
       height INTEGER NOT NULL,
       ratio REAL,
@@ -471,12 +464,12 @@ async function initDefaultData() {
   const specCount = db.prepare("SELECT COUNT(*) as count FROM photo_specs").get().count;
   if (specCount === 0) {
     const specs = [
-      ['1inch', '一寸', '1 Inch', '一吋', 295, 413, 1.4, 0, 1],
-      ['2inch', '二寸', '2 Inch', '二吋', 413, 579, 1.4, 1, 1],
-      ['small1inch', '小一寸', 'Small 1 Inch', '小一吋', 260, 378, 1.45, 2, 1],
-      ['big1inch', '大一寸', 'Big 1 Inch', '大一吋', 390, 567, 1.45, 3, 1]
+      ['1inch', '一寸', '1 Inch', 295, 413, 1.4, 0, 1],
+      ['2inch', '二寸', '2 Inch', 413, 579, 1.4, 1, 1],
+      ['small1inch', '小一寸', 'Small 1 Inch', 260, 378, 1.45, 2, 1],
+      ['big1inch', '大一寸', 'Big 1 Inch', 390, 567, 1.45, 3, 1]
     ];
-    const stmt = db.prepare('INSERT INTO photo_specs (spec_key, name, name_en, name_tw, width, height, ratio, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const stmt = db.prepare('INSERT INTO photo_specs (spec_key, name, name_en, width, height, ratio, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     specs.forEach(s => stmt.run(...s));
     console.log('[Database] 已初始化默认照片规格');
   }

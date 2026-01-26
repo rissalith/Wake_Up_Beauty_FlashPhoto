@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS scene_steps (
   step_key VARCHAR(50) NOT NULL,
   step_name VARCHAR(100) NOT NULL,
   step_name_en VARCHAR(100),
-  step_name_tw VARCHAR(100),
   step_type VARCHAR(50) DEFAULT 'select',
   step_order INTEGER DEFAULT 0,
   is_required BOOLEAN DEFAULT 1,
@@ -16,7 +15,6 @@ CREATE TABLE IF NOT EXISTS scene_steps (
   gender_based BOOLEAN DEFAULT 0,
   title VARCHAR(100),
   title_en VARCHAR(100),
-  title_tw VARCHAR(100),
   component_type VARCHAR(50) DEFAULT 'select',
   is_visible BOOLEAN DEFAULT 1
 );
@@ -28,7 +26,6 @@ CREATE TABLE IF NOT EXISTS step_options (
   option_key VARCHAR(50) NOT NULL,
   name VARCHAR(100) NOT NULL,
   name_en VARCHAR(100),
-  name_tw VARCHAR(100),
   option_value VARCHAR(255),
   image_url VARCHAR(255),
   prompt_text TEXT,
@@ -37,7 +34,6 @@ CREATE TABLE IF NOT EXISTS step_options (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   label VARCHAR(100),
   label_en VARCHAR(100),
-  label_tw VARCHAR(100),
   color VARCHAR(50),
   image VARCHAR(255),
   is_visible BOOLEAN DEFAULT 1,

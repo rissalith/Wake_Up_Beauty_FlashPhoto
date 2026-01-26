@@ -457,17 +457,14 @@ async function getAllAssets() {
   const result = {
     banners: {
       'zh-CN': [],
-      'zh-TW': [],
       'en': []
     },
     features: {
       'zh-CN': '',
-      'zh-TW': '',
       'en': ''
     },
     titles: {
       'zh-CN': '',
-      'zh-TW': '',
       'en': ''
     },
     tabbar: {
@@ -487,8 +484,6 @@ async function getAllAssets() {
     // Banner
     if (key.startsWith('banner/') && fileName) {
       result.banners['zh-CN'].push({ key, url, fileName });
-    } else if (key.startsWith('banner-tw/') && fileName) {
-      result.banners['zh-TW'].push({ key, url, fileName });
     } else if (key.startsWith('banner-en/') && fileName) {
       result.banners['en'].push({ key, url, fileName });
     }
@@ -496,8 +491,6 @@ async function getAllAssets() {
     // Feature图片
     else if (key === 'feature-zh-cn.png') {
       result.features['zh-CN'] = url;
-    } else if (key === 'feature-zh-tw.png') {
-      result.features['zh-TW'] = url;
     } else if (key === 'feature-en.png') {
       result.features['en'] = url;
     }
@@ -505,8 +498,6 @@ async function getAllAssets() {
     // Title图片
     else if (key === 'title-zh-cn.png') {
       result.titles['zh-CN'] = url;
-    } else if (key === 'title-zh-tw.png') {
-      result.titles['zh-TW'] = url;
     } else if (key === 'title-en.png') {
       result.titles['en'] = url;
     }

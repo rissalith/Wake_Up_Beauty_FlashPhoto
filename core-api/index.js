@@ -504,15 +504,15 @@ app.post('/api/assets/upload', assetUpload.single('file'), async (req, res) => {
 
     switch (category) {
       case 'banner':
-        const bannerDir = lang === 'zh-TW' ? 'banner-tw' : lang === 'en' ? 'banner-en' : 'banner';
+        const bannerDir = lang === 'en' ? 'banner-en' : 'banner';
         key = `${bannerDir}/${timestamp}${ext}`;
         break;
       case 'feature':
-        const featureLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        const featureLang = lang === 'en' ? 'en' : 'zh-cn';
         key = `feature-${featureLang}${ext}`;
         break;
       case 'title':
-        const titleLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        const titleLang = lang === 'en' ? 'en' : 'zh-cn';
         key = `title-${titleLang}${ext}`;
         break;
       case 'tabbar':
@@ -582,8 +582,7 @@ app.get('/api/assets/banners', async (req, res) => {
 
     const { lang = 'zh-CN' } = req.query;
     let prefix = 'banner/';
-    if (lang === 'zh-TW') prefix = 'banner-tw/';
-    else if (lang === 'en') prefix = 'banner-en/';
+    if (lang === 'en') prefix = 'banner-en/';
 
     const data = await listAssetObjects(prefix);
     const banners = (data.Contents || [])
@@ -812,7 +811,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
         for (const step of steps) {
           const title = step.title || step.step_name || 'Untitled';
           const titleEn = step.title_en || step.step_name_en || 'Untitled';
-          const titleTw = step.title_tw || step.step_name_tw || '未命名';
           const componentType = step.component_type || step.step_type || 'select';
           const isVisible = step.is_visible !== undefined ? step.is_visible : (step.is_active !== false);
           const configStr = step.config ? JSON.stringify(step.config) : '';
@@ -823,7 +821,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
               step_key = ?,
               title = ?,
               title_en = ?,
-              title_tw = ?,
               component_type = ?,
               step_order = ?,
               is_required = ?,
@@ -835,7 +832,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
               step.step_key || '',
               title,
               titleEn,
-              titleTw,
               componentType,
               step.step_order || 0,
               step.is_required ? 1 : 0,
@@ -848,16 +844,14 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
             stepIdMap[step.id] = step.id;
           } else {
             // 插入新步骤
-            const result = db.prepare(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, step_name_tw, title, title_en, title_tw, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`).run(
+            const result = db.prepare(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, title, title_en, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`).run(
               sceneId,
               step.step_key || '',
               title,
               titleEn,
-              titleTw,
               title,
               titleEn,
-              titleTw,
               componentType,
               step.step_order || 0,
               step.is_required ? 1 : 0,
@@ -903,7 +897,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
           for (const opt of step.options) {
             const label = opt.label || opt.name || '';
             const labelEn = opt.label_en || opt.name_en || '';
-            const labelTw = opt.label_tw || opt.name_tw || '';
             const image = opt.image || opt.image_url || '';
             const color = opt.color || opt.option_value || '';
             const promptText = opt.prompt_text || '';
@@ -919,7 +912,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 option_key = ?,
                 label = ?,
                 label_en = ?,
-                label_tw = ?,
                 color = ?,
                 image = ?,
                 prompt_text = ?,
@@ -933,7 +925,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.option_key || '',
                 label,
                 labelEn,
-                labelTw,
                 color,
                 image,
                 promptText,
@@ -946,13 +937,12 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.id
               );
             } else {
-              db.prepare(`INSERT INTO step_options (step_id, option_key, label, label_en, label_tw, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+              db.prepare(`INSERT INTO step_options (step_id, option_key, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                 realStepId,
                 opt.option_key || '',
                 label,
                 labelEn,
-                labelTw,
                 color,
                 image,
                 promptText,

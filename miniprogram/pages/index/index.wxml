@@ -46,7 +46,7 @@
   </view>
 
   <!-- 页面内容 -->
-  <view class="container" style="padding-top: {{navBarHeight + 260}}px;">
+  <view class="container" style="padding-top: {{navBarHeight + 180}}px;">
 
     <!-- 公告提示 -->
     <view class="announcement-bar" wx:if="{{announcement}}">

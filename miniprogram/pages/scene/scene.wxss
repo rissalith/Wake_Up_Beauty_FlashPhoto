@@ -445,7 +445,7 @@
 
 .image-tag-options {
   display: inline-flex;
-  gap: 12rpx;
+  gap: 16rpx;
   padding: 4rpx 0;
 }
 
@@ -453,12 +453,14 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  width: 100rpx;
-  padding: 8rpx;
+  min-width: 120rpx;
+  width: auto;
+  padding: 12rpx 12rpx;
   background: #f5f5f5;
   border-radius: 8rpx;
   border: 2rpx solid transparent;
   transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .image-tag-item.active {
@@ -491,12 +493,10 @@
 .tag-name {
   font-size: 20rpx;
   color: #666;
-  margin-top: 6rpx;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90rpx;
+  margin-top: 8rpx;
   text-align: center;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .image-tag-item.active .tag-name {

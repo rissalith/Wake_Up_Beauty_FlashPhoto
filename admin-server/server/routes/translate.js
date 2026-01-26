@@ -133,58 +133,11 @@ async function translateText(text, source = 'zh', target = 'en') {
   });
 }
 
-// 简体转繁体的本地映射（保留作为备用）
-const s2tMap = {
-  '证': '證', '件': '件', '职': '職', '业': '業', '写': '寫', '真': '真',
-  '全': '全', '家': '家', '福': '福', '宠': '寵', '物': '物', '婚': '婚', '纱': '紗',
-  '选': '選', '择': '擇', '别': '別', '颜': '顏', '色': '色', '蓝': '藍', '红': '紅',
-  '规': '規', '专': '專', '头': '頭', '风': '風', '简': '簡', '约': '約', '时': '時',
-  '尚': '尚', '智': '智', '能': '能', '点': '點', '击': '擊', '图': '圖', '传': '傳',
-  '发': '發', '型': '型', '装': '裝', '标': '標', '准': '準', '质': '質', '量': '量',
-  '制': '製', '调': '調', '滤': '濾', '镜': '鏡', '经': '經', '现': '現', '户': '戶',
-  '护': '護', '驾': '駛', '毕': '畢', '结': '結', '学': '學', '历': '歷', '签': '簽',
-  '请': '請', '输': '輸', '确': '確', '认': '認', '开': '開', '继': '繼', '续': '續',
-  '删': '刪', '查': '查', '详': '詳', '细': '細', '设': '設', '关': '關', '闭': '閉',
-  '预': '預', '览': '覽', '导': '導', '热': '熱', '门': '門', '显': '顯', '隐': '隱',
-  '启': '啟', '审': '審', '过': '過', '绝': '絕', '处': '處', '进': '進', '订': '訂',
-  '单': '單', '付': '付', '费': '費', '会': '會', '员': '員', '积': '積', '兑': '兌',
-  '优': '優', '惠': '惠', '满': '滿', '减': '減', '参': '參', '与': '與', '领': '領',
-  '奖': '獎', '礼': '禮', '购': '購', '买': '買', '车': '車', '数': '數', '总': '總',
-  '计': '計', '统': '統', '报': '報', '线': '線', '饼': '餅', '趋': '趨', '势': '勢',
-  '长': '長', '环': '環', '额': '額', '笔': '筆', '价': '價', '访': '訪', '问': '問',
-  '浏': '瀏', '转': '轉', '响': '響', '应': '應', '间': '間', '负': '負', '载': '載',
-  '并': '並', '连': '連', '断': '斷', '异': '異', '错': '錯', '误': '誤', '严': '嚴',
-  '紧': '緊', '级': '級', '状': '狀', '态': '態', '维': '維', '升': '級', '滚': '滾',
-  '备': '備', '恢': '恢', '复': '復', '迁': '遷', '扩': '擴', '缩': '縮', '缓': '緩',
-  '页': '頁', '顶': '頂', '边': '邊', '宽': '寬', '体': '體', '划': '劃', '链': '鏈',
-  '题': '題', '马': '馬', '龙': '龍', '华': '華', '国': '國', '电': '電', '话': '話',
-  '网': '網', '络': '絡', '邮': '郵', '联': '聯', '码': '碼', '验': '驗', '账': '賬',
-  '号': '號', '称': '稱', '绍': '紹', '机': '機', '构': '構', '组': '組', '织': '織',
-  '权': '權', '游': '遊', '录': '錄', '册': '冊', '记': '記', '语': '語', '韩': '韓',
-  '亚': '亞', '欧': '歐', '岛': '島', '云': '雲', '节': '節', '庆': '慶', '诞': '誕',
-  '侣': '侶', '亲': '親', '爱': '愛', '丽': '麗', '帅': '帥', '气': '氣', '范': '範',
-  '儿': '兒', '宝': '寶', '贝': '貝', '妈': '媽', '爷': '爺', '孙': '孫', '谱': '譜',
-  '辈': '輩', '猫': '貓', '鸟': '鳥', '鱼': '魚', '虫': '蟲', '兽': '獸', '鸡': '雞',
-  '鸭': '鴨', '鹅': '鵝', '猪': '豬', '驴': '驢', '骆': '駱', '驼': '駝', '狮': '獅',
-  '鹿': '鹿', '龟': '龜', '蚂': '螞', '蚁': '蟻', '蝴': '蝴', '萤': '螢', '树': '樹',
-  '兰': '蘭', '枣': '棗', '苹': '蘋', '柠': '檸', '个': '個', '来': '來', '闲': '閒',
-  '动': '動'
-};
-
-function simplifiedToTraditional(text) {
-  if (!text) return '';
-  let result = '';
-  for (const char of text) {
-    result += s2tMap[char] || char;
-  }
-  return result;
-}
-
 // 翻译接口 - 简体转英文
 router.post('/to-english', async (req, res) => {
   try {
     const { text } = req.body;
-    
+
     if (!text || typeof text !== 'string') {
       return res.json({ code: 400, message: '请提供要翻译的文本' });
     }
@@ -194,7 +147,7 @@ router.post('/to-english', async (req, res) => {
     }
 
     const translatedText = await translateText(text, 'zh', 'en');
-    
+
     res.json({
       code: 200,
       data: {
@@ -208,35 +161,11 @@ router.post('/to-english', async (req, res) => {
   }
 });
 
-// 翻译接口 - 简体转繁体（本地转换）
-router.post('/to-traditional', async (req, res) => {
-  try {
-    const { text } = req.body;
-    
-    if (!text || typeof text !== 'string') {
-      return res.json({ code: 400, message: '请提供要翻译的文本' });
-    }
-
-    const translatedText = simplifiedToTraditional(text);
-    
-    res.json({
-      code: 200,
-      data: {
-        original: text,
-        translated: translatedText
-      }
-    });
-  } catch (error) {
-    console.error('转换失败:', error.message);
-    res.json({ code: 500, message: '转换失败: ' + error.message });
-  }
-});
-
 // 批量翻译接口
 router.post('/batch', async (req, res) => {
   try {
-    const { texts, target = 'en' } = req.body;
-    
+    const { texts } = req.body;
+
     if (!Array.isArray(texts) || texts.length === 0) {
       return res.json({ code: 400, message: '请提供要翻译的文本数组' });
     }
@@ -249,9 +178,7 @@ router.post('/batch', async (req, res) => {
     for (const text of texts) {
       if (text && typeof text === 'string') {
         try {
-          const translated = target === 'zh-TW' 
-            ? simplifiedToTraditional(text)
-            : await translateText(text, 'zh', 'en');
+          const translated = await translateText(text, 'zh', 'en');
           results.push({ original: text, translated });
         } catch (e) {
           results.push({ original: text, translated: text, error: e.message });
@@ -260,7 +187,7 @@ router.post('/batch', async (req, res) => {
         results.push({ original: text, translated: text });
       }
     }
-    
+
     res.json({
       code: 200,
       data: results

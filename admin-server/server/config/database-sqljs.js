@@ -271,10 +271,8 @@ async function initDatabase() {
       scene_key VARCHAR(50) UNIQUE NOT NULL,
       name VARCHAR(100) NOT NULL,
       name_en VARCHAR(100),
-      name_tw VARCHAR(100),
       description TEXT,
       description_en TEXT,
-      description_tw TEXT,
       icon VARCHAR(255),
       cover_image VARCHAR(255),
       price INTEGER DEFAULT 0,
@@ -298,7 +296,6 @@ async function initDatabase() {
       step_key VARCHAR(50) NOT NULL,
       step_name VARCHAR(100) NOT NULL,
       step_name_en VARCHAR(100),
-      step_name_tw VARCHAR(100),
       step_type VARCHAR(50) DEFAULT 'select',
       step_order INTEGER DEFAULT 0,
       is_required BOOLEAN DEFAULT 1,
@@ -316,7 +313,6 @@ async function initDatabase() {
       option_key VARCHAR(50) NOT NULL,
       name VARCHAR(100) NOT NULL,
       name_en VARCHAR(100),
-      name_tw VARCHAR(100),
       option_value VARCHAR(255),
       image_url VARCHAR(255),
       prompt_text TEXT,
@@ -359,7 +355,6 @@ async function initDatabase() {
       spec_key VARCHAR(50) UNIQUE NOT NULL,
       name VARCHAR(100) NOT NULL,
       name_en VARCHAR(100),
-      name_tw VARCHAR(100),
       width INTEGER NOT NULL,
       height INTEGER NOT NULL,
       ratio DECIMAL(5,2),
@@ -396,21 +391,18 @@ async function initDatabase() {
   addColumnIfNotExists('scenes', 'use_dynamic_render', 'BOOLEAN DEFAULT 0');
   addColumnIfNotExists('scenes', 'coming_soon_text', 'VARCHAR(100)');
   addColumnIfNotExists('scenes', 'description_en', 'TEXT');
-  addColumnIfNotExists('scenes', 'description_tw', 'TEXT');
 
   // 迁移：为scene_steps表添加新字段（如果不存在）
   addColumnIfNotExists('scene_steps', 'icon', 'VARCHAR(255)');
   addColumnIfNotExists('scene_steps', 'gender_based', 'BOOLEAN DEFAULT 0');
   addColumnIfNotExists('scene_steps', 'title', 'VARCHAR(100)');
   addColumnIfNotExists('scene_steps', 'title_en', 'VARCHAR(100)');
-  addColumnIfNotExists('scene_steps', 'title_tw', 'VARCHAR(100)');
   addColumnIfNotExists('scene_steps', 'component_type', "VARCHAR(50) DEFAULT 'select'");
   addColumnIfNotExists('scene_steps', 'is_visible', 'BOOLEAN DEFAULT 1');
 
   // 迁移：为step_options表添加新字段（如果不存在）
   addColumnIfNotExists('step_options', 'label', 'VARCHAR(100)');
   addColumnIfNotExists('step_options', 'label_en', 'VARCHAR(100)');
-  addColumnIfNotExists('step_options', 'label_tw', 'VARCHAR(100)');
   addColumnIfNotExists('step_options', 'color', 'VARCHAR(50)');
   addColumnIfNotExists('step_options', 'image', 'VARCHAR(255)');
   addColumnIfNotExists('step_options', 'is_visible', 'BOOLEAN DEFAULT 1');
@@ -441,13 +433,13 @@ async function initDatabase() {
     const existingSpecs = getAll("SELECT id FROM photo_specs");
     if (existingSpecs.length === 0) {
       const defaultSpecs = [
-        { key: '1inch', name: '一寸', name_en: '1 Inch', name_tw: '一吋', width: 295, height: 413, ratio: 1.4, sort: 0 },
-        { key: '2inch', name: '二寸', name_en: '2 Inch', name_tw: '二吋', width: 413, height: 579, ratio: 1.4, sort: 1 },
-        { key: 'small1inch', name: '小一寸', name_en: 'Small 1 Inch', name_tw: '小一吋', width: 260, height: 378, ratio: 1.45, sort: 2 },
-        { key: 'big1inch', name: '大一寸', name_en: 'Big 1 Inch', name_tw: '大一吋', width: 390, height: 567, ratio: 1.45, sort: 3 }
+        { key: '1inch', name: '一寸', name_en: '1 Inch', width: 295, height: 413, ratio: 1.4, sort: 0 },
+        { key: '2inch', name: '二寸', name_en: '2 Inch', width: 413, height: 579, ratio: 1.4, sort: 1 },
+        { key: 'small1inch', name: '小一寸', name_en: 'Small 1 Inch', width: 260, height: 378, ratio: 1.45, sort: 2 },
+        { key: 'big1inch', name: '大一寸', name_en: 'Big 1 Inch', width: 390, height: 567, ratio: 1.45, sort: 3 }
       ];
       defaultSpecs.forEach(spec => {
-        db.run(`INSERT INTO photo_specs (spec_key, name, name_en, name_tw, width, height, ratio, sort_order) VALUES ('${spec.key}', '${spec.name}', '${spec.name_en}', '${spec.name_tw}', ${spec.width}, ${spec.height}, ${spec.ratio}, ${spec.sort})`);
+        db.run(`INSERT INTO photo_specs (spec_key, name, name_en, width, height, ratio, sort_order) VALUES ('${spec.key}', '${spec.name}', '${spec.name_en}', ${spec.width}, ${spec.height}, ${spec.ratio}, ${spec.sort})`);
       });
     }
   } catch (e) {

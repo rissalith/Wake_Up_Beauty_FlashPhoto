@@ -110,17 +110,14 @@ router.get('/list', authMiddleware, async (req, res) => {
     const result = {
       banners: {
         'zh-CN': [],
-        'zh-TW': [],
         'en': []
       },
       features: {
         'zh-CN': '',
-        'zh-TW': '',
         'en': ''
       },
       titles: {
         'zh-CN': '',
-        'zh-TW': '',
         'en': ''
       },
       tabbar: {
@@ -140,8 +137,6 @@ router.get('/list', authMiddleware, async (req, res) => {
       // Banner
       if (key.startsWith('banner/') && fileName) {
         result.banners['zh-CN'].push({ key, url, fileName });
-      } else if (key.startsWith('banner-tw/') && fileName) {
-        result.banners['zh-TW'].push({ key, url, fileName });
       } else if (key.startsWith('banner-en/') && fileName) {
         result.banners['en'].push({ key, url, fileName });
       }
@@ -149,8 +144,6 @@ router.get('/list', authMiddleware, async (req, res) => {
       // Feature图片
       else if (key === 'feature-zh-cn.png') {
         result.features['zh-CN'] = url;
-      } else if (key === 'feature-zh-tw.png') {
-        result.features['zh-TW'] = url;
       } else if (key === 'feature-en.png') {
         result.features['en'] = url;
       }
@@ -158,8 +151,6 @@ router.get('/list', authMiddleware, async (req, res) => {
       // Title图片
       else if (key === 'title-zh-cn.png') {
         result.titles['zh-CN'] = url;
-      } else if (key === 'title-zh-tw.png') {
-        result.titles['zh-TW'] = url;
       } else if (key === 'title-en.png') {
         result.titles['en'] = url;
       }
@@ -208,8 +199,7 @@ router.get('/banners', authMiddleware, async (req, res) => {
   try {
     const { lang = 'zh-CN' } = req.query;
     let prefix = 'banner/';
-    if (lang === 'zh-TW') prefix = 'banner-tw/';
-    else if (lang === 'en') prefix = 'banner-en/';
+    if (lang === 'en') prefix = 'banner-en/';
 
     const data = await listAssetObjects(prefix);
     const banners = (data.Contents || [])
@@ -270,17 +260,17 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
     // 根据分类确定存储路径
     switch (category) {
       case 'banner':
-        const bannerDir = lang === 'zh-TW' ? 'banner-tw' : lang === 'en' ? 'banner-en' : 'banner';
+        const bannerDir = lang === 'en' ? 'banner-en' : 'banner';
         key = `${bannerDir}/${timestamp}${ext}`;
         break;
 
       case 'feature':
-        const featureLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        const featureLang = lang === 'en' ? 'en' : 'zh-cn';
         key = `feature-${featureLang}${ext}`;
         break;
 
       case 'title':
-        const titleLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+        const titleLang = lang === 'en' ? 'en' : 'zh-cn';
         key = `title-${titleLang}${ext}`;
         break;
 
@@ -553,8 +543,7 @@ router.get('/config', async (req, res) => {
 
     // 获取Banner列表
     let bannerPrefix = 'banner/';
-    if (lang === 'zh-TW') bannerPrefix = 'banner-tw/';
-    else if (lang === 'en') bannerPrefix = 'banner-en/';
+    if (lang === 'en') bannerPrefix = 'banner-en/';
 
     const bannerData = await listAssetObjects(bannerPrefix);
     const banners = (bannerData.Contents || [])
@@ -563,11 +552,11 @@ router.get('/config', async (req, res) => {
       .sort();
 
     // Feature图片
-    const featureLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+    const featureLang = lang === 'en' ? 'en' : 'zh-cn';
     const featureImage = `${ASSET_COS_CONFIG.baseUrl}/feature-${featureLang}.png`;
 
     // Title图片
-    const titleLang = lang === 'zh-TW' ? 'zh-tw' : lang === 'en' ? 'en' : 'zh-cn';
+    const titleLang = lang === 'en' ? 'en' : 'zh-cn';
     const titleImage = `${ASSET_COS_CONFIG.baseUrl}/title-${titleLang}.png`;
 
     res.json({

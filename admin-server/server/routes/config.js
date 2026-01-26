@@ -74,7 +74,7 @@ router.get('/scenes', (req, res) => {
     const isReviewMode = reviewConfig && (reviewConfig.config_value === 'true' || reviewConfig.config_value === '1');
 
     // 只返回 active 和 coming_soon 状态的场景
-    let sql = `SELECT id, name, name_en, name_tw, description, description_en, description_tw,
+    let sql = `SELECT id, name, name_en, description, description_en,
       icon, cover_image, points_cost, status, page_path, use_dynamic_render, sort_order
       FROM scenes WHERE status IN ('active', 'coming_soon')`;
     if (isReviewMode) {
@@ -118,7 +118,6 @@ router.get('/scene/:id', (req, res) => {
           id: opt.option_key,
           name: opt.label,
           nameEn: opt.label_en,
-          nameTw: opt.label_tw,
           value: opt.option_key,
           image: opt.image,
           color: opt.color,
@@ -222,7 +221,6 @@ router.get('/init', (req, res) => {
             id: opt.option_key,
             name: opt.label || opt.name,
             nameEn: opt.label_en || opt.name_en,
-            nameTw: opt.label_tw || opt.name_tw,
             value: opt.option_value || opt.color || '',
             image: opt.image || opt.image_url ? `${opt.image || opt.image_url}${(opt.image || opt.image_url).includes('?') ? '&' : '?'}v=${IMG_VERSION}` : '',
             color: opt.color || '',
@@ -286,8 +284,8 @@ router.get('/init', (req, res) => {
 router.post('/admin/scene', (req, res) => {
   try {
     const {
-      id, scene_key, name, name_en, name_tw,
-      description, description_en, description_tw,
+      id, scene_key, name, name_en,
+      description, description_en,
       icon, cover_image, price, points_cost, is_free, status,
       is_review_safe, page_path, use_dynamic_render,
       coming_soon_text, sort_order
@@ -301,10 +299,8 @@ router.post('/admin/scene', (req, res) => {
       run(`UPDATE scenes SET
         name = '${name || ''}',
         name_en = '${name_en || ''}',
-        name_tw = '${name_tw || ''}',
         description = '${description || ''}',
         description_en = '${description_en || ''}',
-        description_tw = '${description_tw || ''}',
         icon = '${icon || ''}',
         cover_image = '${cover_image || ''}',
         points_cost = ${cost},
@@ -318,8 +314,8 @@ router.post('/admin/scene', (req, res) => {
     } else {
       // 创建新场景 - 使用兼容生产数据库的字段
       const newId = scene_key || `scene_${Date.now()}`;
-      run(`INSERT INTO scenes (id, name, name_en, name_tw, description, description_en, description_tw, icon, cover_image, points_cost, status, is_review_safe, page_path, use_dynamic_render, sort_order, created_at, updated_at)
-        VALUES ('${newId}', '${name || ''}', '${name_en || ''}', '${name_tw || ''}', '${description || ''}', '${description_en || ''}', '${description_tw || ''}', '${icon || ''}', '${cover_image || ''}', ${cost}, '${status || 'offline'}', ${is_review_safe ? 1 : 0}, '${page_path || ''}', ${use_dynamic_render ? 1 : 0}, ${sort_order || 0}, datetime('now'), datetime('now'))`);
+      run(`INSERT INTO scenes (id, name, name_en, description, description_en, icon, cover_image, points_cost, status, is_review_safe, page_path, use_dynamic_render, sort_order, created_at, updated_at)
+        VALUES ('${newId}', '${name || ''}', '${name_en || ''}', '${description || ''}', '${description_en || ''}', '${icon || ''}', '${cover_image || ''}', ${cost}, '${status || 'offline'}', ${is_review_safe ? 1 : 0}, '${page_path || ''}', ${use_dynamic_render ? 1 : 0}, ${sort_order || 0}, datetime('now'), datetime('now'))`);
     }
 
     // 更新配置版本号
@@ -517,7 +513,6 @@ router.post('/admin/scene/:sceneId/step', (req, res) => {
     // 兼容前端传入的不同字段名
     const title = req.body.title || req.body.step_name || '';
     const titleEn = req.body.title_en || req.body.step_name_en || '';
-    const titleTw = req.body.title_tw || req.body.step_name_tw || '';
     const componentType = req.body.component_type || req.body.step_type || 'select';
     const isVisible = req.body.is_visible !== undefined ? req.body.is_visible : (req.body.is_active !== false);
 
@@ -527,7 +522,6 @@ router.post('/admin/scene/:sceneId/step', (req, res) => {
         step_key = '${step_key || ''}',
         title = '${title}',
         title_en = '${titleEn}',
-        title_tw = '${titleTw}',
         component_type = '${componentType}',
         step_order = ${step_order || 0},
         is_required = ${is_required ? 1 : 0},
@@ -537,8 +531,8 @@ router.post('/admin/scene/:sceneId/step', (req, res) => {
         config = '${config ? JSON.stringify(config).replace(/'/g, "''") : ''}'
         WHERE id = ${id}`);
     } else {
-      run(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, step_name_tw, title, title_en, title_tw, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
-        VALUES ('${sceneId}', '${step_key || ''}', '${title}', '${titleEn}', '${titleTw}', '${title}', '${titleEn}', '${titleTw}', '${componentType}', ${step_order || 0}, ${is_required ? 1 : 0}, ${isVisible ? 1 : 0}, '${icon || ''}', ${gender_based ? 1 : 0}, '${config ? JSON.stringify(config).replace(/'/g, "''") : ''}', datetime('now'))`);
+      run(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, title, title_en, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
+        VALUES ('${sceneId}', '${step_key || ''}', '${title}', '${titleEn}', '${title}', '${titleEn}', '${componentType}', ${step_order || 0}, ${is_required ? 1 : 0}, ${isVisible ? 1 : 0}, '${icon || ''}', ${gender_based ? 1 : 0}, '${config ? JSON.stringify(config).replace(/'/g, "''") : ''}', datetime('now'))`);
       // 获取新插入的ID
       const newStep = getOne(`SELECT id FROM scene_steps WHERE scene_id = '${sceneId}' ORDER BY id DESC LIMIT 1`);
       stepId = newStep ? newStep.id : null;
@@ -559,7 +553,6 @@ router.post('/admin/step/:stepId/option', (req, res) => {
     // 兼容前端传入的不同字段名
     const label = req.body.label || req.body.name || '';
     const labelEn = req.body.label_en || req.body.name_en || '';
-    const labelTw = req.body.label_tw || req.body.name_tw || '';
     const image = req.body.image || req.body.image_url || '';
     const color = req.body.color || req.body.option_value || '';
     const promptText = req.body.prompt_text || '';
@@ -576,7 +569,6 @@ router.post('/admin/step/:stepId/option', (req, res) => {
         option_key = '${option_key || ''}',
         label = '${label}',
         label_en = '${labelEn}',
-        label_tw = '${labelTw}',
         color = '${color}',
         image = '${image}',
         prompt_text = '${promptText.replace(/'/g, "''")}',
@@ -588,8 +580,8 @@ router.post('/admin/step/:stepId/option', (req, res) => {
         metadata = '${metadataStr}'
         WHERE id = ${id}`);
     } else {
-      run(`INSERT INTO step_options (step_id, option_key, label, label_en, label_tw, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
-        VALUES (${stepId}, '${option_key || ''}', '${label}', '${labelEn}', '${labelTw}', '${color}', '${image}', '${promptText.replace(/'/g, "''")}', ${sort_order || 0}, ${isVisible ? 1 : 0}, ${is_default ? 1 : 0}, ${gender ? `'${gender}'` : 'NULL'}, ${extra_points || 0}, '${metadataStr}')`);
+      run(`INSERT INTO step_options (step_id, option_key, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
+        VALUES (${stepId}, '${option_key || ''}', '${label}', '${labelEn}', '${color}', '${image}', '${promptText.replace(/'/g, "''")}', ${sort_order || 0}, ${isVisible ? 1 : 0}, ${is_default ? 1 : 0}, ${gender ? `'${gender}'` : 'NULL'}, ${extra_points || 0}, '${metadataStr}')`);
     }
     updateConfigVersion();
     res.json({ code: 200, message: '保存成功' });
@@ -639,7 +631,6 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
 
         const title = step.title || step.step_name || 'Untitled';  // 确保不为空
         const titleEn = step.title_en || step.step_name_en || 'Untitled';
-        const titleTw = step.title_tw || step.step_name_tw || '未命名';
         const componentType = step.component_type || step.step_type || 'select';
         const isVisible = step.is_visible !== undefined ? step.is_visible : (step.is_active !== false);
         const configStr = step.config ? JSON.stringify(step.config).replace(/'/g, "''") : '';
@@ -650,7 +641,6 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
             step_key = '${step.step_key || ''}',
             title = '${title}',
             title_en = '${titleEn}',
-            title_tw = '${titleTw}',
             component_type = '${componentType}',
             step_order = ${step.step_order || 0},
             is_required = ${step.is_required ? 1 : 0},
@@ -662,8 +652,8 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
           stepIdMap[step.id] = step.id;
         } else {
           // 插入新步骤 - 同时填充 step_name 和 title 字段以兼容数据库
-          runBatch(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, step_name_tw, title, title_en, title_tw, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
-            VALUES ('${sceneId}', '${step.step_key || ''}', '${title}', '${titleEn}', '${titleTw}', '${title}', '${titleEn}', '${titleTw}', '${componentType}', ${step.step_order || 0}, ${step.is_required ? 1 : 0}, ${isVisible ? 1 : 0}, '${step.icon || ''}', ${step.gender_based ? 1 : 0}, '${configStr}', datetime('now'))`);
+          runBatch(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, title, title_en, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
+            VALUES ('${sceneId}', '${step.step_key || ''}', '${title}', '${titleEn}', '${title}', '${titleEn}', '${componentType}', ${step.step_order || 0}, ${step.is_required ? 1 : 0}, ${isVisible ? 1 : 0}, '${step.icon || ''}', ${step.gender_based ? 1 : 0}, '${configStr}', datetime('now'))`);
         }
       }
 
@@ -705,7 +695,6 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
         for (const opt of step.options) {
           const label = opt.label || opt.name || '';
           const labelEn = opt.label_en || opt.name_en || '';
-          const labelTw = opt.label_tw || opt.name_tw || '';
           const image = opt.image || opt.image_url || '';
           const color = opt.color || opt.option_value || '';
           const promptText = (opt.prompt_text || '').replace(/'/g, "''");
@@ -721,7 +710,6 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
               option_key = '${opt.option_key || ''}',
               label = '${label}',
               label_en = '${labelEn}',
-              label_tw = '${labelTw}',
               color = '${color}',
               image = '${image}',
               prompt_text = '${promptText}',
@@ -733,8 +721,8 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
               metadata = '${metadataStr}'
               WHERE id = ${opt.id}`);
           } else {
-            runBatch(`INSERT INTO step_options (step_id, option_key, label, label_en, label_tw, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
-              VALUES (${realStepId}, '${opt.option_key || ''}', '${label}', '${labelEn}', '${labelTw}', '${color}', '${image}', '${promptText}', ${opt.sort_order || 0}, ${isVisible ? 1 : 0}, ${opt.is_default ? 1 : 0}, ${opt.gender ? `'${opt.gender}'` : 'NULL'}, ${opt.extra_points || 0}, '${metadataStr}')`);
+            runBatch(`INSERT INTO step_options (step_id, option_key, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
+              VALUES (${realStepId}, '${opt.option_key || ''}', '${label}', '${labelEn}', '${color}', '${image}', '${promptText}', ${opt.sort_order || 0}, ${isVisible ? 1 : 0}, ${opt.is_default ? 1 : 0}, ${opt.gender ? `'${opt.gender}'` : 'NULL'}, ${opt.extra_points || 0}, '${metadataStr}')`);
           }
         }
       }
@@ -777,10 +765,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'id_photo',
         name: '证件照',
         name_en: 'ID Photo',
-        name_tw: '證件照',
         desc: 'AI智能证件照，一键生成',
         desc_en: 'AI-powered ID photo generation',
-        desc_tw: 'AI智能證件照，一鍵生成',
         icon: `${CDN_BASE}/id-photo.png?${IMG_VERSION}`,
         price: 50,
         status: 'active',
@@ -792,10 +778,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'professional',
         name: '职业照',
         name_en: 'Professional Photo',
-        name_tw: '職業照',
         desc: '职场形象照，展现专业风采',
         desc_en: 'Professional headshots for career',
-        desc_tw: '職場形象照，展現專業風采',
         icon: `${CDN_BASE}/professional.png?${IMG_VERSION}`,
         price: 100,
         status: 'active',
@@ -807,10 +791,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'resume',
         name: '简历照',
         name_en: 'Resume Photo',
-        name_tw: '履歷照',
         desc: '求职简历专用，让HR眼前一亮',
         desc_en: 'Perfect for job applications',
-        desc_tw: '求職履歷專用，讓HR眼前一亮',
         icon: `${CDN_BASE}/id-photo.png?${IMG_VERSION}`,
         price: 50,
         status: 'coming_soon',
@@ -822,10 +804,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'social',
         name: '社交头像',
         name_en: 'Social Avatar',
-        name_tw: '社交頭像',
         desc: '朋友圈/社交平台形象照',
         desc_en: 'Perfect for social media profiles',
-        desc_tw: '朋友圈/社交平台形象照',
         icon: `${CDN_BASE}/portrait.png?${IMG_VERSION}`,
         price: 80,
         status: 'coming_soon',
@@ -837,10 +817,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'passport',
         name: '护照签证照',
         name_en: 'Passport Photo',
-        name_tw: '護照簽證照',
         desc: '符合各国签证规格要求',
         desc_en: 'Meets visa requirements',
-        desc_tw: '符合各國簽證規格要求',
         icon: `${CDN_BASE}/id-photo.png?${IMG_VERSION}`,
         price: 50,
         status: 'offline',
@@ -851,10 +829,8 @@ router.post('/admin/scenes/init', (req, res) => {
         key: 'student',
         name: '学生证件照',
         name_en: 'Student ID Photo',
-        name_tw: '學生證件照',
         desc: '学生证/校园卡专用',
         desc_en: 'For student ID cards',
-        desc_tw: '學生證/校園卡專用',
         icon: `${CDN_BASE}/id-photo.png?${IMG_VERSION}`,
         price: 30,
         status: 'offline',
@@ -874,10 +850,8 @@ router.post('/admin/scenes/init', (req, res) => {
         run(`UPDATE scenes SET
           name = '${scene.name}',
           name_en = '${scene.name_en}',
-          name_tw = '${scene.name_tw}',
           description = '${scene.desc}',
           description_en = '${scene.desc_en}',
-          description_tw = '${scene.desc_tw}',
           icon = '${scene.icon}',
           price = ${scene.price},
           status = '${scene.status}',
@@ -890,8 +864,8 @@ router.post('/admin/scenes/init', (req, res) => {
         updatedCount++;
       } else {
         // 插入新场景
-        run(`INSERT INTO scenes (scene_key, name, name_en, name_tw, description, description_en, description_tw, icon, price, status, is_review_safe, page_path, coming_soon_text, sort_order)
-          VALUES ('${scene.key}', '${scene.name}', '${scene.name_en}', '${scene.name_tw}', '${scene.desc}', '${scene.desc_en}', '${scene.desc_tw}', '${scene.icon}', ${scene.price}, '${scene.status}', ${scene.is_review_safe}, '${scene.page_path || ''}', '${scene.coming_soon_text || ''}', ${scene.sort})`);
+        run(`INSERT INTO scenes (scene_key, name, name_en, description, description_en, icon, price, status, is_review_safe, page_path, coming_soon_text, sort_order)
+          VALUES ('${scene.key}', '${scene.name}', '${scene.name_en}', '${scene.desc}', '${scene.desc_en}', '${scene.icon}', ${scene.price}, '${scene.status}', ${scene.is_review_safe}, '${scene.page_path || ''}', '${scene.coming_soon_text || ''}', ${scene.sort})`);
         insertedCount++;
       }
     });
@@ -1115,7 +1089,7 @@ router.post('/admin/fix-translations', (req, res) => {
     const notFoundItems = [];
 
     // 1. 更新 scene_steps 表
-    const steps = getAll("SELECT id, step_key, title, title_en, title_tw FROM scene_steps");
+    const steps = getAll("SELECT id, step_key, title, title_en FROM scene_steps");
     for (const step of steps) {
       const searchKey = step.title;
       if (!searchKey) continue;
@@ -1123,8 +1097,7 @@ router.post('/admin/fix-translations', (req, res) => {
       const trans = translations[searchKey];
       if (trans) {
         run(`UPDATE scene_steps SET
-          title_en = '${escapeSQL(trans.en)}',
-          title_tw = '${escapeSQL(trans.tw)}'
+          title_en = '${escapeSQL(trans.en)}'
           WHERE id = ${step.id}`);
         updatedSteps++;
       } else {
@@ -1135,7 +1108,7 @@ router.post('/admin/fix-translations', (req, res) => {
     }
 
     // 2. 更新 step_options 表
-    const options = getAll("SELECT id, option_key, label, label_en, label_tw, name, name_en, name_tw FROM step_options");
+    const options = getAll("SELECT id, option_key, label, label_en, name, name_en FROM step_options");
     for (const opt of options) {
       const searchKey = opt.label || opt.name;
       if (!searchKey) continue;
@@ -1144,9 +1117,7 @@ router.post('/admin/fix-translations', (req, res) => {
       if (trans) {
         run(`UPDATE step_options SET
           label_en = '${escapeSQL(trans.en)}',
-          label_tw = '${escapeSQL(trans.tw)}',
-          name_en = '${escapeSQL(trans.en)}',
-          name_tw = '${escapeSQL(trans.tw)}'
+          name_en = '${escapeSQL(trans.en)}'
           WHERE id = ${opt.id}`);
         updatedOptions++;
       } else {

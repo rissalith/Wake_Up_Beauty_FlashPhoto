@@ -755,9 +755,20 @@ const submitAdjustPoints = async () => {
 
     if (res.code === 200 || res.code === 0) {
       ElMessage.success(res.message || '醒币修正成功')
+      // 调试日志
+      console.log('API响应:', JSON.stringify(res))
+      console.log('res.data:', res.data)
+      console.log('newBalance:', res.data?.newBalance)
+      console.log('adjustPreview:', adjustPreview.value)
+      // 先保存新余额，再关闭弹窗
+      const newPoints = (res.data && res.data.newBalance !== undefined)
+        ? res.data.newBalance
+        : adjustPreview.value
+      console.log('最终newPoints:', newPoints)
       adjustPointsVisible.value = false
       // 更新当前用户的醒币余额
-      currentUser.value.points = res.data.currentPoints
+      currentUser.value.points = newPoints
+      console.log('更新后currentUser.points:', currentUser.value.points)
       // 刷新用户列表
       loadUsers()
     } else {

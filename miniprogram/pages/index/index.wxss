@@ -194,6 +194,8 @@ page {
   padding: 20rpx;
   padding-top: 40rpx;
   padding-bottom: 180rpx;
+  position: relative;
+  z-index: 10;
 }
 
 /* 头部 Banner 轮播 - 铺满式 */
@@ -222,13 +224,14 @@ page {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 120rpx;
+  height: 160rpx;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(255, 248, 240, 0.3) 30%,
-    rgba(255, 248, 240, 0.7) 60%,
-    #FFF8F0 100%
+    rgba(255, 245, 235, 0.4) 25%,
+    rgba(255, 245, 235, 0.75) 50%,
+    rgba(255, 245, 235, 0.92) 75%,
+    #FFF5EB 100%
   );
   pointer-events: none;
   z-index: 5;

@@ -2,7 +2,7 @@
 <view class="container">
   <!-- 未登录提示 -->
   <view class="login-required" wx:if="{{!isLoggedIn}}">
-    <image class="login-icon" src="{{images.logo || '/images/logo.png'}}" mode="aspectFit" />
+    <image class="login-icon" src="{{images.logo || '/images/logo.svg'}}" mode="aspectFit" />
     <text class="login-title">{{i18n.loginRequired || '请先登录'}}</text>
     <text class="login-desc">{{i18n.loginRequiredHistoryDesc || '登录后可查看您的照片生成记录'}}</text>
     <button class="login-btn" bindtap="goToLogin">{{i18n.goLogin || '去登录'}}</button>
