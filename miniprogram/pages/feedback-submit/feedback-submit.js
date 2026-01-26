@@ -1,7 +1,7 @@
 const { api } = require('../../config/api.js');
 const { validateFeedback } = require('../../utils/sensitive-filter.js');
 const { checkTextSecurity, showTextSecurityAlert } = require('../../utils/security.js');
-const { getLangData } = require('../../utils/lang.js');
+const { getLangData, t } = require('../../utils/lang.js');
 
 Page({
   data: {
@@ -31,7 +31,7 @@ Page({
           contact: data.contact || ''
         });
       });
-      wx.setNavigationBarTitle({ title: '编辑反馈' });
+      wx.setNavigationBarTitle({ title: t('feedbackSubmit_editTitle') || '编辑反馈' });
     }
   },
 
@@ -64,6 +64,9 @@ Page({
 
     this.setData({ uploadingCount: tempFilePaths.length });
 
+    const { i18n } = this.data;
+    const uploadFailedMsg = i18n.feedbackSubmit_imageUploadFailed || '图片上传失败';
+
     for (const tempPath of tempFilePaths) {
       try {
         // 读取图片为base64
@@ -83,11 +86,11 @@ Page({
           const imageUrls = this.data.imageUrls.concat([res.data.url]);
           this.setData({ imageUrls });
         } else {
-          wx.showToast({ title: '图片上传失败', icon: 'none' });
+          wx.showToast({ title: uploadFailedMsg, icon: 'none' });
         }
       } catch (error) {
         // 静默处理
-        wx.showToast({ title: '图片上传失败', icon: 'none' });
+        wx.showToast({ title: uploadFailedMsg, icon: 'none' });
       }
     }
 
@@ -112,8 +115,10 @@ Page({
   },
 
   async submitFeedback() {
+    const { i18n } = this.data;
+
     if (!this.data.content.trim()) {
-      wx.showToast({ title: '请输入反馈内容', icon: 'none' });
+      wx.showToast({ title: i18n.feedbackSubmit_contentRequired || '请输入反馈内容', icon: 'none' });
       return;
     }
 
@@ -127,11 +132,11 @@ Page({
     // 使用过滤后的内容
     const filteredContent = validation.filtered;
     if (validation.hadSensitive) {
-      wx.showToast({ title: '部分敏感内容已过滤', icon: 'none', duration: 1500 });
+      wx.showToast({ title: i18n.feedbackSubmit_sensitiveFiltered || '部分敏感内容已过滤', icon: 'none', duration: 1500 });
     }
 
     // 第二步：调用微信后端文本审核接口
-    wx.showLoading({ title: '内容审核中...' });
+    wx.showLoading({ title: i18n.feedbackSubmit_contentReviewing || '内容审核中...' });
     const openid = wx.getStorageSync('openid') || '';
     const textSecurityResult = await checkTextSecurity(filteredContent, openid, 2);
     wx.hideLoading();
@@ -142,7 +147,7 @@ Page({
     }
 
     if (this.data.uploadingCount > 0) {
-      wx.showToast({ title: '图片正在上传，请稍候', icon: 'none' });
+      wx.showToast({ title: i18n.feedbackSubmit_imageUploading || '图片正在上传，请稍候', icon: 'none' });
       return;
     }
 
@@ -167,7 +172,10 @@ Page({
       }
 
       if (res.code === 200) {
-        wx.showToast({ title: this.data.isEdit ? '修改成功' : '提交成功', icon: 'success' });
+        const successMsg = this.data.isEdit
+          ? (i18n.feedbackSubmit_editSuccess || '修改成功')
+          : (i18n.feedbackSubmit_submitSuccess || '提交成功');
+        wx.showToast({ title: successMsg, icon: 'success' });
         setTimeout(() => {
           wx.navigateBack();
           // 通知列表页刷新
@@ -183,7 +191,7 @@ Page({
       }
     } catch (error) {
       // 静默处理
-      wx.showToast({ title: '网络错误', icon: 'none' });
+      wx.showToast({ title: i18n.common_networkError || '网络错误', icon: 'none' });
       this.setData({ submitting: false });
     }
   }

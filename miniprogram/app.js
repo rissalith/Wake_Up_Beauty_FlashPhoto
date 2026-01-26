@@ -68,20 +68,22 @@ App({
       this.globalData.networkType = res.networkType;
       this.globalData.isConnected = res.isConnected;
 
+      const i18n = lang.getLangData();
+
       // 网络断开提示
       if (wasConnected && !res.isConnected) {
         wx.showToast({
-          title: '网络已断开',
+          title: i18n.app_networkDisconnected || '网络已断开',
           icon: 'none',
           duration: 3000
         });
         this.emit('networkDisconnected');
       }
-      
+
       // 网络恢复提示
       if (!wasConnected && res.isConnected) {
         wx.showToast({
-          title: '网络已恢复',
+          title: i18n.app_networkRestored || '网络已恢复',
           icon: 'success',
           duration: 2000
         });

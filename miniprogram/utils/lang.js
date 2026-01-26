@@ -759,7 +759,76 @@ const languages = {
     terms_section9_title: '九、联系我们',
     terms_section9_content: '如您对本协议有任何疑问，可通过产品内的"意见反馈"功能与我们联系。',
     terms_update_time: '本协议最后更新日期：2025年1月',
-    terms_share_title: '醒美闪图 - 用户协议'
+    terms_share_title: '醒美闪图 - 用户协议',
+
+    // 新增：用户信息弹窗
+    userInfoModal_nicknameRequired: '请输入昵称',
+    userInfoModal_setSuccess: '设置成功',
+    userInfoModal_setFailed: '设置失败',
+
+    // 新增：反馈提交页面补充
+    feedbackSubmit_editTitle: '编辑反馈',
+    feedbackSubmit_imageUploadFailed: '图片上传失败',
+    feedbackSubmit_contentRequired: '请输入反馈内容',
+    feedbackSubmit_sensitiveFiltered: '部分敏感内容已过滤',
+    feedbackSubmit_contentReviewing: '内容审核中...',
+    feedbackSubmit_imageUploading: '图片正在上传，请稍候',
+    feedbackSubmit_editSuccess: '修改成功',
+    feedbackSubmit_submitSuccess: '提交成功',
+
+    // 新增：积分记录类型
+    pr_type_newUser: '新用户奖励',
+    pr_type_shareImage: '分享图片奖励',
+    pr_type_inviteFriend: '邀请好友奖励',
+    pr_type_recharge: '充值',
+    pr_type_testRecharge: '测试充值',
+    pr_type_virtualRecharge: '虚拟充值',
+    pr_type_consume: '消费',
+    pr_type_generatePhoto: '生成照片',
+    pr_type_systemAdjust: '系统调整',
+    pr_type_systemRefund: '系统退还',
+    pr_type_systemGrant: '系统发放',
+    pr_type_activityReward: '活动奖励',
+
+    // 新增：我的页面补充
+    mine_changeAvatar: '更换头像',
+    mine_viewLargeImage: '查看大图',
+    mine_uploadingAvatar: '上传头像中...',
+    mine_avatarUploadFailed: '头像上传失败',
+    mine_avatarUpdated: '头像已更新',
+    mine_nicknameUpdated: '昵称已更新',
+    mine_nicknameRequired: '请输入昵称',
+    mine_saveSuccess: '保存成功',
+
+    // 新增：反馈页面补充
+    fb_title: '意见反馈',
+    fb_deleteConfirmTitle: '提示',
+    fb_deleteConfirmContent: '确定要删除这条反馈吗？',
+    fb_deleted: '已删除',
+    fb_deleteFailed: '删除失败',
+
+    // 新增：订单页面补充
+    order_consumeTitle: '消费记录',
+    order_statusCompleted: '已完成',
+    order_photoGeneration: '照片生成',
+    order_unit: '张',
+    order_consume: '消费',
+    order_pointsUnit: '醒币',
+    order_loadingMore: '加载中...',
+    order_noMoreData: '没有更多了',
+
+    // 新增：隐私弹窗补充
+    privacyModal_signFailed: '签署失败',
+    privacyModal_signFailedMessage: '协议签署失败，请检查网络后重试',
+
+    // 新增：全局提示
+    app_networkDisconnected: '网络已断开',
+    app_networkRestored: '网络已恢复',
+
+    // 新增：通用
+    common_tip: '提示',
+    common_networkError: '网络错误',
+    common_loadFailed: '加载失败'
   },
 
   'en': {
@@ -1512,7 +1581,76 @@ const languages = {
     terms_section9_title: '9. Contact Us',
     terms_section9_content: 'If you have any questions about this agreement, you can contact us through the "Feedback" feature in the product.',
     terms_update_time: 'Last updated: January 2025',
-    terms_share_title: 'FlashPhoto - Terms of Service'
+    terms_share_title: 'FlashPhoto - Terms of Service',
+
+    // New: User info modal
+    userInfoModal_nicknameRequired: 'Please enter nickname',
+    userInfoModal_setSuccess: 'Settings saved',
+    userInfoModal_setFailed: 'Settings failed',
+
+    // New: Feedback submit page
+    feedbackSubmit_editTitle: 'Edit Feedback',
+    feedbackSubmit_imageUploadFailed: 'Image upload failed',
+    feedbackSubmit_contentRequired: 'Please enter feedback content',
+    feedbackSubmit_sensitiveFiltered: 'Some sensitive content has been filtered',
+    feedbackSubmit_contentReviewing: 'Reviewing content...',
+    feedbackSubmit_imageUploading: 'Uploading image, please wait',
+    feedbackSubmit_editSuccess: 'Edit successful',
+    feedbackSubmit_submitSuccess: 'Submit successful',
+
+    // New: Points record types
+    pr_type_newUser: 'New user bonus',
+    pr_type_shareImage: 'Share image bonus',
+    pr_type_inviteFriend: 'Invite friend bonus',
+    pr_type_recharge: 'Top up',
+    pr_type_testRecharge: 'Test top up',
+    pr_type_virtualRecharge: 'Virtual top up',
+    pr_type_consume: 'Spent',
+    pr_type_generatePhoto: 'Generate photo',
+    pr_type_systemAdjust: 'System adjustment',
+    pr_type_systemRefund: 'System refund',
+    pr_type_systemGrant: 'System grant',
+    pr_type_activityReward: 'Activity reward',
+
+    // New: Mine page
+    mine_changeAvatar: 'Change Avatar',
+    mine_viewLargeImage: 'View Large',
+    mine_uploadingAvatar: 'Uploading avatar...',
+    mine_avatarUploadFailed: 'Avatar upload failed',
+    mine_avatarUpdated: 'Avatar updated',
+    mine_nicknameUpdated: 'Nickname updated',
+    mine_nicknameRequired: 'Please enter nickname',
+    mine_saveSuccess: 'Saved successfully',
+
+    // New: Feedback page
+    fb_title: 'Feedback',
+    fb_deleteConfirmTitle: 'Notice',
+    fb_deleteConfirmContent: 'Are you sure to delete this feedback?',
+    fb_deleted: 'Deleted',
+    fb_deleteFailed: 'Delete failed',
+
+    // New: Orders page
+    order_consumeTitle: 'Consumption Records',
+    order_statusCompleted: 'Completed',
+    order_photoGeneration: 'Photo Generation',
+    order_unit: '',
+    order_consume: 'Spent',
+    order_pointsUnit: 'Points',
+    order_loadingMore: 'Loading...',
+    order_noMoreData: 'No more data',
+
+    // New: Privacy modal
+    privacyModal_signFailed: 'Sign failed',
+    privacyModal_signFailedMessage: 'Failed to sign agreement, please check network and retry',
+
+    // New: Global notifications
+    app_networkDisconnected: 'Network disconnected',
+    app_networkRestored: 'Network restored',
+
+    // New: Common
+    common_tip: 'Notice',
+    common_networkError: 'Network error',
+    common_loadFailed: 'Load failed'
   }
 };
 

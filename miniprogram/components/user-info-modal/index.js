@@ -1,4 +1,5 @@
 const { uploadWxTempFile, getUserId } = require('../../utils/cos.js');
+const lang = require('../../utils/lang.js');
 
 Component({
   properties: {
@@ -12,16 +13,31 @@ Component({
     avatarUrl: '',
     nickname: '',
     defaultAvatar: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0',
-    submitting: false
+    submitting: false,
+    i18n: {}
   },
 
   lifetimes: {
     attached() {
+      this.loadLanguage();
       this.generateRandomNickname();
+
+      // 监听语言切换事件
+      const eventChannel = getApp().globalData?.eventChannel;
+      if (eventChannel) {
+        eventChannel.on('languageChanged', () => {
+          this.loadLanguage();
+        });
+      }
     }
   },
 
   methods: {
+    // 加载语言数据
+    loadLanguage() {
+      this.setData({ i18n: lang.getLangData() });
+    },
+
     // 生成随机昵称
     generateRandomNickname() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -47,10 +63,10 @@ Component({
     async onSubmit() {
       if (this.data.submitting) return;
 
-      const { avatarUrl, nickname } = this.data;
-      
+      const { avatarUrl, nickname, i18n } = this.data;
+
       if (!nickname.trim()) {
-        wx.showToast({ title: '请输入昵称', icon: 'none' });
+        wx.showToast({ title: i18n.userInfoModal_nicknameRequired || '请输入昵称', icon: 'none' });
         return;
       }
 
@@ -58,7 +74,7 @@ Component({
 
       try {
         let uploadedAvatarUrl = avatarUrl;
-        
+
         if (avatarUrl && (avatarUrl.startsWith('http://tmp') || avatarUrl.startsWith('wxfile://'))) {
           console.log('开始上传头像到COS:', avatarUrl);
           const cosUserId = getUserId();
@@ -75,13 +91,14 @@ Component({
           avatarUrl: uploadedAvatarUrl || this.data.defaultAvatar
         });
 
-        wx.showToast({ title: '设置成功', icon: 'success' });
+        wx.showToast({ title: i18n.userInfoModal_setSuccess || '设置成功', icon: 'success' });
         this.setData({ submitting: false });
         this.triggerEvent('complete', { skipped: false });
       } catch (err) {
         console.error('用户信息设置失败:', err);
         this.setData({ submitting: false });
-        wx.showToast({ title: `设置失败: ${err.message || '请重试'}`, icon: 'none', duration: 3000 });
+        const failedMsg = i18n.userInfoModal_setFailed || '设置失败';
+        wx.showToast({ title: `${failedMsg}: ${err.message || ''}`, icon: 'none', duration: 3000 });
       }
     },
 

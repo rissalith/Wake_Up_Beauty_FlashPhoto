@@ -62,18 +62,18 @@ Page({
   getTypeTexts() {
     const { i18n } = this.data;
     return {
-      'new_user': i18n.pr_newUser || '新用户奖励',
-      'share_image': i18n.pr_shareImage || '分享图片奖励',
-      'invite_friend': i18n.pr_inviteFriend || '邀请好友奖励',
-      'recharge': i18n.pr_recharge || '充值',
-      'test_recharge': i18n.pr_testRecharge || '测试充值',
-      'virtual_recharge': i18n.pr_virtualRecharge || '虚拟充值',
-      'consume': i18n.pr_consume || '消费',
-      'generate': i18n.pr_generate || '生成照片',
-      'admin_adjust': i18n.pr_adminAdjust || '系统调整',
-      'refund': i18n.pr_refund || '系统退还',
-      'system_grant': i18n.pr_systemGrant || '系统发放',
-      'activity_reward': i18n.pr_activityReward || '活动奖励'
+      'new_user': i18n.pr_type_newUser || i18n.pr_newUser || '新用户奖励',
+      'share_image': i18n.pr_type_shareImage || i18n.pr_shareImage || '分享图片奖励',
+      'invite_friend': i18n.pr_type_inviteFriend || i18n.pr_inviteFriend || '邀请好友奖励',
+      'recharge': i18n.pr_type_recharge || i18n.pr_recharge || '充值',
+      'test_recharge': i18n.pr_type_testRecharge || i18n.pr_testRecharge || '测试充值',
+      'virtual_recharge': i18n.pr_type_virtualRecharge || i18n.pr_virtualRecharge || '虚拟充值',
+      'consume': i18n.pr_type_consume || i18n.pr_consume || '消费',
+      'generate': i18n.pr_type_generatePhoto || i18n.pr_generate || '生成照片',
+      'admin_adjust': i18n.pr_type_systemAdjust || i18n.pr_adminAdjust || '系统调整',
+      'refund': i18n.pr_type_systemRefund || i18n.pr_refund || '系统退还',
+      'system_grant': i18n.pr_type_systemGrant || i18n.pr_systemGrant || '系统发放',
+      'activity_reward': i18n.pr_type_activityReward || i18n.pr_activityReward || '活动奖励'
     };
   },
 
@@ -139,12 +139,12 @@ Page({
           loading: false
         });
       } else {
-        throw new Error(res.msg || (i18n.pr_loadFailed || '加载失败'));
+        throw new Error(res.msg || (i18n.common_loadFailed || i18n.pr_loadFailed || '加载失败'));
       }
     } catch (error) {
       // 静默处理
       this.setData({ loading: false, hasMore: false });
-      wx.showToast({ title: this.data.i18n.pr_loadFailed || '加载失败', icon: 'none' });
+      wx.showToast({ title: this.data.i18n.common_loadFailed || this.data.i18n.pr_loadFailed || '加载失败', icon: 'none' });
     }
   }
 });

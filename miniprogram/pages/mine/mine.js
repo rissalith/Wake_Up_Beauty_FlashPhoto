@@ -419,8 +419,12 @@ Page({
       this.showLoginPrompt();
       return;
     }
+    const { i18n } = this.data;
     wx.showActionSheet({
-      itemList: ['更换头像', '查看大图'],
+      itemList: [
+        i18n.mine_changeAvatar || '更换头像',
+        i18n.mine_viewLargeImage || '查看大图'
+      ],
       success: (res) => {
         if (res.tapIndex === 0) {
           // 更换头像
@@ -450,7 +454,8 @@ Page({
     // 如果是临时文件路径，需要上传到COS
     let newAvatarUrl = avatarUrl;
     if (avatarUrl.startsWith('http://tmp') || avatarUrl.startsWith('wxfile://')) {
-      wx.showLoading({ title: '上传头像中...', mask: true });
+      const { i18n } = this.data;
+      wx.showLoading({ title: i18n.mine_uploadingAvatar || '上传头像中...', mask: true });
       try {
         const cosUserId = getUserId();
         const timestamp = Date.now();
@@ -463,7 +468,7 @@ Page({
       } catch (error) {
         // 静默处理
         wx.hideLoading();
-        wx.showToast({ title: '头像上传失败', icon: 'none' });
+        wx.showToast({ title: i18n.mine_avatarUploadFailed || '头像上传失败', icon: 'none' });
         return;
       }
       wx.hideLoading();
@@ -487,7 +492,7 @@ Page({
       }
     }
 
-    wx.showToast({ title: '头像已更新', icon: 'success' });
+    wx.showToast({ title: this.data.i18n.mine_avatarUpdated || '头像已更新', icon: 'success' });
   },
 
   // 直接编辑昵称并保存
@@ -513,7 +518,7 @@ Page({
     if (userId) {
       try {
         await api.updateUserInfo(userId, { nickname: newNickname });
-        wx.showToast({ title: '昵称已更新', icon: 'success' });
+        wx.showToast({ title: this.data.i18n.mine_nicknameUpdated || '昵称已更新', icon: 'success' });
       } catch (error) {
         // 静默处理
       }
@@ -557,18 +562,18 @@ Page({
 
   // 保存个人资料
   async saveProfile() {
-    const { tempAvatarUrl, tempNickname, userInfo } = this.data;
+    const { tempAvatarUrl, tempNickname, userInfo, i18n } = this.data;
     let newAvatarUrl = tempAvatarUrl || userInfo.avatarUrl;
     const newNickname = tempNickname.trim() || userInfo.nickName;
 
     if (!newNickname) {
-      wx.showToast({ title: '请输入昵称', icon: 'none' });
+      wx.showToast({ title: i18n.mine_nicknameRequired || '请输入昵称', icon: 'none' });
       return;
     }
 
     // 如果选择了新头像（临时文件路径），需要上传到COS
     if (tempAvatarUrl && tempAvatarUrl.startsWith('http://tmp') || tempAvatarUrl && tempAvatarUrl.startsWith('wxfile://')) {
-      wx.showLoading({ title: '上传头像中...', mask: true });
+      wx.showLoading({ title: i18n.mine_uploadingAvatar || '上传头像中...', mask: true });
       try {
         // 生成头像文件名
         const cosUserId = getUserId();
@@ -583,7 +588,7 @@ Page({
       } catch (error) {
         // 静默处理
         wx.hideLoading();
-        wx.showToast({ title: '头像上传失败', icon: 'none' });
+        wx.showToast({ title: i18n.mine_avatarUploadFailed || '头像上传失败', icon: 'none' });
         return;
       }
       wx.hideLoading();
@@ -619,7 +624,7 @@ Page({
       tempNickname: ''
     });
 
-    wx.showToast({ title: '保存成功', icon: 'success' });
+    wx.showToast({ title: i18n.mine_saveSuccess || '保存成功', icon: 'success' });
   },
 
   // 阻止滚动穿透

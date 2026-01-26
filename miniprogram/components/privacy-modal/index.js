@@ -112,12 +112,13 @@ Component({
       } catch (err) {
         // 静默处理
         this.setData({ submitting: false });
-        
+
+        const { i18n } = this.data;
         wx.showModal({
-          title: '签署失败',
-          content: '协议签署失败，请检查网络后重试',
+          title: i18n.privacyModal_signFailed || '签署失败',
+          content: i18n.privacyModal_signFailedMessage || '协议签署失败，请检查网络后重试',
           showCancel: false,
-          confirmText: '知道了'
+          confirmText: i18n.confirm || '知道了'
         });
       }
     },

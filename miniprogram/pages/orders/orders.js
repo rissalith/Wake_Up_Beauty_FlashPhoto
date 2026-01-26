@@ -75,13 +75,14 @@ I18nPage({
         );
 
         // 格式化记录
+        const i18n = getLangData();
         const formattedOrders = consumeRecords.map(record => ({
           id: record.id,
-          sceneName: this.extractSceneName(record.description),
+          sceneName: this.extractSceneName(record.description, i18n),
           count: this.extractCount(record.description),
           points: Math.abs(record.amount),
           status: 'completed',
-          statusText: '已完成',
+          statusText: i18n.order_statusCompleted || '已完成',
           createTimeStr: this.formatTime(record.created_at)
         }));
 
@@ -103,14 +104,15 @@ I18nPage({
   },
 
   // 从描述中提取场景名称
-  extractSceneName(description) {
-    if (!description) return '照片生成';
+  extractSceneName(description, i18n) {
+    const defaultName = (i18n && i18n.order_photoGeneration) || '照片生成';
+    if (!description) return defaultName;
     // 尝试匹配 "生成X张XXX" 格式
     const match = description.match(/生成\d+张(.+)/);
     if (match) return match[1];
     // 尝试匹配其他格式
     if (description.includes('生成')) return description;
-    return '照片生成';
+    return defaultName;
   },
 
   // 从描述中提取数量
