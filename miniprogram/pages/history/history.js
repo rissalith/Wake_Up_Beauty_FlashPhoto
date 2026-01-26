@@ -191,6 +191,27 @@ Page({
       }
     }
 
+    // 后台配置中未找到匹配，使用本地语言包作为后备
+    const specKeyMap = {
+      '证件照': 'hist_sceneIdPhoto',
+      'ID Photo': 'hist_sceneIdPhoto',
+      '职业照': 'hist_sceneProfessional',
+      'Professional': 'hist_sceneProfessional',
+      '写真': 'hist_scenePortrait',
+      'Portrait': 'hist_scenePortrait',
+      '全家福': 'hist_sceneFamily',
+      'Family': 'hist_sceneFamily',
+      '宠物照': 'hist_scenePet',
+      'Pet': 'hist_scenePet',
+      '婚纱照': 'hist_sceneWedding',
+      'Wedding': 'hist_sceneWedding'
+    };
+
+    const langKey = specKeyMap[spec];
+    if (langKey) {
+      return lang.t(langKey);
+    }
+
     // 未找到匹配，返回原值
     return spec;
   },
