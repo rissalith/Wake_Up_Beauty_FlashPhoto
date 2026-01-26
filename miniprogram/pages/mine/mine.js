@@ -4,6 +4,7 @@ const { api } = require('../../config/api.js');
 const { uploadWxTempFile, COS_CONFIG, getUserId } = require('../../utils/cos.js');
 const { canShowRecharge, getPlatformTips, isIOS } = require('../../utils/platform.js');
 const configManager = require('../../utils/configManager.js');
+const tracker = require('../../utils/tracker.js');
 
 Page({
   data: {
@@ -160,6 +161,9 @@ Page({
 
   // 跳转到充值页面
   goToRecharge() {
+    // 埋点：点击充值
+    tracker.trackClick('recharge_entry', 'button', '充值');
+
     if (!this.data.isLoggedIn) {
       this.showLoginPrompt();
       return;
@@ -181,6 +185,9 @@ Page({
 
   // 跳转到醒币明细页面
   goToPointsRecord() {
+    // 埋点：点击醒币明细
+    tracker.trackClick('points_record_entry', 'button', '醒币明细');
+
     if (!this.data.isLoggedIn) {
       this.showLoginPrompt();
       return;

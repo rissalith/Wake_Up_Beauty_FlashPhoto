@@ -358,6 +358,30 @@ function createTables() {
     )
   `);
 
+  // ==================== 用户行为追踪表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_behaviors (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      session_id TEXT,
+      behavior_type TEXT NOT NULL,
+      behavior_name TEXT NOT NULL,
+      page_path TEXT,
+      page_query TEXT,
+      element_id TEXT,
+      element_type TEXT,
+      element_text TEXT,
+      extra_data TEXT,
+      device_brand TEXT,
+      device_model TEXT,
+      system_info TEXT,
+      network_type TEXT,
+      duration INTEGER,
+      client_time DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // 创建索引
   createIndexes();
   
@@ -413,7 +437,13 @@ function createIndexes() {
     // 操作日志索引
     'CREATE INDEX IF NOT EXISTS idx_operation_logs_admin ON operation_logs(admin_id)',
     'CREATE INDEX IF NOT EXISTS idx_operation_logs_action ON operation_logs(action)',
-    'CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(created_at)'
+    'CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(created_at)',
+    // 用户行为追踪索引
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_user_id ON user_behaviors(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_user_time ON user_behaviors(user_id, created_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_type ON user_behaviors(behavior_type)',
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_session ON user_behaviors(session_id)',
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_created_at ON user_behaviors(created_at)'
   ];
   
   indexes.forEach(sql => {

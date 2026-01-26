@@ -253,6 +253,64 @@
               </div>
             </div>
           </el-tab-pane>
+
+          <el-tab-pane label="行为轨迹" name="behaviors">
+            <div class="behaviors-container" v-loading="behaviorsLoading">
+              <!-- 筛选器 -->
+              <div class="behaviors-filter">
+                <el-select v-model="behaviorsFilter" placeholder="行为类型" clearable size="small" style="width: 120px" @change="loadBehaviors">
+                  <el-option label="全部" value="" />
+                  <el-option label="页面访问" value="page_view" />
+                  <el-option label="点击事件" value="click" />
+                  <el-option label="功能事件" value="event" />
+                  <el-option label="错误" value="error" />
+                </el-select>
+                <span class="behaviors-total" v-if="behaviorsStats.totalBehaviors">
+                  共 {{ behaviorsStats.totalBehaviors }} 条记录
+                </span>
+              </div>
+
+              <!-- 行为统计卡片 -->
+              <div class="behaviors-stats" v-if="behaviorsStats.typeStats?.length > 0">
+                <div class="behavior-stat-item" v-for="stat in behaviorsStats.typeStats" :key="stat.behavior_type">
+                  <span class="stat-label">{{ getBehaviorTypeLabel(stat.behavior_type) }}</span>
+                  <span class="stat-count">{{ stat.count }}</span>
+                </div>
+              </div>
+
+              <!-- 行为时间线 -->
+              <el-timeline v-if="userBehaviors.length > 0">
+                <el-timeline-item
+                  v-for="behavior in userBehaviors"
+                  :key="behavior.id"
+                  :timestamp="formatDate(behavior.created_at)"
+                  :type="getBehaviorColor(behavior.behavior_type)"
+                  placement="top"
+                >
+                  <div class="behavior-item">
+                    <el-tag :type="getBehaviorTagType(behavior.behavior_type)" size="small" class="behavior-tag">
+                      {{ getBehaviorTypeLabel(behavior.behavior_type) }}
+                    </el-tag>
+                    <span class="behavior-name">{{ behavior.behavior_name }}</span>
+                    <span class="behavior-page" v-if="behavior.page_path">{{ behavior.page_path }}</span>
+                    <span class="behavior-extra" v-if="behavior.element_text">{{ behavior.element_text }}</span>
+                  </div>
+                </el-timeline-item>
+              </el-timeline>
+              <el-empty v-else description="暂无行为记录" />
+
+              <!-- 分页 -->
+              <div class="behaviors-pagination" v-if="behaviorsTotal > behaviorsPageSize">
+                <el-pagination
+                  v-model:current-page="behaviorsPage"
+                  :page-size="behaviorsPageSize"
+                  :total="behaviorsTotal"
+                  layout="prev, pager, next"
+                  @change="loadBehaviors"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
         </el-tabs>
       </div>
     </el-dialog>
@@ -395,6 +453,15 @@ const activitiesPage = ref(1)
 const activitiesPageSize = ref(20)
 const activitiesTotal = ref(0)
 
+// 行为轨迹相关
+const behaviorsLoading = ref(false)
+const userBehaviors = ref([])
+const behaviorsPage = ref(1)
+const behaviorsPageSize = ref(20)
+const behaviorsTotal = ref(0)
+const behaviorsFilter = ref('')
+const behaviorsStats = ref({})
+
 const ordersVisible = ref(false)
 const ordersLoading = ref(false)
 const userOrders = ref([])
@@ -500,6 +567,11 @@ const viewDetail = async (user) => {
   userActivities.value = []
   activitiesPage.value = 1
   activitiesTotal.value = 0
+  userBehaviors.value = []
+  behaviorsPage.value = 1
+  behaviorsTotal.value = 0
+  behaviorsFilter.value = ''
+  behaviorsStats.value = {}
   detailTab.value = 'info'
   detailVisible.value = true
   statsLoading.value = true
@@ -517,6 +589,8 @@ const viewDetail = async (user) => {
 
   // 加载操作记录
   loadActivities()
+  // 加载行为轨迹
+  loadBehaviors()
 }
 
 // 加载用户操作记录
@@ -538,6 +612,71 @@ const loadActivities = async () => {
   } finally {
     activitiesLoading.value = false
   }
+}
+
+// 加载用户行为轨迹
+const loadBehaviors = async () => {
+  if (!currentUser.value) return
+
+  behaviorsLoading.value = true
+  try {
+    const params = {
+      page: behaviorsPage.value,
+      pageSize: behaviorsPageSize.value
+    }
+    if (behaviorsFilter.value) {
+      params.behavior_type = behaviorsFilter.value
+    }
+
+    const res = await usersApi.getBehaviors(currentUser.value.user_id || currentUser.value.id, params)
+    if (res.code === 200 || res.code === 0) {
+      userBehaviors.value = res.data.list
+      behaviorsTotal.value = res.data.total
+    }
+
+    // 加载行为统计
+    const statsRes = await usersApi.getBehaviorStats(currentUser.value.user_id || currentUser.value.id)
+    if (statsRes.code === 200 || statsRes.code === 0) {
+      behaviorsStats.value = statsRes.data
+    }
+  } catch (error) {
+    console.error('获取用户行为轨迹失败:', error)
+  } finally {
+    behaviorsLoading.value = false
+  }
+}
+
+// 获取行为类型标签
+const getBehaviorTypeLabel = (type) => {
+  const labelMap = {
+    'page_view': '页面访问',
+    'click': '点击',
+    'event': '事件',
+    'error': '错误'
+  }
+  return labelMap[type] || type
+}
+
+// 获取行为类型颜色
+const getBehaviorColor = (type) => {
+  const colorMap = {
+    'page_view': 'primary',
+    'click': 'success',
+    'event': 'warning',
+    'error': 'danger'
+  }
+  return colorMap[type] || 'info'
+}
+
+// 获取行为类型标签样式
+const getBehaviorTagType = (type) => {
+  const tagMap = {
+    'page_view': '',
+    'click': 'success',
+    'event': 'warning',
+    'error': 'danger'
+  }
+  return tagMap[type] || 'info'
 }
 
 // 获取操作类型信息
@@ -1155,6 +1294,89 @@ onMounted(() => {
 }
 
 .activities-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 行为轨迹样式 */
+.behaviors-container {
+  min-height: 200px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.behaviors-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.behaviors-total {
+  font-size: 13px;
+  color: #909399;
+}
+
+.behaviors-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
+}
+
+.behavior-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.behavior-stat-item .stat-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.behavior-stat-item .stat-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.behavior-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.behavior-tag {
+  flex-shrink: 0;
+}
+
+.behavior-name {
+  font-size: 13px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.behavior-page {
+  font-size: 12px;
+  color: #909399;
+  background: #f0f2f5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.behavior-extra {
+  font-size: 12px;
+  color: #606266;
+}
+
+.behaviors-pagination {
   margin-top: 16px;
   display: flex;
   justify-content: center;

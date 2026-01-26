@@ -7,6 +7,7 @@ const aiService = require('../../utils/ai-service');
 const configManager = require('../../utils/configManager');
 const preloader = require('../../utils/preloader');
 const { canShowRecharge, isIOS } = require('../../utils/platform');
+const tracker = require('../../utils/tracker');
 
 const HISTORY_KEY = 'photoHistory';
 
@@ -857,6 +858,15 @@ I18nPage({
     }
 
     const { generateCount, totalPoints, sceneConfig } = this.data;
+
+    // 埋点：开始生成照片
+    tracker.trackEvent('generate_photo', {
+      sceneId: this.data.sceneId,
+      sceneName: sceneConfig?.name,
+      generateCount,
+      totalPoints
+    });
+
     const prompt = this.buildPrompt();
     const historyIds = [];
 

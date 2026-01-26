@@ -1,6 +1,7 @@
 const lang = require('../../utils/lang.js');
 const { canShowRecharge, isIOS, getPlatformTips, shouldUseVirtualPayment, getPaymentMethod } = require('../../utils/platform.js');
 const { api } = require('../../config/api.js');
+const tracker = require('../../utils/tracker.js');
 
 Page({
   data: {
@@ -94,6 +95,14 @@ Page({
   // 选择套餐
   selectPackage(e) {
     const pkg = e.currentTarget.dataset.package;
+
+    // 埋点：选择充值套餐
+    tracker.trackClick('recharge_package', 'button', `${pkg.amount}元`, {
+      packageId: pkg.id,
+      amount: pkg.amount,
+      points: pkg.points
+    });
+
     this.setData({
       selectedPackage: pkg,
       isCustom: false,

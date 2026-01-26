@@ -6,6 +6,7 @@ const cosUtil = require('../../utils/cos.js');
 const { api } = require('../../config/api.js');
 const aiService = require('../../utils/ai-service.js');
 const configManager = require('../../utils/configManager.js');
+const tracker = require('../../utils/tracker.js');
 
 Page({
   data: {
@@ -1510,6 +1511,9 @@ Page({
     const id = e.currentTarget.dataset.id;
     const url = e.currentTarget.dataset.url;
     const item = this.data.historyList.find(i => i.id === id);
+
+    // 埋点：分享照片
+    tracker.trackClick('share_photo', 'button', '分享', { photoId: id });
 
     if (!item) {
       wx.showToast({ title: lang.t('failed'), icon: 'none' });

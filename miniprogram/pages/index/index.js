@@ -3,6 +3,7 @@ const HISTORY_KEY = 'photoHistory';
 const lang = require('../../utils/lang.js');
 const imageConfig = require('../../config/images.js');
 const configManager = require('../../utils/configManager.js');
+const tracker = require('../../utils/tracker.js');
 
 Page({
   data: {
@@ -258,6 +259,9 @@ Page({
   goToScene(e) {
     const sceneKey = e.currentTarget.dataset.scene;
     const scene = this.data.activeScenes.find(s => s.scene_key === sceneKey || s.id === sceneKey);
+
+    // 埋点：场景点击
+    tracker.trackClick('scene_card', 'card', scene?.name || sceneKey, { sceneKey });
 
     if (!scene) {
       wx.showToast({ title: '场景不存在', icon: 'none' });

@@ -3,6 +3,7 @@ const lang = require('./utils/lang');
 const { api, request, IS_TEST_MODE, TEST_CONFIG } = require('./config/api');
 const configManager = require('./utils/configManager');
 const preloader = require('./utils/preloader');
+const tracker = require('./utils/tracker');
 
 App({
   onLaunch(options) {
@@ -41,6 +42,9 @@ App({
 
     // 初始化网络状态监听
     this.initNetworkListener();
+
+    // 初始化用户行为追踪
+    tracker.init();
 
     // 立即预加载所有图片资源（不等登录，提升语言切换体验）
     preloader.preloadAllImages();

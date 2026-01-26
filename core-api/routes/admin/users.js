@@ -462,6 +462,129 @@ router.get('/:userId/activities', (req, res) => {
   }
 });
 
+// 获取用户行为记录
+router.get('/:userId/behaviors', (req, res) => {
+  try {
+    const db = getDb();
+    const { userId } = req.params;
+    const {
+      page = 1,
+      pageSize = 20,
+      behavior_type,
+      start_date,
+      end_date
+    } = req.query;
+
+    const offset = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    // 构建查询条件
+    let whereClause = 'WHERE user_id = ?';
+    const params = [userId];
+
+    if (behavior_type) {
+      whereClause += ' AND behavior_type = ?';
+      params.push(behavior_type);
+    }
+
+    if (start_date) {
+      whereClause += ' AND created_at >= ?';
+      params.push(start_date);
+    }
+
+    if (end_date) {
+      whereClause += ' AND created_at <= ?';
+      params.push(end_date);
+    }
+
+    // 查询数据
+    const behaviors = db.prepare(`
+      SELECT
+        id, session_id, behavior_type, behavior_name,
+        page_path, page_query, element_id, element_type, element_text,
+        extra_data, device_brand, device_model, network_type,
+        duration, client_time, created_at
+      FROM user_behaviors
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    // 查询总数
+    const totalResult = db.prepare(`
+      SELECT COUNT(*) as total FROM user_behaviors ${whereClause}
+    `).get(...params);
+
+    res.json({
+      code: 0,
+      data: {
+        list: behaviors,
+        total: totalResult.total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    });
+
+  } catch (error) {
+    console.error('获取用户行为记录错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 获取用户行为统计
+router.get('/:userId/behavior-stats', (req, res) => {
+  try {
+    const db = getDb();
+    const { userId } = req.params;
+
+    // 行为类型统计
+    const typeStats = db.prepare(`
+      SELECT behavior_type, COUNT(*) as count
+      FROM user_behaviors
+      WHERE user_id = ?
+      GROUP BY behavior_type
+    `).all(userId);
+
+    // 最常访问的页面
+    const topPages = db.prepare(`
+      SELECT page_path, COUNT(*) as count
+      FROM user_behaviors
+      WHERE user_id = ? AND behavior_type = 'page_view'
+      GROUP BY page_path
+      ORDER BY count DESC
+      LIMIT 10
+    `).all(userId);
+
+    // 最近7天活跃度
+    const dailyActivity = db.prepare(`
+      SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM user_behaviors
+      WHERE user_id = ? AND created_at >= datetime('now', '-7 days')
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `).all(userId);
+
+    // 总行为数
+    const totalBehaviors = db.prepare(`
+      SELECT COUNT(*) as total FROM user_behaviors WHERE user_id = ?
+    `).get(userId);
+
+    res.json({
+      code: 0,
+      data: {
+        typeStats,
+        topPages,
+        dailyActivity,
+        totalBehaviors: totalBehaviors.total
+      }
+    });
+
+  } catch (error) {
+    console.error('获取用户行为统计错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // 删除用户（注销）
 router.delete('/:userId', (req, res) => {
   try {
