@@ -1020,22 +1020,24 @@ I18nPage({
     }
   },
 
-  // 进度阶段定义
-  PROGRESS_STAGES: {
-    QUEUED: { progress: 5, text: '排队中...' },
-    DEDUCTING: { progress: 10, text: '扣费处理...' },
-    UPLOADING: { progress: 20, text: '上传图片...' },
-    PROCESSING: { progress: 40, text: 'AI处理中...' },
-    GENERATING: { progress: 60, text: '生成图片...' },
-    ENHANCING: { progress: 80, text: '优化处理...' },
-    SAVING: { progress: 90, text: '保存中...' },
-    DONE: { progress: 100, text: '完成' }
+  // 获取进度阶段定义（支持国际化）
+  getProgressStages() {
+    return {
+      QUEUED: { progress: 5, text: t('progress_queued') || '排队中...' },
+      DEDUCTING: { progress: 10, text: t('progress_deducting') || '扣费处理...' },
+      UPLOADING: { progress: 20, text: t('progress_uploading') || '上传图片...' },
+      PROCESSING: { progress: 40, text: t('progress_processing') || 'AI处理中...' },
+      GENERATING: { progress: 60, text: t('progress_generating') || '生成图片...' },
+      ENHANCING: { progress: 80, text: t('progress_enhancing') || '优化处理...' },
+      SAVING: { progress: 90, text: t('progress_saving') || '保存中...' },
+      DONE: { progress: 100, text: t('progress_done') || '完成' }
+    };
   },
 
   // 处理生成队列
   async processGenerationQueue(historyIds, prompt, paymentInfo) {
     const MAX_CONCURRENT = 3;
-    const STAGES = this.PROGRESS_STAGES;
+    const STAGES = this.getProgressStages();
 
     // 阶段1: 排队
     historyIds.forEach(hid => this.updateHistoryItem(hid, { 
@@ -1082,8 +1084,9 @@ I18nPage({
         for (let retry = 0; retry < 3; retry++) {
           try {
             if (retry > 0) {
-              this.updateHistoryItem(historyId, { 
-                progressText: `重试中(${retry}/3)...` 
+              const retryText = (t('progress_retrying') || '重试中({retry}/3)...').replace('{retry}', retry);
+              this.updateHistoryItem(historyId, {
+                progressText: retryText
               });
               await new Promise(resolve => setTimeout(resolve, 2000 + retry * 1000));
             }
@@ -1160,7 +1163,8 @@ I18nPage({
 
     const successCount = results.filter(r => r.success).length;
     if (successCount > 0) {
-      this.showNotice(`${successCount}张照片生成完成`);
+      const completeMsg = (t('photosGenerateComplete') || '{count}张照片生成完成').replace('{count}', successCount);
+      this.showNotice(completeMsg);
       this.showCompletedStatus();
       // 生成完成后自动跳转到历史页面，让用户查看结果
       setTimeout(() => {
@@ -1209,6 +1213,14 @@ I18nPage({
     const imagePart = imagePartIndex >= 0 ? parts[imagePartIndex] : null;
     const imageBase64 = imagePart ? imagePart.inline_data.data : null;
     const mimeType = imagePart ? imagePart.inline_data.mime_type : 'image/jpeg';
+
+    // 调试日志：输出发送给AI的完整信息
+    console.log('========== AI生图请求调试 ==========');
+    console.log('[AI请求] 完整Prompt:');
+    console.log(prompt);
+    console.log('[AI请求] 图片类型:', mimeType);
+    console.log('[AI请求] 图片大小:', imageBase64 ? Math.round(imageBase64.length / 1024) + 'KB' : '无图片');
+    console.log('====================================');
 
     return aiService.generateImage(prompt, imageBase64, mimeType);
   },

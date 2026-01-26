@@ -30,6 +30,9 @@ router.get('/init', (req, res) => {
     const db = getDb();
     const { lang = 'zh-CN' } = req.query;
 
+    // 判断是否需要英文翻译
+    const useEnglish = lang === 'en';
+
     // 1. 获取系统配置
     const configs = db.prepare("SELECT config_key, config_value, config_type FROM system_config WHERE is_public = 1").all();
     const system = {};
@@ -46,6 +49,16 @@ router.get('/init', (req, res) => {
     // 2. 获取场景列表（只返回上线和即将上线的场景）
     const scenes = db.prepare("SELECT * FROM scenes WHERE status IN ('active', 'coming_soon') ORDER BY sort_order ASC, id ASC").all();
 
+    // 根据语言处理场景名称和描述
+    const localizedScenes = scenes.map(scene => {
+      const localizedScene = { ...scene };
+      if (useEnglish) {
+        localizedScene.name = scene.name_en || scene.name;
+        localizedScene.description = scene.description_en || scene.description;
+      }
+      return localizedScene;
+    });
+
     // 3. 获取版本号
     const versionConfig = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'config_version'").get();
     const version = versionConfig ? parseInt(versionConfig.config_value) || 1 : 1;
@@ -55,7 +68,7 @@ router.get('/init', (req, res) => {
       data: {
         version,
         system,
-        scenes
+        scenes: localizedScenes
       }
     });
   } catch (error) {
@@ -71,10 +84,19 @@ router.get('/scene/:sceneId', (req, res) => {
     const { sceneId } = req.params;
     const { lang = 'zh-CN' } = req.query;
 
+    // 判断是否需要英文翻译
+    const useEnglish = lang === 'en';
+
     // 1. 获取场景基本信息（支持 id 或 scene_key）
     let scene = db.prepare("SELECT * FROM scenes WHERE id = ? OR scene_key = ?").get(sceneId, sceneId);
     if (!scene) {
       return res.status(404).json({ code: -1, msg: '场景不存在' });
+    }
+
+    // 根据语言返回对应的名称和描述
+    if (useEnglish) {
+      scene.name = scene.name_en || scene.name;
+      scene.description = scene.description_en || scene.description;
     }
 
     // 2. 获取场景步骤
@@ -84,11 +106,30 @@ router.get('/scene/:sceneId', (req, res) => {
     const stepsWithOptions = steps.map(step => {
       const options = db.prepare('SELECT * FROM step_options WHERE step_id = ? ORDER BY sort_order').all(step.id);
 
+      // 根据语言处理选项的显示文本
+      const localizedOptions = options.map(opt => {
+        const localizedOpt = { ...opt };
+        if (useEnglish) {
+          // 使用英文标签，如果没有则回退到中文
+          localizedOpt.label = opt.label_en || opt.label;
+          localizedOpt.name = opt.label_en || opt.label;
+        } else {
+          localizedOpt.name = opt.label;
+        }
+        // 保留原始的多语言字段供前端使用
+        localizedOpt.name_en = opt.label_en;
+        return localizedOpt;
+      });
+
       // 构建步骤对象
       const stepObj = {
         ...step,
         name: step.step_name || step.name,
-        options
+        // 根据语言返回对应的标题
+        title: useEnglish ? (step.title_en || step.title) : step.title,
+        // 保留原始的多语言字段供前端使用
+        title_en: step.title_en,
+        options: localizedOptions
       };
 
       // 如果步骤标记为 gender_based，添加 depends_on 信息

@@ -828,7 +828,29 @@ const languages = {
     // 新增：通用
     common_tip: '提示',
     common_networkError: '网络错误',
-    common_loadFailed: '加载失败'
+    common_loadFailed: '加载失败',
+
+    // 场景页面 - 生成进度阶段
+    progress_queued: '排队中...',
+    progress_deducting: '扣费处理...',
+    progress_uploading: '上传图片...',
+    progress_processing: 'AI处理中...',
+    progress_generating: '生成图片...',
+    progress_enhancing: '优化处理...',
+    progress_saving: '保存中...',
+    progress_done: '完成',
+    progress_retrying: '重试中({retry}/3)...',
+
+    // 场景页面 - 余额不足弹窗
+    insufficientBalanceTitle: '余额不足',
+    needMorePoints: '还需',
+    howToEarnPoints: '获取醒币方式：',
+    earnTip1: '邀请好友 +50醒币/人',
+    earnTip2: '分享照片 +10醒币/次',
+    earnTip3: '充值 1元=10醒币',
+
+    // 场景页面 - 生成完成提示
+    photosGenerateComplete: '{count}张照片生成完成'
   },
 
   'en': {
@@ -1650,7 +1672,29 @@ const languages = {
     // New: Common
     common_tip: 'Notice',
     common_networkError: 'Network error',
-    common_loadFailed: 'Load failed'
+    common_loadFailed: 'Load failed',
+
+    // Scene page - Generation progress stages
+    progress_queued: 'Queued...',
+    progress_deducting: 'Processing payment...',
+    progress_uploading: 'Uploading...',
+    progress_processing: 'AI processing...',
+    progress_generating: 'Generating...',
+    progress_enhancing: 'Enhancing...',
+    progress_saving: 'Saving...',
+    progress_done: 'Done',
+    progress_retrying: 'Retrying ({retry}/3)...',
+
+    // Scene page - Insufficient balance modal
+    insufficientBalanceTitle: 'Insufficient Balance',
+    needMorePoints: 'Need',
+    howToEarnPoints: 'How to earn points:',
+    earnTip1: 'Invite friends +50 pts/person',
+    earnTip2: 'Share photos +10 pts/time',
+    earnTip3: 'Top up ¥1=10 pts',
+
+    // Scene page - Generation complete message
+    photosGenerateComplete: '{count} photos generated'
   }
 };
 
