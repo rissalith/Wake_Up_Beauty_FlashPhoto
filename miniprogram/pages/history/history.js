@@ -807,34 +807,124 @@ Page({
 
     const currentLang = lang.getCurrentLang();
 
-    // 根据当前语言获取步骤标题（完全依赖后台配置的多语言字段）
-    const getStepTitle = (key, value) => {
-      if (typeof value !== 'object') {
-        return key; // 旧数据格式，直接返回key
-      }
-      // 使用保存的多语言字段（来自后台配置）
-      if (currentLang === 'en' && value.stepTitle_en) {
-        return value.stepTitle_en;
-      } else if (value.stepTitle_cn) {
-        return value.stepTitle_cn;
-      }
-      // 默认返回简体中文标题或key
-      return value.stepTitle || key;
+    // 步骤标题的本地翻译映射（后备方案）
+    const stepTitleMap = {
+      'spec': { cn: '照片规格', en: 'Photo Size' },
+      'beauty': { cn: '美颜修饰', en: 'Beauty' },
+      'clothing': { cn: '智能换装', en: 'Smart Outfit' },
+      'gender': { cn: '性别', en: 'Gender' },
+      'background': { cn: '背景颜色', en: 'Background' },
+      'bg_color': { cn: '背景颜色', en: 'Background' },
+      'bgColor': { cn: '背景颜色', en: 'Background' },
+      'industry': { cn: '行业', en: 'Industry' },
+      'profession': { cn: '职业', en: 'Profession' },
+      'framing': { cn: '构图', en: 'Framing' },
+      'posture': { cn: '姿势', en: 'Posture' }
     };
 
-    // 根据当前语言获取选项显示值（完全依赖后台配置的多语言字段）
+    // 选项值的本地翻译映射（后备方案）
+    const optionLabelMap = {
+      // 性别
+      'male': { cn: '男士', en: 'Male' },
+      'female': { cn: '女士', en: 'Female' },
+      // 照片规格
+      '1inch': { cn: '一寸', en: '1 inch' },
+      '2inch': { cn: '二寸', en: '2 inch' },
+      'small1inch': { cn: '小一寸', en: 'Small 1"' },
+      'big1inch': { cn: '大一寸', en: 'Large 1"' },
+      // 美颜
+      'none': { cn: '原图直出', en: 'Original' },
+      'natural': { cn: '自然美化', en: 'Natural' },
+      'enhanced': { cn: '精致修图', en: 'Enhanced' },
+      // 换装
+      'no_change': { cn: '不换装', en: 'No change' },
+      'suit_tie': { cn: '西装领带', en: 'Suit & Tie' },
+      'suit': { cn: '西装', en: 'Suit' },
+      'white_shirt': { cn: '白衬衫', en: 'White Shirt' },
+      'v_neck': { cn: 'V领', en: 'V-Neck' },
+      'round_neck': { cn: '圆领', en: 'Round Neck' },
+      'shirt': { cn: '衬衫', en: 'Shirt' },
+      // 背景颜色
+      'white': { cn: '白底', en: 'White' },
+      'blue': { cn: '蓝底', en: 'Blue' },
+      'dark_blue': { cn: '深蓝', en: 'Dark Blue' },
+      'red': { cn: '红底', en: 'Red' },
+      'gray': { cn: '灰底', en: 'Gray' },
+      'dark_gray': { cn: '深灰', en: 'Dark Gray' },
+      'gradient': { cn: '渐变', en: 'Gradient' },
+      'beige': { cn: '米色', en: 'Beige' },
+      'light_green': { cn: '浅绿', en: 'Light Green' },
+      'brown': { cn: '棕褐', en: 'Brown' },
+      // 构图
+      'closeup': { cn: '头肩特写', en: 'Close-up' },
+      'halfbody': { cn: '标准半身', en: 'Half Body' },
+      'threequarter': { cn: '四分三身', en: '3/4 Body' },
+      'fullbody': { cn: '全身照', en: 'Full Body' }
+    };
+
+    // 根据当前语言获取步骤标题
+    const getStepTitle = (key, value) => {
+      // 优先使用保存的多语言字段（来自后台配置）
+      if (typeof value === 'object') {
+        if (currentLang === 'en' && value.stepTitle_en) {
+          return value.stepTitle_en;
+        } else if (value.stepTitle_cn) {
+          return value.stepTitle_cn;
+        } else if (value.stepTitle) {
+          // 如果只有中文标题，尝试本地翻译
+          const localTitle = stepTitleMap[key];
+          if (localTitle) {
+            return currentLang === 'en' ? localTitle.en : localTitle.cn;
+          }
+          return value.stepTitle;
+        }
+      }
+      // 使用本地翻译映射
+      const localTitle = stepTitleMap[key];
+      if (localTitle) {
+        return currentLang === 'en' ? localTitle.en : localTitle.cn;
+      }
+      return key;
+    };
+
+    // 根据当前语言获取选项显示值
     const getOptionLabel = (value) => {
       if (typeof value !== 'object') {
-        return value; // 旧数据格式，直接返回原值
+        // 旧数据格式，尝试本地翻译
+        const localLabel = optionLabelMap[value];
+        if (localLabel) {
+          return currentLang === 'en' ? localLabel.en : localLabel.cn;
+        }
+        return value;
       }
-      // 使用保存的多语言字段（来自后台配置）
+      // 优先使用保存的多语言字段（来自后台配置）
       if (currentLang === 'en' && value.label_en) {
         return value.label_en;
       } else if (value.label_cn) {
+        // 如果当前是英文但没有英文翻译，尝试本地翻译
+        if (currentLang === 'en' && value.id) {
+          const localLabel = optionLabelMap[value.id];
+          if (localLabel) {
+            return localLabel.en;
+          }
+        }
         return value.label_cn;
+      } else if (value.label) {
+        // 尝试本地翻译
+        if (value.id) {
+          const localLabel = optionLabelMap[value.id];
+          if (localLabel) {
+            return currentLang === 'en' ? localLabel.en : localLabel.cn;
+          }
+        }
+        return value.label;
       }
-      // 默认返回简体中文 label 或 id
-      return value.label || value.id || '';
+      // 默认返回 id
+      const localLabel = optionLabelMap[value.id];
+      if (localLabel) {
+        return currentLang === 'en' ? localLabel.en : localLabel.cn;
+      }
+      return value.id || '';
     };
 
     const result = [];
