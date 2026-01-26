@@ -46,7 +46,12 @@
         <el-table-column label="用户" min-width="320">
           <template #default="{ row }">
             <div class="user-cell">
-              <el-avatar v-if="isValidAvatarUrl(row.avatar_url)" :src="row.avatar_url" :size="36">
+              <el-avatar
+                v-if="isValidAvatarUrl(row.avatar_url)"
+                :src="row.avatar_url"
+                :size="36"
+                @error="() => handleAvatarError(row)"
+              >
                 <span>{{ (row.nickname || '用户')[0] }}</span>
               </el-avatar>
               <div v-else class="user-avatar">
@@ -113,9 +118,14 @@
     <el-dialog v-model="detailVisible" title="用户详情" width="900px" v-dialog-drag>
       <div v-if="currentUser" class="user-detail" v-loading="statsLoading">
         <div class="detail-header">
-          <el-avatar v-if="isValidAvatarUrl(currentUser.avatar_url)" :src="currentUser.avatar_url" :size="60">
-            <span>{{ (currentUser.nickname || '用户')[0] }}</span>
-          </el-avatar>
+          <el-avatar
+                v-if="isValidAvatarUrl(currentUser.avatar_url)"
+                :src="currentUser.avatar_url"
+                :size="60"
+                @error="() => handleAvatarError(currentUser)"
+              >
+                <span>{{ (currentUser.nickname || '用户')[0] }}</span>
+              </el-avatar>
           <div v-else class="detail-avatar">
             <span>{{ (currentUser.nickname || '用户')[0] }}</span>
           </div>
@@ -459,6 +469,12 @@ const isValidAvatarUrl = (url) => {
   if (url.startsWith('wxfile://')) return false
   if (url.startsWith('http://tmp') || url.startsWith('https://tmp')) return false
   return url.startsWith('http://') || url.startsWith('https://')
+}
+
+// 处理头像加载失败（微信头像防盗链等情况）
+const handleAvatarError = (user) => {
+  // 将头像URL标记为无效，触发显示默认头像
+  user.avatar_url = null
 }
 
 const loadUsers = async () => {

@@ -23,6 +23,16 @@ function findUserByIdOrOpenid(userId) {
   return user;
 }
 
+// 生成默认昵称（醒宝_XXX格式）
+function generateDefaultNickname() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let randomId = '';
+  for (let i = 0; i < 11; i++) {
+    randomId += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `醒宝_${randomId}`;
+}
+
 // 获取奖励配置
 function getRewardConfig(type) {
   const db = getDb();
@@ -116,10 +126,12 @@ router.post('/login', (req, res) => {
       const newUserReward = getRewardConfig('new_user');
       const initialPoints = newUserReward.isActive ? newUserReward.points : 0;
       const now = new Date().toISOString();
+      // 如果没有提供昵称，自动生成默认昵称
+      const finalNickname = nickname || generateDefaultNickname();
 
       dbRun(db,
         'INSERT INTO users (id, openid, unionid, nickname, avatar_url, points, inviter_id, last_login_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, openid, unionid, nickname || null, avatarUrl || null, initialPoints, inviterId || null, now]);
+        [userId, openid, unionid, finalNickname, avatarUrl || null, initialPoints, inviterId || null, now]);
 
       if (initialPoints > 0) {
         dbRun(db,
