@@ -47,13 +47,19 @@
       </view>
 
       <!-- 登录按钮 -->
-      <button class="btn-login" bindtap="onLogin" loading="{{loading}}">
+      <button class="btn-login {{loading ? 'loading' : ''}}" bindtap="onLogin" disabled="{{loading}}">
         <view class="btn-shimmer"></view>
-        <text class="btn-text">{{i18n.loginConfirmBtn || '确认登录'}}</text>
+        <view class="btn-content" wx:if="{{!loading}}">
+          <text class="btn-text">{{i18n.loginConfirmBtn || '确认登录'}}</text>
+        </view>
+        <view class="btn-loading" wx:else>
+          <view class="btn-spinner"></view>
+          <text class="btn-step-text">{{loginStep}}</text>
+        </view>
       </button>
 
       <!-- 稍后再说 -->
-      <view class="skip-link" bindtap="onSkip">{{i18n.loginLater || '稍后再说'}}</view>
+      <view class="skip-link" bindtap="onSkip" wx:if="{{!loading}}">{{i18n.loginLater || '稍后再说'}}</view>
     </view>
   </view>
 </view>

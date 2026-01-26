@@ -373,6 +373,44 @@
   text-shadow: 0 2rpx 4rpx rgba(139, 105, 20, 0.3);
 }
 
+/* 登录按钮加载状态 */
+.btn-login.loading {
+  opacity: 0.9;
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.btn-spinner {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  border-top: 3rpx solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-step-text {
+  font-size: 28rpx;
+  color: #fff;
+  text-shadow: 0 2rpx 4rpx rgba(139, 105, 20, 0.3);
+}
+
 /* 先逛逛按钮（游客模式） */
 .btn-guest {
   margin-top: 28rpx;

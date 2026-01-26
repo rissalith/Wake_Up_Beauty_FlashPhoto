@@ -30,20 +30,23 @@
     </view>
   </view>
 
-  <!-- 页面内容 -->
-  <view class="container" style="padding-top: {{navBarHeight}}px;">
-    <!-- 头部 Banner 轮播 -->
-    <view class="header-banner">
-      <swiper class="banner-swiper" autoplay="{{bannerAutoplay}}" interval="{{4000}}" duration="{{500}}" circular="{{true}}" indicator-dots="{{false}}" bindchange="onBannerChange" current="{{bannerCurrent}}">
-        <swiper-item wx:for="{{bannerList}}" wx:key="index">
-          <image class="banner-bg" src="{{item}}" mode="aspectFill"></image>
-        </swiper-item>
-      </swiper>
-      <!-- 轮播指示点 -->
-      <view class="banner-dots">
-        <view class="banner-dot {{bannerCurrent === index ? 'active' : ''}}" wx:for="{{bannerList}}" wx:key="index"></view>
-      </view>
+  <!-- 头部 Banner 轮播 - 铺满式 -->
+  <view class="header-banner-full" style="top: {{navBarHeight}}px;">
+    <swiper class="banner-swiper-full" autoplay="{{bannerAutoplay}}" interval="{{4000}}" duration="{{500}}" circular="{{true}}" indicator-dots="{{false}}" bindchange="onBannerChange" current="{{bannerCurrent}}">
+      <swiper-item wx:for="{{bannerList}}" wx:key="index">
+        <image class="banner-bg-full" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+    <!-- 底部渐变遮罩 -->
+    <view class="banner-gradient-overlay"></view>
+    <!-- 轮播指示点 -->
+    <view class="banner-dots-full">
+      <view class="banner-dot {{bannerCurrent === index ? 'active' : ''}}" wx:for="{{bannerList}}" wx:key="index"></view>
     </view>
+  </view>
+
+  <!-- 页面内容 -->
+  <view class="container" style="padding-top: {{navBarHeight + 260}}px;">
 
     <!-- 公告提示 -->
     <view class="announcement-bar" wx:if="{{announcement}}">

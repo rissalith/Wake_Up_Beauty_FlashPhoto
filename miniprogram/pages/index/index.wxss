@@ -196,7 +196,70 @@ page {
   padding-bottom: 180rpx;
 }
 
-/* 头部 Banner 轮播 */
+/* 头部 Banner 轮播 - 铺满式 */
+.header-banner-full {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 340rpx;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.banner-swiper-full {
+  width: 100%;
+  height: 100%;
+}
+
+.banner-bg-full {
+  width: 100%;
+  height: 100%;
+}
+
+/* 底部渐变遮罩 - 与页面背景融合 */
+.banner-gradient-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120rpx;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 248, 240, 0.3) 30%,
+    rgba(255, 248, 240, 0.7) 60%,
+    #FFF8F0 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Banner轮播指示点 - 铺满式 */
+.banner-dots-full {
+  position: absolute;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  z-index: 10;
+}
+
+.banner-dot {
+  width: 12rpx;
+  height: 12rpx;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6rpx;
+  transition: all 0.3s ease;
+}
+
+.banner-dot.active {
+  width: 28rpx;
+  background: #fff;
+}
+
+/* 保留旧样式以兼容 */
 .header-banner {
   border-radius: 20rpx;
   margin-top: 20rpx;
@@ -218,7 +281,6 @@ page {
   border-radius: 20rpx;
 }
 
-/* Banner轮播指示点 */
 .banner-dots {
   position: absolute;
   bottom: 16rpx;
@@ -228,19 +290,6 @@ page {
   align-items: center;
   gap: 12rpx;
   z-index: 10;
-}
-
-.banner-dot {
-  width: 12rpx;
-  height: 12rpx;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 6rpx;
-  transition: all 0.3s ease;
-}
-
-.banner-dot.active {
-  width: 28rpx;
-  background: #fff;
 }
 
 /* 服务列表区块 */

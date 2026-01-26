@@ -12,6 +12,7 @@ Component({
   data: {
     i18n: {},
     loading: false,
+    loginStep: '', // 登录步骤提示
     logoUrl: images.logo,
     currentLanguage: 'zh-CN'
   },
@@ -56,16 +57,37 @@ Component({
     // 确认登录 - 直接调用 wx.login
     async onLogin() {
       const app = getApp();
-      this.setData({ loading: true });
+      const { i18n } = this.data;
+      this.setData({ loading: true, loginStep: i18n.loginStep1 || '正在验证微信...' });
 
       try {
         console.log('[Login] 开始登录流程...');
+
+        // 步骤1: 微信验证
+        this.setData({ loginStep: i18n.loginStep1 || '正在验证微信...' });
+
+        // 步骤2: 创建账户（在 userLogin 内部完成）
+        setTimeout(() => {
+          if (this.data.loading) {
+            this.setData({ loginStep: i18n.loginStep2 || '正在创建账户...' });
+          }
+        }, 800);
+
+        // 步骤3: 加载数据
+        setTimeout(() => {
+          if (this.data.loading) {
+            this.setData({ loginStep: i18n.loginStep3 || '正在加载数据...' });
+          }
+        }, 1500);
+
         // 直接登录，不需要头像昵称
         const userData = await app.userLogin({});
         console.log('[Login] 登录成功:', userData);
 
+        this.setData({ loginStep: i18n.loginSuccess || '登录成功' });
+
         wx.showToast({
-          title: this.data.i18n.loginSuccess || '登录成功',
+          title: i18n.loginSuccess || '登录成功',
           icon: 'success'
         });
 
@@ -76,15 +98,16 @@ Component({
         // 打印详细错误信息便于调试
         console.error('[Login] 登录失败:', error);
         console.error('[Login] 错误详情:', JSON.stringify(error));
-        
+
         const errorMsg = error.message || error.msg || error.errMsg || '登录失败';
+        this.setData({ loginStep: '' });
         wx.showToast({
           title: errorMsg,
           icon: 'none',
           duration: 3000
         });
       } finally {
-        this.setData({ loading: false });
+        this.setData({ loading: false, loginStep: '' });
       }
     },
 

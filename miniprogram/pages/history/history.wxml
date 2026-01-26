@@ -174,12 +174,15 @@
           </view>
           <view class="history-info">
             <text class="history-spec">{{item.specDisplay}}</text>
-            <text class="history-status failed">{{item.failReason || i18n.hist_failedTitle || '生成失败'}}</text>
+            <view class="failed-info">
+              <text class="history-status failed">{{item.failReason || i18n.hist_failedTitle || '生成失败'}}</text>
+              <text class="failed-tip" wx:if="{{item.isSystemError}}">{{i18n.hist_systemErrorTip || '系统原因，免费重试'}}</text>
+            </view>
             <text class="history-time">{{item.timeStr}}</text>
           </view>
           <view class="item-actions">
             <view class="action-btn retry" catchtap="retryFailedTask" data-id="{{item.id}}">
-              <image class="action-icon" src="./icons/retry.svg" mode="aspectFit"></image>
+              <text class="retry-text">{{item.isSystemError ? (i18n.hist_freeRetry || '免费重试') : (i18n.hist_retry || '重试')}}</text>
             </view>
             <view class="action-btn delete" catchtap="deleteFailedTask" data-id="{{item.id}}">
               <image class="action-icon" src="./icons/delete.svg" mode="aspectFit"></image>

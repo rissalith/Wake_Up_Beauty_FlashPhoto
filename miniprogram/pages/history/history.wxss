@@ -970,6 +970,30 @@ page {
   color: #e74c3c;
 }
 
+/* 失败信息区域 */
+.failed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.failed-tip {
+  font-size: 20rpx;
+  color: #27ae60;
+  background: #e8f8f0;
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* 重试按钮文字 */
+.retry-text {
+  font-size: 22rpx;
+  color: #3498db;
+  font-weight: 500;
+}
+
 /* 图片容器（列表视图） */
 .history-img-wrap {
   position: relative;

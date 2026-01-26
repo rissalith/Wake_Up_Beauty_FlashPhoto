@@ -34,7 +34,14 @@
             <image src="{{item.path}}" mode="aspectFill" class="preview-image" />
             <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
           </view>
-          <view class="add-image" wx:if="{{uploadedImages.length < 3}}" bindtap="chooseImage">
+          <!-- 上传中状态 -->
+          <view class="image-item uploading-item" wx:if="{{uploading}}">
+            <view class="upload-progress-wrap">
+              <view class="upload-spinner"></view>
+              <text class="upload-progress-text">{{uploadProgress || 0}}%</text>
+            </view>
+          </view>
+          <view class="add-image" wx:elif="{{uploadedImages.length < 3}}" bindtap="chooseImage">
             <view class="add-icon">+</view>
             <text class="add-text">{{lang.fp_add || '添加照片'}}</text>
           </view>
@@ -256,11 +263,33 @@
           </view>
         </view>
 
-        <!-- 余额不足提示 -->
-        <view class="pay-warning" wx:if="{{userPoints < totalPoints}}">
-          <view class="warning-icon">!</view>
-          <text wx:if="{{isIOSPlatform}}">{{lang.iosInsufficientBalance || '余额不足，可通过邀请好友、分享照片等方式获取醒币'}}</text>
-          <text wx:else>{{lang.insufficientBalance || '余额不足，请先充值'}}</text>
+        <!-- 余额不足提示 - 增强版 -->
+        <view class="pay-warning-enhanced" wx:if="{{userPoints < totalPoints}}">
+          <view class="warning-header">
+            <view class="warning-icon">!</view>
+            <text class="warning-title">{{lang.insufficientBalanceTitle || '余额不足'}}</text>
+          </view>
+          <view class="warning-desc">
+            <text>{{lang.needMorePoints || '还需'}} {{totalPoints - userPoints}} {{lang.pointsUnit || '醒币'}}</text>
+          </view>
+          <view class="earn-points-tips">
+            <view class="earn-tip-title">{{lang.howToEarnPoints || '获取醒币方式：'}}</view>
+            <view class="earn-tip-item" bindtap="goToInvite">
+              <text class="earn-tip-icon">👥</text>
+              <text class="earn-tip-text">{{lang.earnTip1 || '邀请好友 +50醒币/人'}}</text>
+              <text class="earn-tip-arrow">›</text>
+            </view>
+            <view class="earn-tip-item" bindtap="goToHistory">
+              <text class="earn-tip-icon">📤</text>
+              <text class="earn-tip-text">{{lang.earnTip2 || '分享照片 +10醒币/次'}}</text>
+              <text class="earn-tip-arrow">›</text>
+            </view>
+            <view class="earn-tip-item" bindtap="goToRecharge" wx:if="{{!isIOSPlatform}}">
+              <text class="earn-tip-icon">💰</text>
+              <text class="earn-tip-text">{{lang.earnTip3 || '充值 1元=10醒币'}}</text>
+              <text class="earn-tip-arrow">›</text>
+            </view>
+          </view>
         </view>
       </view>
 

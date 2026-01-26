@@ -18,6 +18,7 @@ I18nPage({
     uploadedImages: [],
     loading: false,
     uploading: false,
+    uploadProgress: 0, // 上传进度百分比
     // 步骤配置
     steps: [],
     currentStepIndex: 0,
@@ -580,9 +581,16 @@ I18nPage({
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
       success: (res) => {
-        this.setData({ uploading: true });
+        const totalFiles = res.tempFiles.length;
+        this.setData({ uploading: true, uploadProgress: 0 });
         const newImages = [];
         let processedCount = 0;
+
+        // 更新进度的辅助函数
+        const updateProgress = () => {
+          const progress = Math.round((processedCount / totalFiles) * 100);
+          this.setData({ uploadProgress: progress });
+        };
 
         res.tempFiles.forEach(file => {
           const filePath = file.tempFilePath;
@@ -608,20 +616,23 @@ I18nPage({
                       cosUtil.saveImageToCOS(readRes.data, 'temp', this.data.sceneId).then(result => {
                         newImages.push({ path: result.url, cosUrl: result.cosUrl });
                         processedCount++;
-                        if (processedCount === res.tempFiles.length) {
+                        updateProgress();
+                        if (processedCount === totalFiles) {
                           this.finishImageUpload(newImages);
                         }
                       }).catch(() => {
                         newImages.push({ path: compressedPath });
                         processedCount++;
-                        if (processedCount === res.tempFiles.length) {
+                        updateProgress();
+                        if (processedCount === totalFiles) {
                           this.finishImageUpload(newImages);
                         }
                       });
                     },
                     fail: () => {
                       processedCount++;
-                      if (processedCount === res.tempFiles.length) {
+                      updateProgress();
+                      if (processedCount === totalFiles) {
                         this.finishImageUpload(newImages);
                       }
                     }
@@ -630,7 +641,8 @@ I18nPage({
                 fail: () => {
                   newImages.push({ path: filePath });
                   processedCount++;
-                  if (processedCount === res.tempFiles.length) {
+                  updateProgress();
+                  if (processedCount === totalFiles) {
                     this.finishImageUpload(newImages);
                   }
                 }
@@ -645,14 +657,16 @@ I18nPage({
                 success: (compressRes) => {
                   newImages.push({ path: compressRes.tempFilePath });
                   processedCount++;
-                  if (processedCount === res.tempFiles.length) {
+                  updateProgress();
+                  if (processedCount === totalFiles) {
                     this.finishImageUpload(newImages);
                   }
                 },
                 fail: () => {
                   newImages.push({ path: filePath });
                   processedCount++;
-                  if (processedCount === res.tempFiles.length) {
+                  updateProgress();
+                  if (processedCount === totalFiles) {
                     this.finishImageUpload(newImages);
                   }
                 }

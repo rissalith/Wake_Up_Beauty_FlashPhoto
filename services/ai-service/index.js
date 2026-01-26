@@ -19,6 +19,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // AI 服务配置
 const AI_API_KEY = process.env.AI_API_KEY || 'sk-GtmTU7PTpPmWTVurx2SPBdaRsJoDPaJDpkSgRIK8Xu6huLt8';
 const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
+const AI_MODEL = process.env.AI_MODEL || 'gemini-3-pro-image-preview';
 
 // 请求日志
 app.use((req, res, next) => {
@@ -56,6 +57,14 @@ app.post('/api/ai/generate-image', async (req, res) => {
   }
 
   console.log('[AI服务] 收到请求, prompt长度:', prompt.length, ', 有图片:', !!imageBase64);
+  console.log('========== AI生图调试信息 ==========');
+  console.log('[AI服务] 调用模型:', AI_MODEL);
+  console.log('[AI服务] API地址:', AI_API_BASE + '/v1beta/models/' + AI_MODEL + ':generateContent');
+  console.log('[AI服务] 完整Prompt:');
+  console.log(prompt);
+  console.log('[AI服务] 图片类型:', mimeType || 'image/jpeg');
+  console.log('[AI服务] 图片大小:', imageBase64 ? Math.round(imageBase64.length / 1024) + 'KB' : '无图片');
+  console.log('====================================');
 
   try {
     const requestData = {
@@ -79,7 +88,7 @@ app.post('/api/ai/generate-image', async (req, res) => {
     requestData.contents[0].parts.push({ text: prompt });
 
     const response = await axios.post(
-      AI_API_BASE + '/v1beta/models/gemini-3-pro-image-preview:generateContent',
+      AI_API_BASE + '/v1beta/models/' + AI_MODEL + ':generateContent',
       requestData,
       {
         headers: {
@@ -115,7 +124,7 @@ app.post('/api/ai/generate-image', async (req, res) => {
     const duration = Date.now() - startTime;
 
     if (imageData) {
-      console.log(`[AI服务] 成功生成图片, 耗时: ${duration}ms`);
+      console.log(`[AI服务] 成功生成图片, 耗时: ${duration}ms, 模型: ${AI_MODEL}`);
       return res.json({
         code: 200,
         data: { imageData, mimeType: responseMimeType }
@@ -176,6 +185,8 @@ app.listen(PORT, () => {
   console.log('==========================================');
   console.log('  AI 服务已启动');
   console.log(`  端口: ${PORT}`);
+  console.log(`  模型: ${AI_MODEL}`);
+  console.log(`  API地址: ${AI_API_BASE}`);
   console.log(`  健康检查: http://localhost:${PORT}/health`);
   console.log(`  API: http://localhost:${PORT}/api/ai/generate-image`);
   console.log('==========================================');
