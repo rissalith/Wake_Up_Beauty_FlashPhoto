@@ -261,23 +261,14 @@ function clearSceneCache() {
 
 /**
  * 语言切换后的处理
- * 注意：图片已经预加载了所有语言版本，不需要重新加载
- * 场景详情也已经预加载了两种语言，直接使用缓存即可
+ * 清除场景详情缓存，确保获取新语言的配置
  */
 async function onLanguageChange() {
-  const newLang = wx.getStorageSync('language') || 'zh-CN';
+  // 清除所有场景详情缓存，强制重新加载
+  clearSceneCache();
 
-  // 检查新语言的场景详情是否已缓存
-  const scenes = configManager.getActiveScenes();
-  if (scenes && scenes.length > 0) {
-    const firstSceneId = scenes[0].scene_key || scenes[0].id;
-    const cacheKey = `${firstSceneId}_${newLang}`;
-
-    if (!preloadState.sceneDetailsCache[cacheKey]) {
-      // 新语言的缓存不存在，需要预加载
-      await preloadSceneDetails();
-    }
-  }
+  // 重新预加载场景详情
+  await preloadSceneDetails();
 }
 
 /**

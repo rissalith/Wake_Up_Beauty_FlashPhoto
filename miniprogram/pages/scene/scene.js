@@ -294,10 +294,13 @@ I18nPage({
     try {
       this.setData({ configLoading: true });
 
-      // 优先使用预加载缓存的场景配置
+      // 获取当前语言
       const currentLang = getCurrentLang();
+
+      // 优先使用预加载缓存的场景配置
       let sceneConfig = preloader.getCachedSceneDetail(sceneId, currentLang);
 
+      // 如果缓存不存在或语言不匹配，从 API 获取
       if (!sceneConfig) {
         sceneConfig = await configManager.getSceneDetail(sceneId, currentLang);
       }
