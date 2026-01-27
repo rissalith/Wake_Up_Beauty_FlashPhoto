@@ -697,6 +697,68 @@ async function getAllAssets() {
   return result;
 }
 
+// 获取素材桶中的所有图片（用于后台管理图片选择器）
+async function getAssetImages() {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化，请配置COS密钥');
+  }
+
+  const images = [];
+  const folders = new Set();
+
+  let marker = '';
+  let isTruncated = true;
+
+  while (isTruncated) {
+    try {
+      const data = await new Promise((resolve, reject) => {
+        cosClient.getBucket({
+          Bucket: ASSET_COS_CONFIG.bucket,
+          Region: ASSET_COS_CONFIG.region,
+          Prefix: '',
+          Marker: marker,
+          MaxKeys: 1000
+        }, (err, data) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      });
+
+      for (const item of data.Contents || []) {
+        const key = item.Key;
+        const parts = key.split('/');
+        const fileName = parts[parts.length - 1];
+
+        // 只处理图片文件
+        if (fileName && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName)) {
+          const folderPath = parts.slice(0, -1).join('/') || '根目录';
+          folders.add(folderPath);
+
+          images.push({
+            key: key,
+            fileName: fileName,
+            folderPath: folderPath,
+            url: `${ASSET_COS_CONFIG.baseUrl}/${key}`,
+            size: item.Size,
+            lastModified: item.LastModified
+          });
+        }
+      }
+
+      isTruncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+      marker = data.NextMarker || (data.Contents && data.Contents.length > 0 ? data.Contents[data.Contents.length - 1].Key : '');
+    } catch (e) {
+      console.log('[COS] 扫描素材桶完成或出错:', e.message);
+      break;
+    }
+  }
+
+  return {
+    images,
+    folders: Array.from(folders).sort()
+  };
+}
+
 module.exports = {
   COS_CONFIG,
   ASSET_COS_CONFIG,
@@ -715,5 +777,6 @@ module.exports = {
   listAssetObjects,
   uploadToAssetBucket,
   deleteFromAssetBucket,
-  getAllAssets
+  getAllAssets,
+  getAssetImages
 };

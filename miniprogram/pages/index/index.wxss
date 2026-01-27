@@ -639,43 +639,10 @@ page {
   color: #666;
 }
 
-/* 场景卡片高亮效果 - 泛红光 */
+/* 场景卡片高亮效果 - 微微泛光（静态） */
 .service-card.highlighted {
   position: relative;
-  animation: highlight-glow 2s ease-in-out infinite;
-  box-shadow: 0 0 15rpx var(--highlight-color, #ff6b6b);
-  border: 2rpx solid var(--highlight-color, #ff6b6b);
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 107, 107, 0.02) 100%);
-}
-
-.service-card.highlighted::before {
-  content: '';
-  position: absolute;
-  top: -4rpx;
-  left: -4rpx;
-  right: -4rpx;
-  bottom: -4rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, var(--highlight-color, #ff6b6b), transparent);
-  opacity: var(--highlight-intensity, 0.3);
-  z-index: -1;
-  animation: highlight-pulse 2s ease-in-out infinite;
-}
-
-@keyframes highlight-glow {
-  0%, 100% {
-    box-shadow: 0 0 10rpx var(--highlight-color, #ff6b6b);
-  }
-  50% {
-    box-shadow: 0 0 25rpx var(--highlight-color, #ff6b6b);
-  }
-}
-
-@keyframes highlight-pulse {
-  0%, 100% {
-    opacity: calc(var(--highlight-intensity, 0.3) * 0.5);
-  }
-  50% {
-    opacity: var(--highlight-intensity, 0.3);
-  }
+  box-shadow: 0 0 12rpx rgba(255, 107, 107, 0.4);
+  border: 1rpx solid rgba(255, 107, 107, 0.3);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.06) 0%, rgba(255, 255, 255, 1) 100%);
 }
