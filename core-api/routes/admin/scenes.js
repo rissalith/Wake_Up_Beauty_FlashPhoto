@@ -612,4 +612,118 @@ router.delete('/:sceneId/draw-pool/:stepKey/:id', (req, res) => {
   }
 });
 
+// ==================== 品级定义 API ====================
+
+// 确保品级表存在
+function ensureGradesTable(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS draw_pool_grades (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scene_id TEXT NOT NULL,
+      step_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      weight INTEGER DEFAULT 100,
+      color TEXT DEFAULT '#409eff',
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  try {
+    db.exec('CREATE INDEX IF NOT EXISTS idx_draw_pool_grades_scene_step ON draw_pool_grades(scene_id, step_key)');
+  } catch (e) {}
+}
+
+// 获取品级列表
+router.get('/:sceneId/draw-pool/:stepKey/grades', (req, res) => {
+  try {
+    const db = getDb();
+    ensureGradesTable(db);
+
+    const { sceneId, stepKey } = req.params;
+    const grades = db.prepare(
+      'SELECT * FROM draw_pool_grades WHERE scene_id = ? AND step_key = ? ORDER BY sort_order ASC, id ASC'
+    ).all(sceneId, stepKey);
+
+    res.json({ code: 0, data: grades });
+  } catch (error) {
+    console.error('获取品级列表错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 添加品级
+router.post('/:sceneId/draw-pool/:stepKey/grades', (req, res) => {
+  try {
+    const db = getDb();
+    ensureGradesTable(db);
+
+    const { sceneId, stepKey } = req.params;
+    const { name, nameEn, weight, color, sortOrder } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ code: -1, msg: '品级名称不能为空' });
+    }
+
+    const result = dbRun(db, `
+      INSERT INTO draw_pool_grades (scene_id, step_key, name, name_en, weight, color, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [sceneId, stepKey, name, nameEn || null, weight || 100, color || '#409eff', sortOrder || 0]);
+
+    saveDatabase();
+
+    res.json({ code: 0, msg: 'success', data: { id: result.lastInsertRowid } });
+  } catch (error) {
+    console.error('添加品级错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 更新品级
+router.put('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { name, nameEn, weight, color, sortOrder } = req.body;
+
+    const fields = [];
+    const values = [];
+
+    if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+    if (nameEn !== undefined) { fields.push('name_en = ?'); values.push(nameEn); }
+    if (weight !== undefined) { fields.push('weight = ?'); values.push(weight); }
+    if (color !== undefined) { fields.push('color = ?'); values.push(color); }
+    if (sortOrder !== undefined) { fields.push('sort_order = ?'); values.push(sortOrder); }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ code: -1, msg: '没有可更新的字段' });
+    }
+
+    values.push(id);
+    dbRun(db, `UPDATE draw_pool_grades SET ${fields.join(', ')} WHERE id = ?`, values);
+    saveDatabase();
+
+    res.json({ code: 0, msg: 'success' });
+  } catch (error) {
+    console.error('更新品级错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 删除品级
+router.delete('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+
+    dbRun(db, 'DELETE FROM draw_pool_grades WHERE id = ?', [id]);
+    saveDatabase();
+
+    res.json({ code: 0, msg: 'success' });
+  } catch (error) {
+    console.error('删除品级错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 module.exports = router;
