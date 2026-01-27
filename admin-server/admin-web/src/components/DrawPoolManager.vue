@@ -1,112 +1,120 @@
 <template>
   <div class="draw-pool-manager">
-    <!-- 品级管理区域 -->
-    <div class="grades-section">
-      <div class="section-header">
-        <span class="section-title">品级定义</span>
-        <el-button type="primary" size="small" :icon="Plus" @click="showAddGradeDialog">添加品级</el-button>
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <el-button size="small" @click="showGradesDialog">
+          品级管理 ({{ grades.length }})
+        </el-button>
+        <el-select v-model="filterGrade" placeholder="品级筛选" clearable size="small" style="width: 100px" @change="loadItems">
+          <el-option label="全部" value="" />
+          <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
+        </el-select>
+        <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 100px" @clear="loadItems" @keyup.enter="loadItems">
+          <template #append>
+            <el-button :icon="Search" @click="loadItems" />
+          </template>
+        </el-input>
       </div>
-      <div class="grades-list" v-if="grades.length > 0">
-        <div v-for="grade in grades" :key="grade.id" class="grade-item" :style="{ borderLeftColor: grade.color }">
-          <div class="grade-info">
-            <span class="grade-name">{{ grade.name }}</span>
-            <span class="grade-name-en" v-if="grade.name_en">{{ grade.name_en }}</span>
-          </div>
-          <div class="grade-weight">
-            <el-input-number v-model="grade.weight" :min="1" :max="10000" size="small" @change="updateGrade(grade)" />
-          </div>
-          <div class="grade-actions">
-            <el-button type="primary" link size="small" @click="editGrade(grade)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="deleteGrade(grade)">删除</el-button>
-          </div>
-        </div>
-      </div>
-      <div class="grades-empty" v-else>
-        <span>暂无品级，请先添加品级</span>
+      <div class="toolbar-right">
+        <el-button type="primary" size="small" :icon="Plus" @click="showAddDialog" :disabled="grades.length === 0">添加</el-button>
+        <el-button size="small" :icon="Upload" @click="showBatchDialog" :disabled="grades.length === 0">批量导入</el-button>
       </div>
     </div>
 
-    <el-divider />
-
-    <!-- 词条管理区域 -->
-    <div class="items-section">
-      <div class="section-header">
-        <span class="section-title">词条列表</span>
-        <div class="section-actions">
-          <el-select v-model="filterGrade" placeholder="品级筛选" clearable size="small" style="width: 100px" @change="loadItems">
-            <el-option label="全部" value="" />
-            <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
-          </el-select>
-          <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 100px" @clear="loadItems" @keyup.enter="loadItems">
-            <template #append>
-              <el-button :icon="Search" @click="loadItems" />
-            </template>
-          </el-input>
-          <el-button type="primary" size="small" :icon="Plus" @click="showAddDialog" :disabled="grades.length === 0">添加</el-button>
-          <el-button size="small" :icon="Upload" @click="showBatchDialog" :disabled="grades.length === 0">批量导入</el-button>
-        </div>
-      </div>
-
-      <!-- 统计信息 -->
-      <div class="stats-bar" v-if="items.length > 0">
-        <span>共 {{ total }} 项</span>
-        <span v-for="g in grades" :key="g.id" class="stat-item" :style="{ background: g.color }">
-          {{ g.name }}: {{ getGradeCount(g.name) }}
-        </span>
-      </div>
-
-      <!-- 列表 -->
-      <el-table :data="items" v-loading="loading" stripe size="small" max-height="300">
-        <!-- 图片列（可选） -->
-        <el-table-column v-if="showImage" prop="image" label="图" width="50" align="center">
-          <template #default="{ row }">
-            <el-image v-if="row.image" :src="row.image" style="width: 30px; height: 30px" fit="cover" :preview-src-list="[row.image]" />
-            <span v-else class="placeholder-icon">-</span>
-          </template>
-        </el-table-column>
-
-        <!-- 名称 -->
-        <el-table-column prop="name" label="名称" min-width="80" show-overflow-tooltip />
-        <el-table-column prop="name_en" label="英文" min-width="80" show-overflow-tooltip />
-
-        <!-- 品级 -->
-        <el-table-column prop="rarity" label="品级" width="70" align="center">
-          <template #default="{ row }">
-            <el-tag size="small" :color="getGradeColor(row.rarity)" style="color: #fff; border: none;">{{ row.rarity || '-' }}</el-tag>
-          </template>
-        </el-table-column>
-
-        <!-- 启用 -->
-        <el-table-column prop="is_active" label="启用" width="55" align="center">
-          <template #default="{ row }">
-            <el-switch v-model="row.is_active" :active-value="1" :inactive-value="0" @change="updateItem(row)" size="small" />
-          </template>
-        </el-table-column>
-
-        <!-- 操作 -->
-        <el-table-column label="操作" width="80" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="editItem(row)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="deleteItem(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-wrapper" v-if="total > pageSize">
-        <el-pagination
-          v-model:current-page="currentPage"
-          :page-size="pageSize"
-          :total="total"
-          layout="prev, pager, next"
-          size="small"
-          @current-change="loadItems"
-        />
-      </div>
+    <!-- 统计信息 -->
+    <div class="stats-bar">
+      <span>共 {{ total }} 项</span>
+      <span v-for="g in grades" :key="g.id" class="stat-item" :style="{ background: g.color }">
+        {{ g.name }}: {{ getGradeCount(g.name) }}
+      </span>
     </div>
 
-    <!-- 品级添加/编辑对话框 -->
-    <el-dialog v-model="gradeDialogVisible" :title="isEditGrade ? '编辑品级' : '添加品级'" width="400px">
+    <!-- 列表 -->
+    <el-table :data="items" v-loading="loading" stripe size="small" max-height="350">
+      <!-- 图片列（可选） -->
+      <el-table-column v-if="showImage" prop="image" label="图" width="50" align="center">
+        <template #default="{ row }">
+          <el-image v-if="row.image" :src="row.image" style="width: 30px; height: 30px" fit="cover" :preview-src-list="[row.image]" />
+          <span v-else class="placeholder-icon">-</span>
+        </template>
+      </el-table-column>
+
+      <!-- 名称 -->
+      <el-table-column prop="name" label="名称" min-width="80" show-overflow-tooltip />
+      <el-table-column prop="name_en" label="英文" min-width="80" show-overflow-tooltip />
+
+      <!-- 品级 -->
+      <el-table-column prop="rarity" label="品级" width="80" align="center">
+        <template #default="{ row }">
+          <el-tag size="small" :color="getGradeColor(row.rarity)" style="color: #fff; border: none;">{{ row.rarity || '-' }}</el-tag>
+        </template>
+      </el-table-column>
+
+      <!-- 启用 -->
+      <el-table-column prop="is_active" label="启用" width="55" align="center">
+        <template #default="{ row }">
+          <el-switch v-model="row.is_active" :active-value="1" :inactive-value="0" @change="updateItem(row)" size="small" />
+        </template>
+      </el-table-column>
+
+      <!-- 操作 -->
+      <el-table-column label="操作" width="80" align="center" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" link size="small" @click="editItem(row)">编辑</el-button>
+          <el-button type="danger" link size="small" @click="deleteItem(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 分页 -->
+    <div class="pagination-wrapper" v-if="total > pageSize">
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        size="small"
+        @current-change="loadItems"
+      />
+    </div>
+
+    <!-- 品级管理弹窗 -->
+    <el-dialog v-model="gradesDialogVisible" title="品级管理" width="550px">
+      <div class="grades-dialog-content">
+        <div class="grades-tip">
+          <el-icon><InfoFilled /></el-icon>
+          <span>品级权重决定抽中概率，权重越高概率越大。抽奖时先按权重抽品级，再从该品级词条中随机选一个。</span>
+        </div>
+        <div class="grades-list" v-if="grades.length > 0">
+          <div v-for="grade in grades" :key="grade.id" class="grade-item" :style="{ borderLeftColor: grade.color }">
+            <div class="grade-color">
+              <el-color-picker v-model="grade.color" size="small" @change="updateGrade(grade)" />
+            </div>
+            <div class="grade-info">
+              <el-input v-model="grade.name" size="small" style="width: 80px" @blur="updateGrade(grade)" />
+              <el-input v-model="grade.name_en" size="small" style="width: 80px" placeholder="英文" @blur="updateGrade(grade)" />
+            </div>
+            <div class="grade-weight">
+              <span class="weight-label">权重:</span>
+              <el-input-number v-model="grade.weight" :min="1" :max="10000" size="small" style="width: 100px" @change="updateGrade(grade)" />
+            </div>
+            <div class="grade-actions">
+              <el-button type="danger" link size="small" @click="deleteGrade(grade)">删除</el-button>
+            </div>
+          </div>
+        </div>
+        <div class="grades-empty" v-else>
+          <span>暂无品级，请添加</span>
+        </div>
+        <div class="grades-add">
+          <el-button type="primary" size="small" :icon="Plus" @click="showAddGradeDialog">添加品级</el-button>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 品级添加对话框 -->
+    <el-dialog v-model="gradeDialogVisible" title="添加品级" width="400px" append-to-body>
       <el-form :model="gradeForm" :rules="gradeRules" ref="gradeFormRef" label-width="80px" size="small">
         <el-form-item label="品级名称" prop="name">
           <el-input v-model="gradeForm.name" placeholder="如：大吉、普通、史诗" />
@@ -161,12 +169,12 @@
         <template #title>
           每行一项，格式：名称,英文,品级<br>
           品级必须是已定义的品级名称<br>
-          示例：马到成功,Instant Success,大吉
+          示例：马到成功,Instant Success,rare
         </template>
       </el-alert>
-      <el-input v-model="batchText" type="textarea" :rows="8" placeholder="马到成功,Instant Success,大吉
-龙马精神,Vigorous Spirit,中吉
-万事如意,All the Best,小吉" />
+      <el-input v-model="batchText" type="textarea" :rows="8" placeholder="马到成功,Instant Success,rare
+龙马精神,Vigorous Spirit,epic
+万事如意,All the Best,common" />
       <template #footer>
         <el-button size="small" @click="batchDialogVisible = false">取消</el-button>
         <el-button type="primary" size="small" @click="batchImport">导入</el-button>
@@ -178,7 +186,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Search } from '@element-plus/icons-vue'
+import { Plus, Upload, Search, InfoFilled } from '@element-plus/icons-vue'
 import request from '@/api'
 
 const props = defineProps({
@@ -198,8 +206,8 @@ const props = defineProps({
 
 // ==================== 品级相关 ====================
 const grades = ref([])
+const gradesDialogVisible = ref(false)
 const gradeDialogVisible = ref(false)
-const isEditGrade = ref(false)
 const gradeFormRef = ref(null)
 const gradeForm = reactive({
   id: null,
@@ -212,6 +220,11 @@ const gradeForm = reactive({
 const gradeRules = {
   name: [{ required: true, message: '请输入品级名称', trigger: 'blur' }],
   weight: [{ required: true, message: '请输入权重', trigger: 'blur' }]
+}
+
+// 显示品级管理弹窗
+const showGradesDialog = () => {
+  gradesDialogVisible.value = true
 }
 
 // 加载品级列表
@@ -230,21 +243,7 @@ const loadGrades = async () => {
 
 // 显示添加品级对话框
 const showAddGradeDialog = () => {
-  isEditGrade.value = false
   Object.assign(gradeForm, { id: null, name: '', nameEn: '', weight: 100, color: '#409eff' })
-  gradeDialogVisible.value = true
-}
-
-// 编辑品级
-const editGrade = (grade) => {
-  isEditGrade.value = true
-  Object.assign(gradeForm, {
-    id: grade.id,
-    name: grade.name,
-    nameEn: grade.name_en || '',
-    weight: grade.weight,
-    color: grade.color || '#409eff'
-  })
   gradeDialogVisible.value = true
 }
 
@@ -260,13 +259,8 @@ const saveGrade = async () => {
       color: gradeForm.color
     }
 
-    if (isEditGrade.value) {
-      await request.put(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades/${gradeForm.id}`, data)
-      ElMessage.success('更新成功')
-    } else {
-      await request.post(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`, data)
-      ElMessage.success('添加成功')
-    }
+    await request.post(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`, data)
+    ElMessage.success('添加成功')
 
     gradeDialogVisible.value = false
     loadGrades()
@@ -278,11 +272,14 @@ const saveGrade = async () => {
   }
 }
 
-// 更新品级权重
+// 更新品级
 const updateGrade = async (grade) => {
   try {
     await request.put(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades/${grade.id}`, {
-      weight: grade.weight
+      name: grade.name,
+      nameEn: grade.name_en,
+      weight: grade.weight,
+      color: grade.color
     })
   } catch (error) {
     console.error('更新品级失败:', error)
@@ -293,7 +290,7 @@ const updateGrade = async (grade) => {
 // 删除品级
 const deleteGrade = async (grade) => {
   try {
-    await ElMessageBox.confirm(`确定删除品级"${grade.name}"吗？该品级下的词条不会被删除。`, '确认删除', { type: 'warning' })
+    await ElMessageBox.confirm(`确定删除品级"${grade.name}"吗？`, '确认删除', { type: 'warning' })
     await request.delete(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades/${grade.id}`)
     ElMessage.success('删除成功')
     loadGrades()
@@ -409,7 +406,7 @@ const saveItem = async () => {
       nameEn: form.nameEn,
       image: form.image || null,
       rarity: form.rarity,
-      weight: 100, // 词条不再单独设置权重，统一为100
+      weight: 100,
       promptText: form.promptText || form.name
     }
 
@@ -480,7 +477,7 @@ const batchImport = async () => {
     if (parts[0]) {
       const rarity = parts[2] || gradeNames[0] || ''
       if (!gradeNames.includes(rarity)) {
-        ElMessage.warning(`品级"${rarity}"不存在，请先添加该品级`)
+        ElMessage.warning(`品级"${rarity}"不存在，请先在品级管理中添加`)
         return
       }
       importItems.push({
@@ -539,73 +536,24 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
   padding: 5px 0;
 }
 
-.section-header {
+.toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #303133;
-}
-
-.section-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* 品级列表样式 */
-.grades-list {
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.grade-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  border-left: 3px solid #409eff;
-}
-
-.grade-info {
-  flex: 1;
+.toolbar-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.grade-name {
-  font-weight: 500;
-  color: #303133;
-}
-
-.grade-name-en {
-  font-size: 12px;
-  color: #909399;
-}
-
-.grade-weight {
-  width: 120px;
-}
-
-.grade-actions {
+.toolbar-right {
   display: flex;
-  gap: 4px;
-}
-
-.grades-empty {
-  padding: 20px;
-  text-align: center;
-  color: #909399;
-  font-size: 13px;
+  gap: 8px;
 }
 
 /* 统计栏 */
@@ -645,7 +593,80 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
   color: #c0c4cc;
 }
 
-.el-divider {
-  margin: 15px 0;
+/* 品级管理弹窗样式 */
+.grades-dialog-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.grades-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #606266;
+}
+
+.grades-tip .el-icon {
+  color: #409eff;
+  margin-top: 2px;
+}
+
+.grades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grade-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  border-left: 3px solid #409eff;
+}
+
+.grade-color {
+  flex-shrink: 0;
+}
+
+.grade-info {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.grade-weight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weight-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.grade-actions {
+  flex-shrink: 0;
+}
+
+.grades-empty {
+  padding: 30px;
+  text-align: center;
+  color: #909399;
+  font-size: 13px;
+}
+
+.grades-add {
+  margin-top: 15px;
+  text-align: center;
 }
 </style>
