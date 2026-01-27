@@ -465,34 +465,34 @@
                     </div>
                   </div>
                 </template>
+
+                <!-- random_dice类型（摇骰子/抽奖）专用配置 -->
+                <template v-if="currentStep.component_type === 'random_dice'">
+                  <div class="random-dice-config">
+                    <div class="dice-config-header">
+                      <span class="config-label">抽奖池类型：</span>
+                      <el-radio-group v-model="currentStep.config.poolType" size="small" @change="onPoolTypeChange">
+                        <el-radio-button label="phrase">词组池</el-radio-button>
+                        <el-radio-button label="horse">马品级</el-radio-button>
+                      </el-radio-group>
+                    </div>
+                    <div class="dice-pool-manager">
+                      <draw-pool-manager
+                        v-if="form.id && currentStep.config && currentStep.config.poolType"
+                        :scene-id="form.id"
+                        :pool-type="currentStep.config.poolType"
+                        :key="currentStep.step_key + '-' + currentStep.config.poolType"
+                      />
+                      <el-empty v-else-if="!currentStep.config || !currentStep.config.poolType" description="请先选择抽奖池类型" :image-size="60" />
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
             <div class="step-options-empty" v-else>
               <el-empty description="选择步骤后配置选项" :image-size="60" />
             </div>
           </div>
-        </el-tab-pane>
-
-        <!-- 词组池Tab - 仅编辑模式显示 -->
-        <el-tab-pane label="词组池" name="phrases" :disabled="!isEdit">
-          <draw-pool-manager
-            v-if="isEdit && form.id"
-            :scene-id="form.id"
-            pool-type="phrase"
-            ref="phrasePoolRef"
-          />
-          <el-empty v-else description="请先保存场景基本信息" />
-        </el-tab-pane>
-
-        <!-- 马品级Tab - 仅编辑模式显示 -->
-        <el-tab-pane label="马品级" name="horse-grades" :disabled="!isEdit">
-          <draw-pool-manager
-            v-if="isEdit && form.id"
-            :scene-id="form.id"
-            pool-type="horse"
-            ref="horseGradeRef"
-          />
-          <el-empty v-else description="请先保存场景基本信息" />
         </el-tab-pane>
 
         <!-- Prompt模板Tab - 仅编辑模式显示 -->
@@ -1336,6 +1336,16 @@ async function saveSort() {
 // 步骤配置辅助函数
 function selectStep(index) {
   currentStepIndex.value = index
+  // 确保 config 对象存在
+  const step = steps.value[index]
+  if (step && !step.config) {
+    step.config = {}
+  }
+}
+
+function onPoolTypeChange(value) {
+  // 切换抽奖池类型时的回调
+  console.log('[Scenes] Pool type changed to:', value)
 }
 
 function addStep() {
@@ -2906,6 +2916,30 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* random_dice 抽奖池配置样式 */
+.random-dice-config {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.dice-config-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.dice-config-header .config-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+.dice-pool-manager {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .options-filter-compact {
