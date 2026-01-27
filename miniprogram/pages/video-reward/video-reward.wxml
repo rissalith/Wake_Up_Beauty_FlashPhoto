@@ -1,0 +1,90 @@
+<!-- 看视频得醒币页面 -->
+<custom-navbar title="{{i18n.title}}" back="{{true}}" />
+
+<view class="container">
+  <!-- 顶部信息卡片 -->
+  <view class="info-card">
+    <view class="balance-section">
+      <text class="balance-label">当前醒币</text>
+      <text class="balance-value">{{currentBalance}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="today-section">
+      <text class="today-label">{{i18n.todayEarned}}</text>
+      <text class="today-value">{{todayCount * pointsPerVideo}}</text>
+    </view>
+  </view>
+
+  <!-- 视频区域 -->
+  <view class="video-section">
+    <view class="video-container {{isWatching ? 'watching' : ''}}">
+      <!-- 视频占位 -->
+      <view class="video-placeholder">
+        <view class="play-icon" wx:if="{{!isWatching}}">▶</view>
+        <view class="watching-animation" wx:else>
+          <view class="wave wave1"></view>
+          <view class="wave wave2"></view>
+          <view class="wave wave3"></view>
+        </view>
+      </view>
+
+      <!-- 进度条 -->
+      <view class="progress-bar" wx:if="{{isWatching}}">
+        <view class="progress-fill" style="width: {{watchProgress}}%"></view>
+      </view>
+
+      <!-- 倒计时 -->
+      <view class="countdown" wx:if="{{isWatching}}">
+        <text>{{countdown}}s</text>
+      </view>
+    </view>
+
+    <!-- 奖励提示 -->
+    <view class="reward-hint">
+      <text class="hint-text">{{i18n.perVideo}}</text>
+      <text class="hint-points">+{{pointsPerVideo}} {{i18n.points}}</text>
+    </view>
+  </view>
+
+  <!-- 观看按钮 -->
+  <view class="action-section">
+    <view class="watch-btn {{isWatching ? 'disabled' : ''}}" bindtap="{{isWatching ? '' : 'startWatching'}}">
+      <text wx:if="{{!isWatching}}">{{i18n.watchVideo}}</text>
+      <text wx:else>{{i18n.watching}} {{countdown}}s</text>
+    </view>
+  </view>
+
+  <!-- 说明 -->
+  <view class="tips-section">
+    <view class="tips-title">活动说明</view>
+    <view class="tips-list">
+      <view class="tip-item">
+        <text class="tip-num">1</text>
+        <text class="tip-text">观看完整视频（15秒）即可获得30醒币</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-num">2</text>
+        <text class="tip-text">每日观看次数不限，多看多得</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-num">3</text>
+        <text class="tip-text">醒币可用于生成AI照片</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 成功弹窗 -->
+<view class="success-modal" wx:if="{{showSuccess}}">
+  <view class="success-mask" bindtap="closeSuccess"></view>
+  <view class="success-content">
+    <view class="success-icon">🎉</view>
+    <view class="success-title">{{i18n.success}}</view>
+    <view class="success-points">+{{earnedPoints}} {{i18n.points}}</view>
+    <view class="success-balance">当前余额: {{currentBalance}} 醒币</view>
+    <view class="success-btns">
+      <view class="success-btn continue" bindtap="continueWatch">{{i18n.continue}}</view>
+      <view class="success-btn back" bindtap="closeSuccess">{{i18n.back}}</view>
+    </view>
+  </view>
+</view>

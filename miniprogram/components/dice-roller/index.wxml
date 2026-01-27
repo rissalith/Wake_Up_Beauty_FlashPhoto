@@ -1,0 +1,110 @@
+<!-- 摇骰子组件 -->
+<view class="dice-roller">
+  <!-- 标题区域 -->
+  <view class="dice-header" wx:if="{{title}}">
+    <text class="dice-title">{{title}}</text>
+    <text class="dice-subtitle" wx:if="{{subtitle}}">{{subtitle}}</text>
+  </view>
+
+  <!-- 骰子区域 -->
+  <view class="dice-container">
+    <!-- 未抽取状态 - 显示骰子 -->
+    <view class="dice-box {{isRolling ? 'rolling' : ''}}" wx:if="{{!result}}" bindtap="onRollTap">
+      <view class="dice">
+        <view class="dice-face dice-face-{{currentDice}}">
+          <block wx:if="{{currentDice === 1}}">
+            <view class="dot center"></view>
+          </block>
+          <block wx:elif="{{currentDice === 2}}">
+            <view class="dot top-right"></view>
+            <view class="dot bottom-left"></view>
+          </block>
+          <block wx:elif="{{currentDice === 3}}">
+            <view class="dot top-right"></view>
+            <view class="dot center"></view>
+            <view class="dot bottom-left"></view>
+          </block>
+          <block wx:elif="{{currentDice === 4}}">
+            <view class="dot top-left"></view>
+            <view class="dot top-right"></view>
+            <view class="dot bottom-left"></view>
+            <view class="dot bottom-right"></view>
+          </block>
+          <block wx:elif="{{currentDice === 5}}">
+            <view class="dot top-left"></view>
+            <view class="dot top-right"></view>
+            <view class="dot center"></view>
+            <view class="dot bottom-left"></view>
+            <view class="dot bottom-right"></view>
+          </block>
+          <block wx:else>
+            <view class="dot top-left"></view>
+            <view class="dot top-right"></view>
+            <view class="dot middle-left"></view>
+            <view class="dot middle-right"></view>
+            <view class="dot bottom-left"></view>
+            <view class="dot bottom-right"></view>
+          </block>
+        </view>
+      </view>
+      <view class="dice-hint" wx:if="{{!isRolling}}">
+        <text>点击摇一摇</text>
+      </view>
+      <view class="dice-hint rolling-hint" wx:else>
+        <text>摇骰子中...</text>
+      </view>
+    </view>
+
+    <!-- 已抽取状态 - 显示结果 -->
+    <view class="result-box" wx:else animation="{{animationData}}">
+      <!-- 成语结果 -->
+      <block wx:if="{{drawType === 'phrase'}}">
+        <view class="result-phrase">
+          <text class="phrase-text">{{result.phrase}}</text>
+          <text class="phrase-en" wx:if="{{result.phrase_en}}">{{result.phrase_en}}</text>
+        </view>
+      </block>
+
+      <!-- 马品级结果 -->
+      <block wx:else>
+        <view class="result-horse {{getRarityClass(result.grade_key)}}">
+          <image class="horse-image" src="{{result.image}}" mode="aspectFit" wx:if="{{result.image}}"></image>
+          <view class="horse-placeholder" wx:else>
+            <text class="horse-icon">🐴</text>
+          </view>
+          <text class="horse-name">{{result.name}}</text>
+          <view class="horse-rarity {{getRarityClass(result.grade_key)}}" wx:if="{{showRarity}}">
+            <text>{{getRarityText(result.grade_key)}}</text>
+          </view>
+          <text class="horse-desc" wx:if="{{result.description}}">{{result.description}}</text>
+        </view>
+      </block>
+
+      <!-- 重新摇骰子按钮 -->
+      <view class="reroll-btn" bindtap="onReroll">
+        <text>再摇一次</text>
+        <text class="reroll-cost" wx:if="{{remainingFree <= 0}}">（{{costPerRoll}}醒币）</text>
+        <text class="reroll-free" wx:else>（免费）</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 免费次数提示 -->
+  <view class="free-hint">
+    <text wx:if="{{remainingFree > 0}}">今日免费次数: {{remainingFree}}次</text>
+    <text wx:else>每次消耗 {{costPerRoll}} 醒币</text>
+  </view>
+
+  <!-- 付费确认弹窗 -->
+  <view class="confirm-modal" wx:if="{{showConfirm}}">
+    <view class="confirm-mask" bindtap="onCancelPay"></view>
+    <view class="confirm-content">
+      <view class="confirm-title">确认消耗醒币</view>
+      <view class="confirm-desc">本次摇骰子将消耗 {{costPerRoll}} 醒币</view>
+      <view class="confirm-btns">
+        <view class="confirm-btn cancel" bindtap="onCancelPay">取消</view>
+        <view class="confirm-btn ok" bindtap="onConfirmPay">确认</view>
+      </view>
+    </view>
+  </view>
+</view>

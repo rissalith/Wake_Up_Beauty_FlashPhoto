@@ -4,7 +4,7 @@
   <view class="banner">
     <view class="banner-content">
       <view class="banner-title">{{lang.invite_title || '邀请好友 一起省钱'}}</view>
-      <view class="banner-desc">{{lang.invite_desc || '每邀请1位好友，双方各得10醒币'}}</view>
+      <view class="banner-desc">{{lang.invite_desc || '每邀请1位好友，双方各得20醒币'}}</view>
     </view>
     <image class="banner-icon-img" src="/images/invite-gift.svg" mode="aspectFit"></image>
   </view>
@@ -24,41 +24,6 @@
     <view class="stat-item">
       <text class="stat-value highlight">{{pendingPoints}}</text>
       <text class="stat-label">{{lang.invite_pending || '待领取'}}</text>
-    </view>
-  </view>
-
-  <!-- 奖励说明 -->
-  <view class="reward-card">
-    <view class="reward-header">
-      <view class="reward-title">{{lang.invite_rewardTitle || '邀请奖励'}}</view>
-    </view>
-    <view class="reward-content">
-      <view class="reward-item">
-        <view class="reward-icon-wrap">
-          <image class="reward-icon-img" src="/images/invite-user.svg" mode="aspectFit"></image>
-        </view>
-        <view class="reward-info">
-          <text class="reward-name">{{lang.invite_friendReward || '邀请好友注册'}}</text>
-          <text class="reward-desc">{{lang.invite_friendRewardDesc || '好友完成注册，双方各得'}}</text>
-        </view>
-        <view class="reward-points">+10{{lang.pointsUnit || '醒币'}}</view>
-      </view>
-      <view class="reward-item">
-        <view class="reward-icon-wrap">
-          <image class="reward-icon-img" src="/images/invite-upload.svg" mode="aspectFit"></image>
-        </view>
-        <view class="reward-info">
-          <text class="reward-name">{{lang.invite_shareReward || '分享生成的照片'}}</text>
-          <text class="reward-desc">{{lang.invite_shareRewardDesc || '首次分享海报，每日无上限！'}}</text>
-        </view>
-        <view class="reward-points">+10{{lang.pointsUnit || '醒币'}}</view>
-      </view>
-    </view>
-    <!-- 领取按钮 -->
-    <view class="claim-section" wx:if="{{pendingPoints > 0}}">
-      <view class="claim-btn" bindtap="claimReward">
-        {{lang.invite_claimNow || '立即领取'}} {{pendingPoints}} {{lang.pointsUnit || '醒币'}}
-      </view>
     </view>
   </view>
 
@@ -107,7 +72,7 @@
     <view class="rules-list">
       <view class="rule-item">
         <text class="rule-num">1</text>
-        <text class="rule-text">{{lang.invite_rule1 || '每成功邀请1位好友完成注册，您和好友各获得10醒币'}}</text>
+        <text class="rule-text">{{lang.invite_rule1 || '每成功邀请1位好友完成注册，您和好友各获得20醒币'}}</text>
       </view>
       <view class="rule-item">
         <text class="rule-num">2</text>
@@ -136,7 +101,7 @@
           <text class="record-name">{{item.name || (lang.invite_friend || '好友') + (index + 1)}}</text>
           <text class="record-time">{{item.time}}</text>
         </view>
-        <text class="record-points">+10{{lang.pointsUnit || '醒币'}}</text>
+        <text class="record-points">+{{item.reward_points || 20}}{{lang.pointsUnit || '醒币'}}</text>
       </view>
     </view>
   </view>

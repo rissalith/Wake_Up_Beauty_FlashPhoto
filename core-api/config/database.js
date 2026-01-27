@@ -186,6 +186,9 @@ function createTables() {
       use_dynamic_render INTEGER DEFAULT 0,
       coming_soon_text TEXT,
       sort_order INTEGER DEFAULT 0,
+      is_highlighted INTEGER DEFAULT 0,
+      highlight_color TEXT DEFAULT '#ff6b6b',
+      highlight_intensity REAL DEFAULT 0.3,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -344,6 +347,66 @@ function createTables() {
     )
   `);
 
+  // ==================== 随机词组池表（吉祥成语） ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS random_phrase_pool (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scene_id TEXT NOT NULL,
+      phrase TEXT NOT NULL,
+      phrase_en TEXT,
+      rarity TEXT DEFAULT 'common',
+      weight INTEGER DEFAULT 100,
+      prompt_text TEXT,
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ==================== 马品级表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS horse_grades (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scene_id TEXT NOT NULL,
+      grade_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      description TEXT,
+      image TEXT,
+      probability REAL NOT NULL,
+      prompt_text TEXT,
+      sort_order INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ==================== 用户抽奖记录表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_draw_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      scene_id TEXT NOT NULL,
+      draw_type TEXT NOT NULL,
+      result_id INTEGER,
+      result_value TEXT,
+      points_cost INTEGER DEFAULT 0,
+      is_free INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ==================== 视频奖励记录表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS video_reward_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      video_id TEXT,
+      points_earned INTEGER NOT NULL,
+      watch_duration INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // ==================== 操作日志表 ====================
   db.exec(`
     CREATE TABLE IF NOT EXISTS operation_logs (
@@ -443,7 +506,20 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_behaviors_user_time ON user_behaviors(user_id, created_at DESC)',
     'CREATE INDEX IF NOT EXISTS idx_behaviors_type ON user_behaviors(behavior_type)',
     'CREATE INDEX IF NOT EXISTS idx_behaviors_session ON user_behaviors(session_id)',
-    'CREATE INDEX IF NOT EXISTS idx_behaviors_created_at ON user_behaviors(created_at)'
+    'CREATE INDEX IF NOT EXISTS idx_behaviors_created_at ON user_behaviors(created_at)',
+    // 随机词组池索引
+    'CREATE INDEX IF NOT EXISTS idx_phrase_pool_scene ON random_phrase_pool(scene_id)',
+    'CREATE INDEX IF NOT EXISTS idx_phrase_pool_rarity ON random_phrase_pool(rarity)',
+    // 马品级索引
+    'CREATE INDEX IF NOT EXISTS idx_horse_grades_scene ON horse_grades(scene_id)',
+    // 用户抽奖记录索引
+    'CREATE INDEX IF NOT EXISTS idx_draw_records_user ON user_draw_records(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_draw_records_scene ON user_draw_records(scene_id)',
+    'CREATE INDEX IF NOT EXISTS idx_draw_records_type ON user_draw_records(draw_type)',
+    'CREATE INDEX IF NOT EXISTS idx_draw_records_created_at ON user_draw_records(created_at)',
+    // 视频奖励记录索引
+    'CREATE INDEX IF NOT EXISTS idx_video_reward_user ON video_reward_records(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_video_reward_created_at ON video_reward_records(created_at)'
   ];
   
   indexes.forEach(sql => {
@@ -474,8 +550,9 @@ async function initDefaultData() {
     const rewards = [
       ['new_user', '新用户注册', 50, '新用户注册赠送', 1, 1],
       ['daily_login', '每日登录', 2, '每日首次登录奖励', 1, 1],
-      ['invite_friend', '邀请好友', 10, '成功邀请好友注册', -1, 1],
-      ['share_photo', '分享照片', 10, '分享生成的照片', 3, 1]
+      ['invite_friend', '邀请好友', 20, '成功邀请好友注册', -1, 1],
+      ['share_photo', '分享照片', 10, '分享生成的照片', 3, 1],
+      ['watch_video', '看视频得醒币', 20, '观看视频获得醒币', -1, 1]
     ];
     const stmt = db.prepare('INSERT INTO point_rewards (type, name, points, description, max_times, is_active) VALUES (?, ?, ?, ?, ?, ?)');
     rewards.forEach(r => stmt.run(...r));
@@ -493,7 +570,7 @@ async function initDefaultData() {
       ['config_version', '1.0.0', 'string', '配置版本号', 1],
       ['default_scene_price', '50', 'number', '默认场景价格', 1],
       ['new_user_points', '50', 'number', '新用户赠送醒币', 0],
-      ['invite_reward', '10', 'number', '邀请奖励醒币', 0],
+      ['invite_reward', '20', 'number', '邀请奖励醒币', 0],
       ['points_per_photo', '50', 'number', '每张照片消耗', 0]
     ];
     const stmt = db.prepare('INSERT INTO system_config (config_key, config_value, config_type, description, is_public) VALUES (?, ?, ?, ?, ?)');

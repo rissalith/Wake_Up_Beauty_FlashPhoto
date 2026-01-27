@@ -42,8 +42,6 @@ I18nPage({
     showLoginModal: false,
     // 历史
     historyList: [],
-    generatingCount: 0,
-    showCompleted: false,
     showTopNotice: false,
     topNoticeText: '',
     pendingPayAfterRecharge: false
@@ -572,6 +570,34 @@ I18nPage({
     });
   },
 
+  // 摇骰子结果回调
+  onDiceResult(e) {
+    const { stepKey, result, drawType } = e.detail;
+    console.log('[Scene] Dice result:', stepKey, result, drawType);
+
+    // 更新选择结果
+    if (result) {
+      const value = drawType === 'phrase' ? result.phrase : result.grade_key;
+      const promptText = result.prompt_text || value;
+
+      this.setData({
+        [`selections.${stepKey}`]: value,
+        [`diceResults.${stepKey}`]: result
+      }, () => {
+        this.logCurrentPrompt();
+      });
+
+      // 刷新用户余额
+      this.loadUserPoints();
+    }
+  },
+
+  // 摇骰子选择回调（用户确认选择）
+  onDiceSelect(e) {
+    const { stepKey, result } = e.detail;
+    console.log('[Scene] Dice select confirmed:', stepKey, result);
+  },
+
   // 输出当前完整 Prompt（调试用）
   logCurrentPrompt() {
     const prompt = this.buildPrompt();
@@ -973,8 +999,7 @@ I18nPage({
     };
 
     const historyList = [item, ...this.data.historyList];
-    const generatingCount = historyList.filter(i => i.status === 'generating').length;
-    this.setData({ historyList, generatingCount });
+    this.setData({ historyList });
     this.saveHistory();
 
     return item.id;
@@ -991,8 +1016,7 @@ I18nPage({
       // 静默处理
     }
 
-    const generatingCount = history.filter(i => i.status === 'generating').length;
-    this.setData({ historyList: history, generatingCount });
+    this.setData({ historyList: history });
 
     const app = getApp();
     if (app && app.emit) app.emit('historyUpdated');
@@ -1030,8 +1054,7 @@ I18nPage({
   loadHistory() {
     try {
       const history = wx.getStorageSync(HISTORY_KEY) || [];
-      const generatingCount = history.filter(item => item.status === 'generating').length;
-      this.setData({ historyList: history, generatingCount });
+      this.setData({ historyList: history });
     } catch (e) {
       // 静默处理
     }
@@ -1211,7 +1234,6 @@ I18nPage({
     if (successCount > 0) {
       const completeMsg = (t('photosGenerateComplete') || '{count}张照片生成完成').replace('{count}', successCount);
       this.showNotice(completeMsg);
-      this.showCompletedStatus();
       // 生成完成后自动跳转到历史页面，让用户查看结果
       setTimeout(() => {
         wx.switchTab({ url: '/pages/history/history' });
@@ -1316,17 +1338,6 @@ I18nPage({
   showNotice(text) {
     this.setData({ showTopNotice: true, topNoticeText: text });
     setTimeout(() => this.setData({ showTopNotice: false }), 5000);
-  },
-
-  // 显示完成状态
-  showCompletedStatus() {
-    this.setData({ showCompleted: true, generatingCount: 0 });
-    setTimeout(() => this.setData({ showCompleted: false }), 3000);
-  },
-
-  // 跳转历史
-  goToHistory() {
-    wx.switchTab({ url: '/pages/history/history' });
   },
 
   // 跳转充值

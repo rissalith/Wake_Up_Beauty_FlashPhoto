@@ -263,13 +263,31 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 4rpx;
+  margin: 0 8rpx;
   margin-bottom: 40rpx;
+  position: relative;
+}
+
+.flow-arrow-wrap::before {
+  content: '';
+  width: 40rpx;
+  height: 4rpx;
+  background: linear-gradient(90deg, #E8B686 0%, #D4956A 100%);
+  border-radius: 2rpx;
+}
+
+.flow-arrow-wrap::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 12rpx solid #D4956A;
+  border-top: 8rpx solid transparent;
+  border-bottom: 8rpx solid transparent;
+  margin-left: -2rpx;
 }
 
 .flow-arrow-img {
-  width: 28rpx;
-  height: 28rpx;
+  display: none;
 }
 
 .share-main-btn {

@@ -732,6 +732,17 @@ Page({
     });
   },
 
+  // 跳转到看视频得醒币页面
+  goToVideoReward() {
+    if (!this.data.isLoggedIn) {
+      this.showLoginPrompt();
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/video-reward/video-reward'
+    });
+  },
+
   // 意见反馈
   goToFeedback() {
     if (!this.data.isLoggedIn) {

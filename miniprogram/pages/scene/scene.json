@@ -1,7 +1,9 @@
 {
   "usingComponents": {
     "login-modal": "/components/login-modal/index",
-    "privacy-modal": "/components/privacy-modal/index"
+    "privacy-modal": "/components/privacy-modal/index",
+    "floating-progress": "/components/floating-progress/index",
+    "dice-roller": "/components/dice-roller/index"
   },
   "navigationBarTitleText": "场景"
 }

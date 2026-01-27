@@ -4,80 +4,6 @@ page {
   background: linear-gradient(180deg, #FFF8F0 0%, #FFF5EB 50%, #FFFAF5 100%);
 }
 
-/* 悬浮进度条 */
-.floating-progress {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100%);
-  z-index: 1001;
-  transition: transform 0.3s ease;
-}
-
-.floating-progress.show {
-  transform: translateX(-50%) translateY(0);
-}
-
-.floating-progress-inner {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  background: linear-gradient(135deg, #F5D0A9 0%, #E8B686 100%);
-  padding: 16rpx 32rpx;
-  border-radius: 0 0 32rpx 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(232, 182, 134, 0.4);
-}
-
-/* 完成状态 - 绿色 */
-.floating-progress-inner.completed {
-  background: linear-gradient(135deg, #A8D5BA 0%, #7FC49A 100%);
-  box-shadow: 0 4rpx 20rpx rgba(127, 196, 154, 0.4);
-}
-
-.progress-spinner {
-  width: 28rpx;
-  height: 28rpx;
-  border: 3rpx solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* 完成状态对勾图标 */
-.progress-check {
-  width: 28rpx;
-  height: 28rpx;
-  position: relative;
-}
-
-.progress-check::after {
-  content: '';
-  position: absolute;
-  left: 8rpx;
-  top: 4rpx;
-  width: 10rpx;
-  height: 18rpx;
-  border: solid #fff;
-  border-width: 0 4rpx 4rpx 0;
-  transform: rotate(45deg);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.progress-text {
-  font-size: 26rpx;
-  color: #fff;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.progress-arrow {
-  font-size: 32rpx;
-  color: rgba(255,255,255,0.8);
-  margin-left: 8rpx;
-}
-
 .page-container {
   min-height: 100vh;
 }
@@ -711,4 +637,45 @@ page {
 .privacy-toast-btn.delay {
   background: #FFF5EB;
   color: #666;
+}
+
+/* 场景卡片高亮效果 - 泛红光 */
+.service-card.highlighted {
+  position: relative;
+  animation: highlight-glow 2s ease-in-out infinite;
+  box-shadow: 0 0 15rpx var(--highlight-color, #ff6b6b);
+  border: 2rpx solid var(--highlight-color, #ff6b6b);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 107, 107, 0.02) 100%);
+}
+
+.service-card.highlighted::before {
+  content: '';
+  position: absolute;
+  top: -4rpx;
+  left: -4rpx;
+  right: -4rpx;
+  bottom: -4rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, var(--highlight-color, #ff6b6b), transparent);
+  opacity: var(--highlight-intensity, 0.3);
+  z-index: -1;
+  animation: highlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes highlight-glow {
+  0%, 100% {
+    box-shadow: 0 0 10rpx var(--highlight-color, #ff6b6b);
+  }
+  50% {
+    box-shadow: 0 0 25rpx var(--highlight-color, #ff6b6b);
+  }
+}
+
+@keyframes highlight-pulse {
+  0%, 100% {
+    opacity: calc(var(--highlight-intensity, 0.3) * 0.5);
+  }
+  50% {
+    opacity: var(--highlight-intensity, 0.3);
+  }
 }

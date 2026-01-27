@@ -69,6 +69,8 @@ const miniprogramVirtualPayRoutes = require('./routes/miniprogram/virtual-pay');
 const miniprogramFeedbackRoutes = require('./routes/miniprogram/feedback');
 const miniprogramSecurityRoutes = require('./routes/miniprogram/security');
 const miniprogramBehaviorRoutes = require('./routes/miniprogram/behavior');
+const miniprogramDrawRoutes = require('./routes/miniprogram/draw');
+const miniprogramVideoRewardRoutes = require('./routes/miniprogram/video-reward');
 
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
@@ -99,6 +101,8 @@ app.use('/api/virtual-pay', miniprogramVirtualPayRoutes);
 app.use('/api/feedback', miniprogramFeedbackRoutes);
 app.use('/api/security', miniprogramSecurityRoutes);
 app.use('/api/behavior', miniprogramBehaviorRoutes);
+app.use('/api/draw', miniprogramDrawRoutes);
+app.use('/api/video-reward', miniprogramVideoRewardRoutes);
 
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);

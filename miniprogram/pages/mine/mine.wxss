@@ -669,6 +669,61 @@ page {
     inset 0 2rpx 4rpx rgba(255, 255, 255, 0.8);
 }
 
+/* 看视频得醒币卡片 */
+.video-card {
+  background: linear-gradient(135deg, #f5f0ff 0%, #ffe8ec 50%, #fff5f0 100%);
+  box-shadow:
+    0 4rpx 20rpx rgba(211, 47, 47, 0.15),
+    0 8rpx 40rpx rgba(255, 107, 107, 0.1),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.8);
+}
+
+/* 视频图标 */
+.video-icon {
+  width: 48rpx;
+  height: 48rpx;
+  background: linear-gradient(135deg, #d32f2f 0%, #ff5252 100%);
+  border-radius: 12rpx;
+  position: relative;
+}
+
+.video-icon::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 16rpx solid #fff;
+  border-top: 10rpx solid transparent;
+  border-bottom: 10rpx solid transparent;
+}
+
+/* 播放装饰 */
+.video-play-decoration {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  font-size: 28rpx;
+  color: #d32f2f;
+  font-weight: 400;
+  z-index: 2;
+  opacity: 0.6;
+  animation: playPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes playPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
 /* 星星装饰 */
 .invite-star-decoration {
   position: absolute;

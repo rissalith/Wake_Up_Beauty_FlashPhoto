@@ -1,15 +1,10 @@
 <!-- 醒美闪图 - 主页面 -->
 
-<!-- 悬浮进度条 - 有正在生成的任务时显示 -->
-<view class="floating-progress {{(generatingCount > 0 || showCompleted) ? 'show' : ''}}" style="top: {{navBarHeight}}px;" bindtap="goToHistory" wx:if="{{generatingCount > 0 || showCompleted}}">
-  <view class="floating-progress-inner {{showCompleted ? 'completed' : ''}}">
-    <view class="progress-spinner" wx:if="{{!showCompleted}}"></view>
-    <view class="progress-check" wx:if="{{showCompleted}}"></view>
-    <text class="progress-text" wx:if="{{!showCompleted}}">{{generatingCount}}{{i18n.generatingPhotos || '张照片生成中...'}}</text>
-    <text class="progress-text" wx:if="{{showCompleted}}">{{i18n.allCompleted || '全部完成'}}</text>
-    <text class="progress-arrow">›</text>
-  </view>
-</view>
+<!-- 悬浮进度条组件 -->
+<floating-progress
+  topOffset="{{navBarHeight}}"
+  showReassurance="{{true}}"
+/>
 
 <view class="page-container">
   <!-- 自定义导航栏 -->
@@ -66,7 +61,7 @@
           <swiper-item wx:for="{{scenePages}}" wx:key="index" wx:for-item="pageScenes" wx:for-index="pageIndex">
             <view class="service-list">
               <!-- 当前页的场景列表 -->
-              <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}}" wx:for="{{pageScenes}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100">
+              <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}} {{item.is_highlighted ? 'highlighted' : ''}}" wx:for="{{pageScenes}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100" style="{{item.is_highlighted ? '--highlight-color:' + (item.highlight_color || '#ff6b6b') + ';--highlight-intensity:' + (item.highlight_intensity || 0.3) : ''}}">
                 <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
                   <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
                 </view>

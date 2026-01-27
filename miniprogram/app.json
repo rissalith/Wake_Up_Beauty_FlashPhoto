@@ -13,7 +13,8 @@
     "pages/about/about",
     "pages/feedback/feedback",
     "pages/feedback-submit/feedback-submit",
-    "pages/webview/index"
+    "pages/webview/index",
+    "pages/video-reward/video-reward"
   ],
   "window": {
     "backgroundTextStyle": "light",

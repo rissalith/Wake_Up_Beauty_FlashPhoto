@@ -1,5 +1,4 @@
  // 醒美闪图 - 主页面
-const HISTORY_KEY = 'photoHistory';
 const lang = require('../../utils/lang.js');
 const imageConfig = require('../../config/images.js');
 const configManager = require('../../utils/configManager.js');
@@ -12,9 +11,6 @@ Page({
     showPrivacyModal: false,
     showLoginModal: false,
     showUserInfoModal: false,
-    generatingCount: 0,
-    showCompleted: false,
-    lastGeneratingCount: 0,
     // 场景滑动
     currentPage: 0,
     showSwipeHint: true,
@@ -70,13 +66,8 @@ Page({
     // 检查是否显示滑动提示
     this.checkSwipeHint();
 
-    // 监听全局历史更新事件，实时刷新进度条
+    // 监听全局历史更新事件（组件会自行处理）
     if (app && app.on) {
-      this._historyUpdateHandler = () => {
-        this.loadGeneratingCount();
-      };
-      app.on('historyUpdated', this._historyUpdateHandler);
-
       // 监听登录成功事件，检查隐私政策
       this._loginHandler = () => {
         this.checkPrivacyAfterLogin();
@@ -345,8 +336,6 @@ Page({
       this.getTabBar().loadLanguage();
       this.getTabBar().updateGeneratingCount();
     }
-    // 加载生成中的任务数量
-    this.loadGeneratingCount();
     // 刷新语言
     this.loadLanguage();
     // 延迟登录模式：只更新状态，不强制弹窗
@@ -513,43 +502,6 @@ Page({
       this.setData({ showSwipeHint: false });
       wx.setStorageSync('hasSwipedScene', true);
     }
-  },
-
-  // 加载生成中的任务数量
-  loadGeneratingCount() {
-    try {
-      const history = wx.getStorageSync(HISTORY_KEY) || [];
-      const generatingCount = history.filter(item => item.status === 'generating').length;
-      const { lastGeneratingCount } = this.data;
-
-      // 如果之前有生成任务，现在变成0，说明全部完成了
-      if (lastGeneratingCount > 0 && generatingCount === 0) {
-        this.showCompletedStatus();
-      }
-
-      this.setData({
-        generatingCount,
-        lastGeneratingCount: generatingCount
-      });
-    } catch (e) {
-      // 静默处理
-    }
-  },
-
-  // 显示完成状态（绿色提示条）
-  showCompletedStatus() {
-    this.setData({ showCompleted: true });
-    // 3秒后自动隐藏
-    setTimeout(() => {
-      this.setData({ showCompleted: false });
-    }, 3000);
-  },
-
-  // 跳转到历史页面
-  goToHistory() {
-    wx.switchTab({
-      url: '/pages/history/history'
-    });
   },
 
   // 检查登录状态和隐私政策

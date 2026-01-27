@@ -75,10 +75,26 @@
       </view>
       <view class="card-text">
         <view class="card-title">{{i18n.inviteGift || '邀请有礼'}}</view>
-        <view class="card-desc">{{i18n.inviteGiftDesc || '邀1人得10醒币'}}</view>
+        <view class="card-desc">{{i18n.inviteGiftDesc || '邀1人得20醒币'}}</view>
       </view>
       <!-- 星星装饰 -->
       <view class="invite-star-decoration">✦</view>
+      <!-- 光影效果 -->
+      <view class="card-shimmer"></view>
+      <view class="card-glow"></view>
+    </view>
+
+    <!-- 看视频得醒币卡片 -->
+    <view class="feature-card video-card" bindtap="goToVideoReward">
+      <view class="card-icon-wrap">
+        <view class="css-icon video-icon"></view>
+      </view>
+      <view class="card-text">
+        <view class="card-title">{{i18n.watchVideo || '看视频得醒币'}}</view>
+        <view class="card-desc">{{i18n.watchVideoDesc || '看视频得20醒币'}}</view>
+      </view>
+      <!-- 播放装饰 -->
+      <view class="video-play-decoration">▶</view>
       <!-- 光影效果 -->
       <view class="card-shimmer"></view>
       <view class="card-glow"></view>

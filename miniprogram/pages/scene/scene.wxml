@@ -13,17 +13,11 @@
       <text>{{topNoticeText}}</text>
     </view>
 
-    <!-- 悬浮进度条 -->
-    <view class="floating-progress" wx:if="{{generatingCount > 0 || showCompleted}}" bindtap="goToHistory">
-      <view class="progress-content {{showCompleted ? 'completed' : ''}}">
-        <view class="progress-icon">
-          <view class="spinner" wx:if="{{!showCompleted}}"></view>
-          <text class="check-icon" wx:else>✓</text>
-        </view>
-        <text class="progress-text" wx:if="{{!showCompleted}}">{{generatingCount}}{{lang.fp_photosGenerating || '张照片生成中...'}}</text>
-        <text class="progress-text" wx:else>{{lang.hist_generateComplete || '生成完成，点击查看'}}</text>
-      </view>
-    </view>
+    <!-- 悬浮进度条组件 -->
+    <floating-progress
+      topOffset="16"
+      showReassurance="{{true}}"
+    />
 
     <!-- 图片上传区 -->
     <view class="upload-section">
@@ -194,6 +188,21 @@
               data-key="{{item.step_key}}"
             />
           </view>
+
+          <!-- 摇骰子组件 (random_dice) -->
+          <dice-roller
+            wx:if="{{item.component_type === 'random_dice'}}"
+            scene-id="{{sceneId}}"
+            step-key="{{item.step_key}}"
+            draw-type="{{item.config.poolType || 'phrase'}}"
+            free-count="{{item.config.freeCount || 1}}"
+            cost-per-roll="{{item.config.costPerRoll || 10}}"
+            show-rarity="{{item.config.showRarity || false}}"
+            title="{{item.config.title || item.title}}"
+            subtitle="{{item.config.subtitle || ''}}"
+            bind:result="onDiceResult"
+            bind:select="onDiceSelect"
+          />
         </view>
       </block>
     </block>

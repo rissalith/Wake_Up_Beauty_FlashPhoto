@@ -1,0 +1,34 @@
+<!--悬浮进度条组件 - 显示生成任务状态-->
+<view
+  class="floating-progress {{visible ? 'show' : ''}} {{showCompleted ? 'completed' : ''}}"
+  style="top: {{topOffset}}px;"
+  bindtap="onTap"
+  wx:if="{{visible}}"
+>
+  <view class="progress-inner">
+    <!-- 图标区域 -->
+    <view class="progress-icon">
+      <view class="spinner" wx:if="{{!showCompleted}}"></view>
+      <view class="check-icon" wx:else></view>
+    </view>
+
+    <!-- 文字内容区 -->
+    <view class="progress-content">
+      <!-- 主文案 -->
+      <text class="progress-main-text" wx:if="{{!showCompleted}}">
+        {{generatingCount}}{{i18n.generatingPhotos || '张照片生成中...'}}
+      </text>
+      <text class="progress-main-text" wx:else>
+        {{i18n.fp_completedTapToView || '全部完成！点击查看结果'}}
+      </text>
+
+      <!-- 安心提示（仅生成中显示） -->
+      <text class="progress-sub-text" wx:if="{{!showCompleted && showReassurance}}">
+        {{i18n.fp_reassurance || '可自由切换页面，不影响生成'}}
+      </text>
+    </view>
+
+    <!-- 箭头 -->
+    <text class="progress-arrow">›</text>
+  </view>
+</view>
