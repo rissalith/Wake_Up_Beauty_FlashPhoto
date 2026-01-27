@@ -27,6 +27,8 @@ I18nPage({
     selections: {},
     // 各步骤的选项数据
     stepOptions: {},
+    // 摇骰子步骤状态（受控组件模式）
+    diceSteps: {},
     // 价格
     pointsPerPhoto: 100,
     generateCount: 1,
@@ -426,6 +428,9 @@ I18nPage({
         stepOptions
       });
 
+      // 初始化摇骰子步骤状态
+      this.initDiceSteps(visibleSteps);
+
     } catch (error) {
       // 静默处理
       this.setData({ configLoading: false });
@@ -570,33 +575,144 @@ I18nPage({
     });
   },
 
-  // 摇骰子结果回调
-  onDiceResult(e) {
-    const { stepKey, result, drawType } = e.detail;
-    console.log('[Scene] Dice result:', stepKey, result, drawType);
+  // ========== 摇骰子相关方法（重构版）==========
 
-    // 更新选择结果
-    if (result) {
-      const value = drawType === 'phrase' ? result.phrase : result.grade_key;
-      const promptText = result.prompt_text || value;
+  // 初始化摇骰子步骤状态
+  initDiceSteps(steps) {
+    const diceSteps = {};
+    steps.forEach(step => {
+      if (step.component_type === 'random_dice') {
+        diceSteps[step.step_key] = {
+          result: null,
+          isRolling: false,
+          freeCount: step.config?.freeCount || 1,
+          confirmed: false
+        };
+      }
+    });
+    this.setData({ diceSteps });
 
-      this.setData({
-        [`selections.${stepKey}`]: value,
-        [`diceResults.${stepKey}`]: result
-      }, () => {
-        this.logCurrentPrompt();
-      });
+    // 加载各步骤的免费次数
+    this.loadDiceFreeCount(steps);
+  },
 
-      // 刷新用户余额
-      this.loadUserPoints();
+  // 加载摇骰子免费次数
+  async loadDiceFreeCount(steps) {
+    const userId = wx.getStorageSync('userId');
+    if (!userId) return;
+
+    const { request } = require('../../config/api');
+
+    for (const step of steps) {
+      if (step.component_type === 'random_dice') {
+        try {
+          const drawType = step.config?.poolType || 'phrase';
+          const res = await request({
+            url: `/draw/free-count/${userId}/${this.data.sceneId}/${drawType}`,
+            method: 'GET'
+          });
+          if (res.code === 0) {
+            this.setData({
+              [`diceSteps.${step.step_key}.freeCount`]: res.data.freeCount
+            });
+          }
+        } catch (error) {
+          console.error('[Scene] Load dice free count error:', error);
+        }
+      }
     }
   },
 
-  // 摇骰子选择回调（用户确认选择）
-  onDiceSelect(e) {
-    const { stepKey, result } = e.detail;
-    console.log('[Scene] Dice select confirmed:', stepKey, result);
+  // 摇骰子请求（由 dice-roller 组件触发）
+  async onDiceRoll(e) {
+    const { stepKey, drawType, sceneId, needPay } = e.detail;
+    console.log('[Scene] Dice roll request:', stepKey, drawType, needPay);
+
+    const userId = wx.getStorageSync('userId');
+    if (!userId) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    // 设置滚动状态
+    this.setData({
+      [`diceSteps.${stepKey}.isRolling`]: true
+    });
+
+    try {
+      const { request } = require('../../config/api');
+      const res = await request({
+        url: '/draw/roll',
+        method: 'POST',
+        data: { userId, sceneId, drawType }
+      });
+
+      // 等待动画完成
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      if (res.code === 0) {
+        const result = res.data.result;
+        const value = drawType === 'phrase' ? result.phrase : result.grade_key;
+
+        this.setData({
+          [`diceSteps.${stepKey}.result`]: result,
+          [`diceSteps.${stepKey}.isRolling`]: false,
+          [`diceSteps.${stepKey}.freeCount`]: res.data.isFree
+            ? this.data.diceSteps[stepKey].freeCount - 1
+            : this.data.diceSteps[stepKey].freeCount,
+          [`selections.${stepKey}`]: value,
+          userPoints: res.data.newBalance || this.data.userPoints
+        }, () => {
+          this.logCurrentPrompt();
+        });
+      } else {
+        this.setData({
+          [`diceSteps.${stepKey}.isRolling`]: false
+        });
+        wx.showToast({ title: res.msg || '抽取失败', icon: 'none' });
+      }
+    } catch (error) {
+      console.error('[Scene] Dice roll error:', error);
+      this.setData({
+        [`diceSteps.${stepKey}.isRolling`]: false
+      });
+      wx.showToast({ title: '网络错误', icon: 'none' });
+    }
   },
+
+  // 摇骰子确认选择（由 dice-roller 组件触发）
+  onDiceConfirm(e) {
+    const { stepKey, result } = e.detail;
+    console.log('[Scene] Dice confirm:', stepKey, result);
+
+    this.setData({
+      [`diceSteps.${stepKey}.confirmed`]: true
+    });
+  },
+
+  // 醒币不足事件处理
+  onDiceInsufficientPoints(e) {
+    const { stepKey, required, current } = e.detail;
+    console.log('[Scene] Insufficient points:', stepKey, required, current);
+
+    // 可以在这里显示充值弹窗
+    if (this.data.showRecharge) {
+      this.setData({ showPayModal: true });
+    }
+  },
+
+  // 旧版回调（保持兼容）
+  onDiceResult(e) {
+    // 重构后不再使用，保留空实现以防旧代码调用
+    console.log('[Scene] onDiceResult (deprecated):', e.detail);
+  },
+
+  onDiceSelect(e) {
+    // 重构后不再使用，保留空实现以防旧代码调用
+    console.log('[Scene] onDiceSelect (deprecated):', e.detail);
+  },
+
+  // ========== 摇骰子相关方法结束 ==========
 
   // 输出当前完整 Prompt（调试用）
   logCurrentPrompt() {

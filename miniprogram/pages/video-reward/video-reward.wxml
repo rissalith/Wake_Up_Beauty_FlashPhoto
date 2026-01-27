@@ -1,26 +1,29 @@
 <!-- 看视频得醒币页面 -->
-<custom-navbar title="{{i18n.title}}" back="{{true}}" />
-
 <view class="container">
   <!-- 顶部信息卡片 -->
   <view class="info-card">
-    <view class="balance-section">
-      <text class="balance-label">当前醒币</text>
-      <text class="balance-value">{{currentBalance}}</text>
+    <view class="stat-section">
+      <text class="stat-label">累计获得</text>
+      <text class="stat-value">{{totalEarned}}<text class="stat-unit">醒币</text></text>
     </view>
     <view class="divider"></view>
-    <view class="today-section">
-      <text class="today-label">{{i18n.todayEarned}}</text>
-      <text class="today-value">{{todayCount * pointsPerVideo}}</text>
+    <view class="stat-section">
+      <text class="stat-label">今日已获得</text>
+      <text class="stat-value highlight">{{todayCount * pointsPerVideo}}<text class="stat-unit">醒币</text></text>
+    </view>
+    <view class="divider"></view>
+    <view class="stat-section">
+      <text class="stat-label">今日剩余</text>
+      <text class="stat-value">{{remainCount}}<text class="stat-unit">次</text></text>
     </view>
   </view>
 
   <!-- 视频区域 -->
   <view class="video-section">
-    <view class="video-container {{isWatching ? 'watching' : ''}}">
+    <view class="video-container {{isWatching ? 'watching' : ''}}" bindtap="{{isWatching || remainCount <= 0 ? '' : 'startWatching'}}">
       <!-- 视频占位 -->
       <view class="video-placeholder">
-        <view class="play-icon" wx:if="{{!isWatching}}">▶</view>
+        <view class="play-icon {{remainCount <= 0 ? 'disabled' : ''}}" wx:if="{{!isWatching}}">▶</view>
         <view class="watching-animation" wx:else>
           <view class="wave wave1"></view>
           <view class="wave wave2"></view>
@@ -37,20 +40,11 @@
       <view class="countdown" wx:if="{{isWatching}}">
         <text>{{countdown}}s</text>
       </view>
-    </view>
 
-    <!-- 奖励提示 -->
-    <view class="reward-hint">
-      <text class="hint-text">{{i18n.perVideo}}</text>
-      <text class="hint-points">+{{pointsPerVideo}} {{i18n.points}}</text>
-    </view>
-  </view>
-
-  <!-- 观看按钮 -->
-  <view class="action-section">
-    <view class="watch-btn {{isWatching ? 'disabled' : ''}}" bindtap="{{isWatching ? '' : 'startWatching'}}">
-      <text wx:if="{{!isWatching}}">{{i18n.watchVideo}}</text>
-      <text wx:else>{{i18n.watching}} {{countdown}}s</text>
+      <!-- 次数用完提示 -->
+      <view class="exhausted-tip" wx:if="{{remainCount <= 0 && !isWatching}}">
+        <text>今日次数已用完</text>
+      </view>
     </view>
   </view>
 
@@ -60,11 +54,11 @@
     <view class="tips-list">
       <view class="tip-item">
         <text class="tip-num">1</text>
-        <text class="tip-text">观看完整视频（15秒）即可获得30醒币</text>
+        <text class="tip-text">观看完整视频（15秒）即可获得{{pointsPerVideo}}醒币</text>
       </view>
       <view class="tip-item">
         <text class="tip-num">2</text>
-        <text class="tip-text">每日观看次数不限，多看多得</text>
+        <text class="tip-text">每日最多观看5次，多看多得</text>
       </view>
       <view class="tip-item">
         <text class="tip-num">3</text>
@@ -77,14 +71,25 @@
 <!-- 成功弹窗 -->
 <view class="success-modal" wx:if="{{showSuccess}}">
   <view class="success-mask" bindtap="closeSuccess"></view>
+  <!-- 彩带喷射效果 -->
+  <view class="confetti-container">
+    <view class="confetti confetti-1">🎊</view>
+    <view class="confetti confetti-2">✨</view>
+    <view class="confetti confetti-3">🎉</view>
+    <view class="confetti confetti-4">⭐</view>
+    <view class="confetti confetti-5">🎊</view>
+    <view class="confetti confetti-6">✨</view>
+    <view class="confetti confetti-7">🎉</view>
+    <view class="confetti confetti-8">⭐</view>
+  </view>
   <view class="success-content">
-    <view class="success-icon">🎉</view>
-    <view class="success-title">{{i18n.success}}</view>
-    <view class="success-points">+{{earnedPoints}} {{i18n.points}}</view>
+    <view class="success-icon bounce">🎉</view>
+    <view class="success-title">恭喜获得</view>
+    <view class="success-points scale-in">+{{earnedPoints}} 醒币</view>
     <view class="success-balance">当前余额: {{currentBalance}} 醒币</view>
     <view class="success-btns">
-      <view class="success-btn continue" bindtap="continueWatch">{{i18n.continue}}</view>
-      <view class="success-btn back" bindtap="closeSuccess">{{i18n.back}}</view>
+      <view class="success-btn continue" bindtap="continueWatch" wx:if="{{remainCount > 0}}">继续观看</view>
+      <view class="success-btn back" bindtap="closeSuccess">{{remainCount > 0 ? '返回' : '知道了'}}</view>
     </view>
   </view>
 </view>

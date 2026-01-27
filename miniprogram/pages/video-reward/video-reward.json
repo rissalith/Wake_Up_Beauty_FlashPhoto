@@ -1,6 +1,6 @@
 {
-  "usingComponents": {
-    "custom-navbar": "/components/custom-navbar/index"
-  },
-  "navigationStyle": "custom"
+  "usingComponents": {},
+  "navigationBarTitleText": "看视频得醒币",
+  "navigationBarBackgroundColor": "#E8B686",
+  "navigationBarTextStyle": "white"
 }

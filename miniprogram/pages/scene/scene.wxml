@@ -195,13 +195,18 @@
             scene-id="{{sceneId}}"
             step-key="{{item.step_key}}"
             draw-type="{{item.config.poolType || 'phrase'}}"
-            free-count="{{item.config.freeCount || 1}}"
+            result="{{diceSteps[item.step_key].result}}"
+            is-rolling="{{diceSteps[item.step_key].isRolling}}"
+            free-count="{{diceSteps[item.step_key].freeCount}}"
+            confirmed="{{diceSteps[item.step_key].confirmed}}"
             cost-per-roll="{{item.config.costPerRoll || 10}}"
             show-rarity="{{item.config.showRarity || false}}"
             title="{{item.config.title || item.title}}"
             subtitle="{{item.config.subtitle || ''}}"
-            bind:result="onDiceResult"
-            bind:select="onDiceSelect"
+            user-points="{{userPoints}}"
+            bind:roll="onDiceRoll"
+            bind:confirm="onDiceConfirm"
+            bind:insufficientPoints="onDiceInsufficientPoints"
           />
         </view>
       </block>

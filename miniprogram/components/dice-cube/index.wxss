@@ -1,0 +1,89 @@
+/* 骰子动画子组件样式 */
+.dice-cube {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* 骰子 */
+.dice {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #ffffff, #e6e6e6);
+  border-radius: 24rpx;
+  box-shadow: 8rpx 8rpx 20rpx rgba(0, 0, 0, 0.15),
+              -4rpx -4rpx 10rpx rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: transform 0.1s ease;
+}
+
+/* 摇动动画 */
+.dice-cube.rolling .dice {
+  animation: shake 0.1s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-10deg) scale(1.05); }
+  50% { transform: rotate(10deg) scale(0.95); }
+  75% { transform: rotate(-5deg) scale(1.02); }
+}
+
+/* 骰子面 */
+.dice-face {
+  width: 75%;
+  height: 75%;
+  position: relative;
+}
+
+/* 骰子点 */
+.dot {
+  width: 20%;
+  height: 20%;
+  background: #d32f2f;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: inset 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+.dot.center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dot.top-left {
+  top: 8%;
+  left: 8%;
+}
+
+.dot.top-right {
+  top: 8%;
+  right: 8%;
+}
+
+.dot.middle-left {
+  top: 50%;
+  left: 8%;
+  transform: translateY(-50%);
+}
+
+.dot.middle-right {
+  top: 50%;
+  right: 8%;
+  transform: translateY(-50%);
+}
+
+.dot.bottom-left {
+  bottom: 8%;
+  left: 8%;
+}
+
+.dot.bottom-right {
+  bottom: 8%;
+  right: 8%;
+}

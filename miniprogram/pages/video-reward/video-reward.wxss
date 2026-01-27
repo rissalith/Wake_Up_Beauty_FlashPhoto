@@ -1,9 +1,8 @@
 /* 看视频得醒币页面样式 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff5f5 0%, #fff 30%);
+  background: linear-gradient(180deg, #FFF8F0 0%, #FFF5EB 50%, #FFFAF5 100%);
   padding: 20rpx 30rpx;
-  padding-top: calc(env(safe-area-inset-top) + 100rpx);
   box-sizing: border-box;
 }
 
@@ -11,55 +10,59 @@
 .info-card {
   display: flex;
   background: #fff;
-  border-radius: 24rpx;
-  padding: 40rpx;
+  border-radius: 20rpx;
+  padding: 32rpx 20rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-  margin-bottom: 40rpx;
+  margin-bottom: 24rpx;
 }
 
-.balance-section,
-.today-section {
+.stat-section {
   flex: 1;
   text-align: center;
 }
 
-.balance-label,
-.today-label {
+.stat-label {
   font-size: 26rpx;
   color: #999;
   display: block;
 }
 
-.balance-value,
-.today-value {
-  font-size: 48rpx;
+.stat-value {
+  font-size: 44rpx;
   font-weight: bold;
-  color: #333;
+  color: #E8B686;
   margin-top: 12rpx;
   display: block;
 }
 
-.today-value {
-  color: #d32f2f;
+.stat-value.highlight {
+  color: #E8B686;
+}
+
+.stat-unit {
+  font-size: 24rpx;
+  font-weight: normal;
+  color: #999;
+  margin-left: 4rpx;
 }
 
 .divider {
   width: 2rpx;
-  background: #eee;
-  margin: 0 20rpx;
+  background: #f0f0f0;
+  margin: 0 8rpx;
 }
 
 /* 视频区域 */
 .video-section {
-  margin-bottom: 40rpx;
+  margin-bottom: 24rpx;
 }
 
 .video-container {
   position: relative;
   width: 100%;
-  height: 400rpx;
+  height: 340rpx;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 24rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -79,12 +82,52 @@
 .play-icon {
   width: 120rpx;
   height: 120rpx;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 48rpx;
+  color: #fff;
+  transition: all 0.3s;
+}
+
+.play-icon:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.play-icon.disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 次数用完提示 */
+.exhausted-tip {
+  position: absolute;
+  bottom: 20rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24rpx;
+}
+
+.video-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.play-icon {
+  width: 100rpx;
+  height: 100rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40rpx;
   color: #fff;
 }
 
@@ -145,63 +188,39 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 24rpx;
-  gap: 12rpx;
+  margin-top: 20rpx;
+  gap: 8rpx;
 }
 
 .hint-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #666;
 }
 
 .hint-points {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: bold;
-  color: #d32f2f;
-}
-
-/* 操作区域 */
-.action-section {
-  margin-bottom: 40rpx;
-}
-
-.watch-btn {
-  width: 100%;
-  height: 96rpx;
-  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
-  border-radius: 48rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  font-size: 34rpx;
-  font-weight: bold;
-  box-shadow: 0 8rpx 30rpx rgba(211, 47, 47, 0.3);
-}
-
-.watch-btn.disabled {
-  background: linear-gradient(135deg, #999 0%, #666 100%);
-  box-shadow: none;
+  color: #E8B686;
 }
 
 /* 说明区域 */
 .tips-section {
   background: #fff;
-  border-radius: 24rpx;
-  padding: 30rpx;
+  border-radius: 20rpx;
+  padding: 32rpx;
 }
 
 .tips-title {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 20rpx;
+  margin-bottom: 28rpx;
 }
 
 .tips-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 24rpx;
 }
 
 .tip-item {
@@ -211,22 +230,22 @@
 }
 
 .tip-num {
-  width: 40rpx;
-  height: 40rpx;
-  background: #f5f5f5;
+  width: 44rpx;
+  height: 44rpx;
+  background: #FFF5EB;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24rpx;
-  color: #999;
+  font-size: 26rpx;
+  color: #E8B686;
   flex-shrink: 0;
 }
 
 .tip-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #666;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 /* 成功弹窗 */
@@ -240,6 +259,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .success-mask {
@@ -251,6 +271,49 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* 彩带喷射容器 */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  font-size: 48rpx;
+  animation: confetti-fall 2s ease-out forwards;
+}
+
+.confetti-1 { left: 10%; animation-delay: 0s; }
+.confetti-2 { left: 25%; animation-delay: 0.1s; }
+.confetti-3 { left: 40%; animation-delay: 0.2s; }
+.confetti-4 { left: 55%; animation-delay: 0.15s; }
+.confetti-5 { left: 70%; animation-delay: 0.25s; }
+.confetti-6 { left: 85%; animation-delay: 0.05s; }
+.confetti-7 { left: 15%; animation-delay: 0.3s; }
+.confetti-8 { left: 60%; animation-delay: 0.35s; }
+
+@keyframes confetti-fall {
+  0% {
+    top: 30%;
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-150rpx) rotate(180deg) scale(1.2);
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+    transform: translateY(200rpx) rotate(360deg) scale(0.5);
+  }
+}
+
 .success-content {
   position: relative;
   width: 560rpx;
@@ -259,6 +322,7 @@
   padding: 60rpx 40rpx;
   text-align: center;
   animation: popup 0.3s ease-out;
+  z-index: 1;
 }
 
 @keyframes popup {
@@ -277,6 +341,17 @@
   margin-bottom: 20rpx;
 }
 
+.success-icon.bounce {
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
 .success-title {
   font-size: 36rpx;
   font-weight: bold;
@@ -284,10 +359,28 @@
 }
 
 .success-points {
-  font-size: 56rpx;
+  font-size: 52rpx;
   font-weight: bold;
-  color: #d32f2f;
+  color: #E8B686;
   margin: 20rpx 0;
+}
+
+.success-points.scale-in {
+  animation: scale-in 0.5s ease-out 0.2s both;
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .success-balance {
@@ -312,7 +405,7 @@
 }
 
 .success-btn.continue {
-  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  background: linear-gradient(135deg, #E8B686 0%, #D4956A 100%);
   color: #fff;
 }
 

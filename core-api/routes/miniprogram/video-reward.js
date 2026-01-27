@@ -42,7 +42,7 @@ router.post('/claim', async (req, res) => {
 
     // 获取奖励配置
     const rewardConfig = db.prepare("SELECT * FROM point_rewards WHERE type = 'watch_video'").get();
-    const rewardPoints = rewardConfig?.points || 30;
+    const rewardPoints = rewardConfig?.points || 10;
 
     // 发放奖励
     const newBalance = user.points + rewardPoints;
@@ -107,7 +107,7 @@ router.get('/status/:userId', (req, res) => {
 
     // 获取奖励配置
     const rewardConfig = db.prepare("SELECT * FROM point_rewards WHERE type = 'watch_video'").get();
-    const rewardPoints = rewardConfig?.points || 30;
+    const rewardPoints = rewardConfig?.points || 10;
 
     res.json({
       code: 0,

@@ -78,6 +78,12 @@
                        @change="updateScene(row)" />
           </template>
         </el-table-column>
+        <el-table-column label="高亮" width="80" align="center">
+          <template #default="{ row }">
+            <el-switch v-model="row.is_highlighted" :active-value="1" :inactive-value="0"
+                       @change="updateScene(row)" />
+          </template>
+        </el-table-column>
         <el-table-column label="醒币" width="80" align="center">
           <template #default="{ row }">
             <span class="points-value">{{ row.points_cost || row.price }}</span>
@@ -465,6 +471,28 @@
               <el-empty description="选择步骤后配置选项" :image-size="60" />
             </div>
           </div>
+        </el-tab-pane>
+
+        <!-- 词组池Tab - 仅编辑模式显示 -->
+        <el-tab-pane label="词组池" name="phrases" :disabled="!isEdit">
+          <draw-pool-manager
+            v-if="isEdit && form.id"
+            :scene-id="form.id"
+            pool-type="phrase"
+            ref="phrasePoolRef"
+          />
+          <el-empty v-else description="请先保存场景基本信息" />
+        </el-tab-pane>
+
+        <!-- 马品级Tab - 仅编辑模式显示 -->
+        <el-tab-pane label="马品级" name="horse-grades" :disabled="!isEdit">
+          <draw-pool-manager
+            v-if="isEdit && form.id"
+            :scene-id="form.id"
+            pool-type="horse"
+            ref="horseGradeRef"
+          />
+          <el-empty v-else description="请先保存场景基本信息" />
         </el-tab-pane>
 
         <!-- Prompt模板Tab - 仅编辑模式显示 -->
@@ -867,6 +895,7 @@ import Sortable from 'sortablejs'
 import draggable from 'vuedraggable'
 import request from '@/api'
 import { translateToEnglish, batchTranslateToEnglish } from '@/utils/translate'
+import DrawPoolManager from '@/components/DrawPoolManager.vue'
 
 const loading = ref(false)
 const saving = ref(false)

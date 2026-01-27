@@ -1,4 +1,7 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "dice-cube": "../dice-cube/index",
+    "result-card": "../result-card/index"
+  }
 }

@@ -860,7 +860,19 @@ const languages = {
     earnTip3: '充值 1元=10醒币',
 
     // 场景页面 - 生成完成提示
-    photosGenerateComplete: '{count}张照片生成完成'
+    photosGenerateComplete: '{count}张照片生成完成',
+
+    // 看视频得醒币页面
+    videoReward_title: '看视频得醒币',
+    videoReward_watch: '观看视频',
+    videoReward_watching: '观看中...',
+    videoReward_todayEarned: '今日已获得',
+    videoReward_perVideo: '每次观看可得',
+    videoReward_tips: '观看完整视频即可获得醒币奖励',
+    videoReward_success: '恭喜获得',
+    videoReward_continue: '继续观看',
+    watchVideo: '看视频得醒币',
+    watchVideoDesc: '看视频得10醒币'
   },
 
   'en': {
