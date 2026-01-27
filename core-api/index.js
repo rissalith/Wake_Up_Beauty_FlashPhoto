@@ -1029,6 +1029,9 @@ app.post('/api/config/admin/scene', (req, res) => {
         is_review_safe = COALESCE(?, is_review_safe),
         use_dynamic_render = COALESCE(?, use_dynamic_render),
         sort_order = COALESCE(?, sort_order),
+        is_highlighted = COALESCE(?, is_highlighted),
+        highlight_color = COALESCE(?, highlight_color),
+        highlight_intensity = COALESCE(?, highlight_intensity),
         updated_at = CURRENT_TIMESTAMP
         WHERE scene_key = ? OR id = ?`).run(
         data.name || null,
@@ -1041,6 +1044,9 @@ app.post('/api/config/admin/scene', (req, res) => {
         data.is_review_safe !== undefined ? data.is_review_safe : null,
         data.use_dynamic_render !== undefined ? data.use_dynamic_render : null,
         data.sort_order !== undefined ? data.sort_order : null,
+        data.is_highlighted !== undefined ? data.is_highlighted : null,
+        data.highlight_color || null,
+        data.highlight_intensity !== undefined ? data.highlight_intensity : null,
         sceneKey,
         sceneKey
       );
