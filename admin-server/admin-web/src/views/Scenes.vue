@@ -246,6 +246,7 @@
                     <el-option label="颜色选择" value="color_picker" />
                     <el-option label="图片标签" value="image_tags" />
                     <el-option label="滑块" value="slider" />
+                    <el-option label="摇骰子" value="random_dice" />
                   </el-select>
                 </el-form-item>
                 <div class="switch-row">
@@ -470,20 +471,18 @@
                 <template v-if="currentStep.component_type === 'random_dice'">
                   <div class="random-dice-config">
                     <div class="dice-config-header">
-                      <span class="config-label">抽奖池类型：</span>
-                      <el-radio-group v-model="currentStep.config.poolType" size="small" @change="onPoolTypeChange">
-                        <el-radio-button label="phrase">词组池</el-radio-button>
-                        <el-radio-button label="horse">马品级</el-radio-button>
-                      </el-radio-group>
+                      <el-checkbox v-model="currentStep.config.showImage" size="small">显示图片</el-checkbox>
+                      <span class="config-tip">（勾选后每个选项需要配置图片）</span>
                     </div>
                     <div class="dice-pool-manager">
                       <draw-pool-manager
-                        v-if="form.id && currentStep.config && currentStep.config.poolType"
+                        v-if="form.id && currentStep.step_key"
                         :scene-id="form.id"
-                        :pool-type="currentStep.config.poolType"
-                        :key="currentStep.step_key + '-' + currentStep.config.poolType"
+                        :step-key="currentStep.step_key"
+                        :show-image="currentStep.config?.showImage || false"
+                        :key="currentStep.step_key"
                       />
-                      <el-empty v-else-if="!currentStep.config || !currentStep.config.poolType" description="请先选择抽奖池类型" :image-size="60" />
+                      <el-empty v-else description="请先保存场景" :image-size="60" />
                     </div>
                   </div>
                 </template>
@@ -852,7 +851,7 @@
               <div class="preview-step-header">
                 <span class="step-num">{{ idx + 1 }}</span>
                 <span class="step-name">{{ step.title }} ({{ step.step_key }})</span>
-                <el-tag size="small">{{ step.component_type }}</el-tag>
+                                <el-tag size="small">{{ getComponentTypeLabel(step.component_type) }}</el-tag>
               </div>
               <div class="preview-step-options" v-if="step.options?.length">
                 <div class="option-grid">
@@ -1030,6 +1029,23 @@ const availableVars = computed(() => {
 
 function getVarDisplay(v) {
   return '{{' + v + '}}'
+}
+
+// 组件类型中英文映射
+const componentTypeMap = {
+  image_upload: '图片上传',
+  gender_select: '性别选择',
+  radio: '单选框',
+  tags: '标签选择',
+  spec_select: '规格选择',
+  color_picker: '颜色选择',
+  image_tags: '图片标签',
+  slider: '滑块',
+  random_dice: '摇骰子'
+}
+
+function getComponentTypeLabel(type) {
+  return componentTypeMap[type] || type
 }
 
 function filterScenes() {
@@ -1341,11 +1357,6 @@ function selectStep(index) {
   if (step && !step.config) {
     step.config = {}
   }
-}
-
-function onPoolTypeChange(value) {
-  // 切换抽奖池类型时的回调
-  console.log('[Scenes] Pool type changed to:', value)
 }
 
 function addStep() {
@@ -2935,6 +2946,11 @@ onMounted(() => {
 .dice-config-header .config-label {
   font-size: 14px;
   color: #606266;
+}
+
+.dice-config-header .config-tip {
+  font-size: 12px;
+  color: #909399;
 }
 
 .dice-pool-manager {

@@ -3,83 +3,63 @@
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <el-select v-model="filterRarity" placeholder="稀有度筛选" clearable style="width: 120px" @change="loadItems">
+        <el-select v-model="filterRarity" placeholder="品级筛选" clearable size="small" style="width: 100px" @change="loadItems">
           <el-option label="全部" value="" />
           <el-option v-for="r in rarityOptions" :key="r.value" :label="r.label" :value="r.value" />
         </el-select>
-        <el-input v-model="searchKeyword" placeholder="搜索" clearable style="width: 200px; margin-left: 10px" @clear="loadItems" @keyup.enter="loadItems">
+        <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 120px" @clear="loadItems" @keyup.enter="loadItems">
           <template #append>
             <el-button :icon="Search" @click="loadItems" />
           </template>
         </el-input>
       </div>
       <div class="toolbar-right">
-        <el-button type="primary" :icon="Plus" @click="showAddDialog">添加{{ itemLabel }}</el-button>
-        <el-button :icon="Upload" @click="showBatchDialog" v-if="poolType === 'phrase'">批量导入</el-button>
+        <el-button type="primary" size="small" :icon="Plus" @click="showAddDialog">添加</el-button>
+        <el-button size="small" :icon="Upload" @click="showBatchDialog">批量导入</el-button>
       </div>
     </div>
 
     <!-- 统计信息 -->
     <div class="stats-bar">
-      <span>共 {{ total }} 个{{ itemLabel }}</span>
-      <template v-if="poolType === 'phrase'">
-        <span v-for="r in rarityOptions" :key="r.value" :class="['stat-item', r.value]">
-          {{ r.label }}: {{ stats[r.value] || 0 }}
-        </span>
-      </template>
-      <template v-else>
-        <span class="stat-item">概率总和: {{ probabilitySum }}%</span>
-        <el-tag :type="probabilitySum === 100 ? 'success' : 'danger'" size="small">
-          {{ probabilitySum === 100 ? '✓ 正确' : '✗ 需要等于100%' }}
-        </el-tag>
-      </template>
+      <span>共 {{ total }} 项</span>
+      <span v-for="r in rarityOptions" :key="r.value" :class="['stat-item', r.value]">
+        {{ r.label }}: {{ stats[r.value] || 0 }}
+      </span>
     </div>
 
     <!-- 列表 -->
-    <el-table :data="items" v-loading="loading" stripe>
-      <!-- 词组池列 -->
-      <template v-if="poolType === 'phrase'">
-        <el-table-column prop="phrase" label="中文" min-width="120" />
-        <el-table-column prop="phrase_en" label="英文" min-width="150" />
-        <el-table-column prop="rarity" label="稀有度" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="getRarityType(row.rarity)" size="small">{{ getRarityText(row.rarity) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="weight" label="权重" width="80" align="center" />
-      </template>
-
-      <!-- 马品级列 -->
-      <template v-else>
-        <el-table-column prop="image" label="图片" width="80" align="center">
-          <template #default="{ row }">
-            <el-image v-if="row.image" :src="row.image" style="width: 50px; height: 50px" fit="cover" :preview-src-list="[row.image]" />
-            <span v-else class="horse-emoji">🐴</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="name" label="名称" min-width="100" />
-        <el-table-column prop="name_en" label="英文名" min-width="120" />
-        <el-table-column prop="grade_key" label="品级标识" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="getGradeType(row.grade_key)" size="small">{{ row.grade_key }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="probability" label="概率" width="100" align="center">
-          <template #default="{ row }">
-            {{ (row.probability * 100).toFixed(0) }}%
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort_order" label="排序" width="70" align="center" />
-      </template>
-
-      <!-- 公共列 -->
-      <el-table-column prop="prompt_text" label="Prompt文本" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="is_active" label="状态" width="80" align="center">
+    <el-table :data="items" v-loading="loading" stripe size="small">
+      <!-- 图片列（可选） -->
+      <el-table-column v-if="showImage" prop="image" label="图" width="50" align="center">
         <template #default="{ row }">
-          <el-switch v-model="row.is_active" :active-value="1" :inactive-value="0" @change="updateItem(row)" />
+          <el-image v-if="row.image" :src="row.image" style="width: 30px; height: 30px" fit="cover" :preview-src-list="[row.image]" />
+          <span v-else class="placeholder-icon">📷</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
+
+      <!-- 名称 -->
+      <el-table-column prop="name" label="名称" width="100" show-overflow-tooltip />
+      <el-table-column prop="name_en" label="英文" width="100" show-overflow-tooltip />
+
+      <!-- 品级 -->
+      <el-table-column prop="rarity" label="品级" width="70" align="center">
+        <template #default="{ row }">
+          <el-tag :type="getRarityType(row.rarity)" size="small">{{ getRarityText(row.rarity) }}</el-tag>
+        </template>
+      </el-table-column>
+
+      <!-- 权重 -->
+      <el-table-column prop="weight" label="权重" width="60" align="center" />
+
+      <!-- 启用 -->
+      <el-table-column prop="is_active" label="启用" width="55" align="center">
+        <template #default="{ row }">
+          <el-switch v-model="row.is_active" :active-value="1" :inactive-value="0" @change="updateItem(row)" size="small" />
+        </template>
+      </el-table-column>
+
+      <!-- 操作 -->
+      <el-table-column label="操作" width="80" align="center">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="editItem(row)">编辑</el-button>
           <el-button type="danger" link size="small" @click="deleteItem(row)">删除</el-button>
@@ -94,89 +74,56 @@
         :page-size="pageSize"
         :total="total"
         layout="prev, pager, next"
+        size="small"
         @current-change="loadItems"
       />
     </div>
 
     <!-- 添加/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? `编辑${itemLabel}` : `添加${itemLabel}`" width="550px">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <!-- 词组池表单 -->
-        <template v-if="poolType === 'phrase'">
-          <el-form-item label="中文词组" prop="phrase">
-            <el-input v-model="form.phrase" placeholder="如：马到成功" />
-          </el-form-item>
-          <el-form-item label="英文翻译">
-            <el-input v-model="form.phraseEn" placeholder="如：Instant Success" />
-          </el-form-item>
-          <el-form-item label="稀有度" prop="rarity">
-            <el-select v-model="form.rarity" style="width: 100%">
-              <el-option v-for="r in rarityOptions" :key="r.value" :label="r.label" :value="r.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="权重">
-            <el-input-number v-model="form.weight" :min="1" :max="1000" style="width: 100%" />
-            <div class="form-tip">权重越高，抽中概率越大</div>
-          </el-form-item>
-        </template>
-
-        <!-- 马品级表单 -->
-        <template v-else>
-          <el-form-item label="品级标识" prop="gradeKey">
-            <el-input v-model="form.gradeKey" placeholder="如：common, silver, gold, divine" :disabled="isEdit" />
-            <div class="form-tip">唯一标识，用于程序识别</div>
-          </el-form-item>
-          <el-form-item label="中文名称" prop="name">
-            <el-input v-model="form.name" placeholder="如：普通马" />
-          </el-form-item>
-          <el-form-item label="英文名称">
-            <el-input v-model="form.nameEn" placeholder="如：Common Horse" />
-          </el-form-item>
-          <el-form-item label="图片">
-            <div class="image-upload-area">
-              <el-image v-if="form.image" :src="form.image" style="width: 100px; height: 100px" fit="cover" />
-              <el-input v-model="form.image" placeholder="图片URL" style="flex: 1; margin-left: 10px" />
-            </div>
-          </el-form-item>
-          <el-form-item label="概率" prop="probability">
-            <el-input-number v-model="form.probability" :min="0" :max="100" :precision="0" style="width: 100%">
-              <template #append>%</template>
-            </el-input-number>
-            <div class="form-tip">所有品级概率之和必须等于100%</div>
-          </el-form-item>
-          <el-form-item label="排序">
-            <el-input-number v-model="form.sortOrder" :min="0" :max="100" style="width: 100%" />
-          </el-form-item>
-          <el-form-item label="描述">
-            <el-input v-model="form.description" type="textarea" :rows="2" placeholder="品级描述" />
-          </el-form-item>
-        </template>
-
-        <!-- 公共字段 -->
-        <el-form-item label="Prompt文本">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑' : '添加'" width="450px">
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px" size="small">
+        <el-form-item label="名称" prop="name">
+          <el-input v-model="form.name" placeholder="如：马到成功" />
+        </el-form-item>
+        <el-form-item label="英文">
+          <el-input v-model="form.nameEn" placeholder="如：Instant Success" />
+        </el-form-item>
+        <el-form-item v-if="showImage" label="图片">
+          <el-input v-model="form.image" placeholder="图片URL" />
+        </el-form-item>
+        <el-form-item label="品级" prop="rarity">
+          <el-select v-model="form.rarity" style="width: 100%">
+            <el-option v-for="r in rarityOptions" :key="r.value" :label="r.label" :value="r.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="权重">
+          <el-input-number v-model="form.weight" :min="1" :max="1000" style="width: 100%" />
+          <div class="form-tip">权重越高，抽中概率越大</div>
+        </el-form-item>
+        <el-form-item label="Prompt">
           <el-input v-model="form.promptText" type="textarea" :rows="2" placeholder="用于AI生成的文本描述" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveItem">保存</el-button>
+        <el-button size="small" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" size="small" @click="saveItem">保存</el-button>
       </template>
     </el-dialog>
 
     <!-- 批量导入对话框 -->
-    <el-dialog v-model="batchDialogVisible" title="批量导入词组" width="600px">
+    <el-dialog v-model="batchDialogVisible" title="批量导入" width="500px">
       <el-alert type="info" :closable="false" style="margin-bottom: 15px">
         <template #title>
-          每行一个词组，格式：中文,英文,稀有度,权重<br>
+          每行一项，格式：名称,英文,品级,权重<br>
+          品级可选：common/rare/epic/legendary<br>
           示例：马到成功,Instant Success,epic,80
         </template>
       </el-alert>
-      <el-input v-model="batchText" type="textarea" :rows="10" placeholder="马到成功,Instant Success,epic,80
-龙马精神,Vigorous Spirit,legendary,50
-一马当先,Take the Lead,rare,90" />
+      <el-input v-model="batchText" type="textarea" :rows="8" placeholder="马到成功,Instant Success,epic,80
+龙马精神,Vigorous Spirit,legendary,50" />
       <template #footer>
-        <el-button @click="batchDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="batchImport">导入</el-button>
+        <el-button size="small" @click="batchDialogVisible = false">取消</el-button>
+        <el-button type="primary" size="small" @click="batchImport">导入</el-button>
       </template>
     </el-dialog>
   </div>
@@ -193,19 +140,19 @@ const props = defineProps({
     type: String,
     required: true
   },
-  // 池类型: phrase(词组池) / horse(马品级)
-  poolType: {
+  // 步骤标识，用于区分同一场景下的不同抽奖池
+  stepKey: {
     type: String,
-    default: 'phrase',
-    validator: (v) => ['phrase', 'horse'].includes(v)
+    default: ''
+  },
+  // 是否显示图片列
+  showImage: {
+    type: Boolean,
+    default: false
   }
 })
 
-// 计算属性
-const itemLabel = computed(() => props.poolType === 'phrase' ? '词组' : '品级')
-const apiPath = computed(() => props.poolType === 'phrase' ? 'phrases' : 'horse-grades')
-
-// 稀有度选项
+// 品级选项
 const rarityOptions = [
   { value: 'common', label: '普通' },
   { value: 'rare', label: '稀有' },
@@ -226,17 +173,11 @@ const searchKeyword = ref('')
 const stats = computed(() => {
   const result = { common: 0, rare: 0, epic: 0, legendary: 0 }
   items.value.forEach(item => {
-    const key = props.poolType === 'phrase' ? item.rarity : item.grade_key
-    if (result[key] !== undefined) {
-      result[key]++
+    if (result[item.rarity] !== undefined) {
+      result[item.rarity]++
     }
   })
   return result
-})
-
-const probabilitySum = computed(() => {
-  if (props.poolType !== 'horse') return 0
-  return Math.round(items.value.reduce((sum, item) => sum + (item.probability || 0) * 100, 0))
 })
 
 // 对话框
@@ -246,38 +187,22 @@ const isEdit = ref(false)
 const formRef = ref(null)
 const form = reactive({
   id: null,
-  // 词组池字段
-  phrase: '',
-  phraseEn: '',
-  rarity: 'common',
-  weight: 100,
-  // 马品级字段
-  gradeKey: '',
   name: '',
   nameEn: '',
   image: '',
-  probability: 10,
-  sortOrder: 0,
-  description: '',
-  // 公共字段
+  rarity: 'common',
+  weight: 100,
   promptText: ''
 })
 const batchText = ref('')
 
-const rules = computed(() => {
-  if (props.poolType === 'phrase') {
-    return {
-      phrase: [{ required: true, message: '请输入中文词组', trigger: 'blur' }],
-      rarity: [{ required: true, message: '请选择稀有度', trigger: 'change' }]
-    }
-  } else {
-    return {
-      gradeKey: [{ required: true, message: '请输入品级标识', trigger: 'blur' }],
-      name: [{ required: true, message: '请输入中文名称', trigger: 'blur' }],
-      probability: [{ required: true, message: '请输入概率', trigger: 'blur' }]
-    }
-  }
-})
+const rules = {
+  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
+  rarity: [{ required: true, message: '请选择品级', trigger: 'change' }]
+}
+
+// API路径
+const apiPath = computed(() => `draw-pool/${props.stepKey || 'default'}`)
 
 // 加载列表
 const loadItems = async () => {
@@ -296,21 +221,14 @@ const loadItems = async () => {
       // 前端搜索过滤
       if (searchKeyword.value) {
         const keyword = searchKeyword.value.toLowerCase()
-        items.value = items.value.filter(item => {
-          if (props.poolType === 'phrase') {
-            return item.phrase?.toLowerCase().includes(keyword) ||
-                   item.phrase_en?.toLowerCase().includes(keyword)
-          } else {
-            return item.name?.toLowerCase().includes(keyword) ||
-                   item.name_en?.toLowerCase().includes(keyword) ||
-                   item.grade_key?.toLowerCase().includes(keyword)
-          }
-        })
+        items.value = items.value.filter(item =>
+          item.name?.toLowerCase().includes(keyword) ||
+          item.name_en?.toLowerCase().includes(keyword)
+        )
       }
     }
   } catch (error) {
     console.error('加载列表失败:', error)
-    ElMessage.error('加载列表失败')
   } finally {
     loading.value = false
   }
@@ -327,17 +245,11 @@ const showAddDialog = () => {
 const resetForm = () => {
   Object.assign(form, {
     id: null,
-    phrase: '',
-    phraseEn: '',
-    rarity: 'common',
-    weight: 100,
-    gradeKey: '',
     name: '',
     nameEn: '',
     image: '',
-    probability: 10,
-    sortOrder: 0,
-    description: '',
+    rarity: 'common',
+    weight: 100,
     promptText: ''
   })
 }
@@ -345,28 +257,15 @@ const resetForm = () => {
 // 编辑
 const editItem = (row) => {
   isEdit.value = true
-  if (props.poolType === 'phrase') {
-    Object.assign(form, {
-      id: row.id,
-      phrase: row.phrase,
-      phraseEn: row.phrase_en,
-      rarity: row.rarity,
-      weight: row.weight,
-      promptText: row.prompt_text
-    })
-  } else {
-    Object.assign(form, {
-      id: row.id,
-      gradeKey: row.grade_key,
-      name: row.name,
-      nameEn: row.name_en,
-      image: row.image,
-      probability: Math.round((row.probability || 0) * 100),
-      sortOrder: row.sort_order,
-      description: row.description,
-      promptText: row.prompt_text
-    })
-  }
+  Object.assign(form, {
+    id: row.id,
+    name: row.name,
+    nameEn: row.name_en,
+    image: row.image || '',
+    rarity: row.rarity,
+    weight: row.weight,
+    promptText: row.prompt_text || ''
+  })
   dialogVisible.value = true
 }
 
@@ -375,26 +274,13 @@ const saveItem = async () => {
   try {
     await formRef.value.validate()
 
-    let data
-    if (props.poolType === 'phrase') {
-      data = {
-        phrase: form.phrase,
-        phraseEn: form.phraseEn,
-        rarity: form.rarity,
-        weight: form.weight,
-        promptText: form.promptText || form.phrase
-      }
-    } else {
-      data = {
-        gradeKey: form.gradeKey,
-        name: form.name,
-        nameEn: form.nameEn,
-        image: form.image,
-        probability: form.probability / 100,
-        sortOrder: form.sortOrder,
-        description: form.description,
-        promptText: form.promptText || form.name
-      }
+    const data = {
+      name: form.name,
+      nameEn: form.nameEn,
+      image: form.image || null,
+      rarity: form.rarity,
+      weight: form.weight,
+      promptText: form.promptText || form.name
     }
 
     if (isEdit.value) {
@@ -430,9 +316,8 @@ const updateItem = async (row) => {
 
 // 删除
 const deleteItem = async (row) => {
-  const name = props.poolType === 'phrase' ? row.phrase : row.name
   try {
-    await ElMessageBox.confirm(`确定删除"${name}"吗？`, '确认删除', { type: 'warning' })
+    await ElMessageBox.confirm(`确定删除"${row.name}"吗？`, '确认删除', { type: 'warning' })
     await request.delete(`/admin/scenes/${props.sceneId}/${apiPath.value}/${row.id}`)
     ElMessage.success('删除成功')
     loadItems()
@@ -457,28 +342,28 @@ const batchImport = async () => {
   }
 
   const lines = batchText.value.trim().split('\n')
-  const phrases = []
+  const items = []
 
   for (const line of lines) {
     const parts = line.split(',').map(s => s.trim())
     if (parts[0]) {
-      phrases.push({
-        phrase: parts[0],
-        phraseEn: parts[1] || '',
+      items.push({
+        name: parts[0],
+        nameEn: parts[1] || '',
         rarity: parts[2] || 'common',
         weight: parseInt(parts[3]) || 100
       })
     }
   }
 
-  if (phrases.length === 0) {
+  if (items.length === 0) {
     ElMessage.warning('没有有效的数据')
     return
   }
 
   try {
-    await request.post(`/admin/scenes/${props.sceneId}/phrases/batch`, { phrases })
-    ElMessage.success(`成功导入 ${phrases.length} 个词组`)
+    await request.post(`/admin/scenes/${props.sceneId}/${apiPath.value}/batch`, { items })
+    ElMessage.success(`成功导入 ${items.length} 项`)
     batchDialogVisible.value = false
     loadItems()
   } catch (error) {
@@ -498,14 +383,13 @@ const getRarityText = (rarity) => {
   return map[rarity] || '普通'
 }
 
-const getGradeType = (grade) => {
-  const map = { common: 'info', silver: '', gold: 'warning', divine: 'danger' }
-  return map[grade] || 'info'
-}
-
 // 监听 sceneId 变化
 watch(() => props.sceneId, (newVal) => {
   if (newVal) loadItems()
+})
+
+watch(() => props.stepKey, (newVal) => {
+  if (props.sceneId) loadItems()
 })
 
 // 初始化
@@ -518,37 +402,47 @@ defineExpose({ reload: loadItems })
 
 <style scoped>
 .draw-pool-manager {
-  padding: 10px 0;
+  padding: 5px 0;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
 }
 
 .stats-bar {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px 15px;
+  gap: 8px;
+  padding: 6px 10px;
   background: #f5f7fa;
   border-radius: 4px;
-  margin-bottom: 15px;
-  font-size: 14px;
+  margin-bottom: 10px;
+  font-size: 12px;
   color: #606266;
+  flex-wrap: wrap;
 }
 
 .stat-item {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
   background: #e0e0e0;
+  font-size: 11px;
 }
 
 .stat-item.rare { background: #409eff; color: #fff; }
@@ -558,21 +452,17 @@ defineExpose({ reload: loadItems })
 .pagination-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 .form-tip {
-  font-size: 12px;
+  font-size: 11px;
   color: #909399;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
-.image-upload-area {
-  display: flex;
-  align-items: center;
-}
-
-.horse-emoji {
-  font-size: 30px;
+.placeholder-icon {
+  font-size: 16px;
+  opacity: 0.5;
 }
 </style>
