@@ -427,7 +427,7 @@
                 </template>
 
                 <!-- 其他组件类型的通用配置 - 表格布局 -->
-                <template v-else>
+                <template v-else-if="currentStep.component_type !== 'random_dice'">
                   <!-- 表头 -->
                   <div class="common-table-header">
                     <div class="common-col common-col-label-main">中文</div>
