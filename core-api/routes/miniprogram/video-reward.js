@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../../config/database');
 const { v4: uuidv4 } = require('uuid');
+const { getBeijingDateString } = require('../../utils/timeUtil');
 
 /**
  * POST /api/video-reward/claim - 领取视频奖励
@@ -40,9 +41,9 @@ router.post('/claim', async (req, res) => {
       });
     }
 
-    // 检查今日领取次数
+    // 检查今日领取次数（使用北京时间）
     const MAX_DAILY_COUNT = 5;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getBeijingDateString();
     const todayCount = db.prepare(`
       SELECT COUNT(*) as count FROM video_reward_records
       WHERE user_id = ? AND DATE(created_at) = ?
@@ -107,7 +108,8 @@ router.get('/status/:userId', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    // 使用北京时间
+    const today = getBeijingDateString();
 
     // 获取今日领取次数
     const todayCount = db.prepare(`
