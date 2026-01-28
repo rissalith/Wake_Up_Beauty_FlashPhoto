@@ -129,6 +129,9 @@ router.get('/scene/:sceneId', (req, res) => {
         title: useEnglish ? (step.title_en || step.title) : step.title,
         // 保留原始的多语言字段供前端使用
         title_en: step.title_en,
+        // 摇骰子定价配置
+        free_count: step.free_count !== undefined ? step.free_count : 1,
+        cost_per_roll: step.cost_per_roll !== undefined ? step.cost_per_roll : 10,
         options: localizedOptions
       };
 

@@ -829,6 +829,10 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
           const isVisible = step.is_visible !== undefined ? step.is_visible : (step.is_active !== false);
           const configStr = step.config ? JSON.stringify(step.config) : '';
 
+          // 摇骰子定价配置
+          const freeCount = step.free_count !== undefined ? step.free_count : 1;
+          const costPerRoll = step.cost_per_roll !== undefined ? step.cost_per_roll : 10;
+
           if (step.id && !String(step.id).startsWith('temp_') && typeof step.id === 'number') {
             // 更新现有步骤
             db.prepare(`UPDATE scene_steps SET
@@ -841,7 +845,9 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
               is_visible = ?,
               icon = ?,
               gender_based = ?,
-              config = ?
+              config = ?,
+              free_count = ?,
+              cost_per_roll = ?
               WHERE id = ?`).run(
               step.step_key || '',
               title,
@@ -853,13 +859,15 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
               step.icon || '',
               step.gender_based ? 1 : 0,
               configStr,
+              freeCount,
+              costPerRoll,
               step.id
             );
             stepIdMap[step.id] = step.id;
           } else {
             // 插入新步骤
-            const result = db.prepare(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, title, title_en, component_type, step_order, is_required, is_visible, icon, gender_based, config, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`).run(
+            const result = db.prepare(`INSERT INTO scene_steps (scene_id, step_key, step_name, step_name_en, title, title_en, component_type, step_order, is_required, is_visible, icon, gender_based, config, free_count, cost_per_roll, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`).run(
               sceneId,
               step.step_key || '',
               title,
@@ -872,7 +880,9 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
               isVisible ? 1 : 0,
               step.icon || '',
               step.gender_based ? 1 : 0,
-              configStr
+              configStr,
+              freeCount,
+              costPerRoll
             );
             stepIdMap[step.id || `temp_${step.step_order}`] = result.lastInsertRowid;
           }

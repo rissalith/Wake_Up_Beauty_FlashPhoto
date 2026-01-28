@@ -213,9 +213,19 @@ function createTables() {
       icon TEXT,
       gender_based INTEGER DEFAULT 0,
       config TEXT,
+      free_count INTEGER DEFAULT 1,
+      cost_per_roll INTEGER DEFAULT 10,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // 为已存在的表添加新字段（如果不存在）
+  try {
+    db.exec('ALTER TABLE scene_steps ADD COLUMN free_count INTEGER DEFAULT 1');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scene_steps ADD COLUMN cost_per_roll INTEGER DEFAULT 10');
+  } catch (e) { /* 字段可能已存在 */ }
 
   // ==================== 步骤选项表 ====================
   db.exec(`
