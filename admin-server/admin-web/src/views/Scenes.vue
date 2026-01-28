@@ -1414,6 +1414,8 @@ function addOption() {
   const isFirstOption = currentStep.value.options.length === 0
   const newOption = {
     option_key: autoKey,
+    name: '',
+    name_en: '',
     label: '',
     label_en: '',
     color: '',
