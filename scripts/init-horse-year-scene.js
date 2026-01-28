@@ -136,7 +136,7 @@ const horseGrades = [
     name_en: 'Common Horse',
     description: '朴实可爱的小马驹，温顺乖巧',
     probability: 0.50,
-    prompt_text: '一匹棕色的普通小马，温顺可爱，毛发柔顺',
+    prompt_text: 'a cute brown pony with soft fur, gentle and adorable appearance',
     sort_order: 1
   },
   {
@@ -145,7 +145,7 @@ const horseGrades = [
     name_en: 'Silver Horse',
     description: '银光闪闪的骏马，英姿飒爽',
     probability: 0.30,
-    prompt_text: '一匹银白色的骏马，毛发闪烁着银光，英姿飒爽',
+    prompt_text: 'a majestic silver-white horse with shimmering metallic coat, elegant and spirited',
     sort_order: 2
   },
   {
@@ -154,7 +154,7 @@ const horseGrades = [
     name_en: 'Golden Horse',
     description: '金光灿灿的神驹，尊贵华丽',
     probability: 0.15,
-    prompt_text: '一匹金色的神驹，浑身散发着金色光芒，鬃毛飘逸，尊贵华丽',
+    prompt_text: 'a magnificent golden horse radiating golden light, with flowing mane, noble and luxurious',
     sort_order: 3
   },
   {
@@ -163,7 +163,7 @@ const horseGrades = [
     name_en: 'Divine Horse',
     description: '传说中的天马，祥云环绕，神圣无比',
     probability: 0.05,
-    prompt_text: '一匹传说中的天马，浑身散发神圣光芒，脚踏祥云，鬃毛如火焰般飘动，周围环绕着金色光环',
+    prompt_text: 'a legendary divine celestial horse glowing with sacred light, standing on auspicious clouds, with flame-like flowing mane surrounded by golden halos',
     sort_order: 4
   }
 ];
@@ -171,16 +171,31 @@ const horseGrades = [
 // Prompt模板
 const promptTemplate = {
   name: '马年新春头像模板',
-  template: `基于参考图生成马年新春喜庆头像。
+  template: `Generate a festive Chinese New Year avatar based on the reference photo.
 
-【核心要求】必须严格保持参考图中人物的面部特征一致性，包括五官轮廓、脸型、眼睛形状、鼻子、嘴巴、肤色等，确保生成结果与本人高度相似。
+【CRITICAL - Face Preservation】
+You MUST strictly preserve the facial features from the reference photo: face shape, eyes, nose, mouth, skin tone, and all distinctive features. The generated result must be highly recognizable as the same person.
 
-【场景设定】中国传统新春氛围，{{gender}}人物身穿喜庆的红色中式服装，开心地和{{horse}}合影，双手举着红色春联，春联上写着"{{phrase}}"四个金色大字。
+【Scene Description】
+A {{gender}} person wearing traditional red Chinese New Year clothing (唐装/旗袍), happily posing with {{horse}} for a New Year photo. The person is holding a red Spring Festival couplet (春联) with the golden Chinese characters "{{phrase}}" written on it.
 
-【背景风格】纯色喜庆红色背景，周围有烟花、灯笼、祥云等新春元素装饰。
+【Visual Style】
+- Festive red background with traditional Chinese New Year decorations
+- Fireworks, red lanterns, auspicious clouds, and golden accents
+- Warm, celebratory lighting with a slight golden glow
+- High-quality realistic portrait photography style
 
-【构图要求】近景，人物居中，头像构图，面部清晰可见，表情喜庆自然，写实写真照风格。`,
-  negative_prompt: '模糊, 变形, 多人, 裁切不完整, 侧脸, 闭眼, 文字错误, 春联文字模糊, 低质量, 卡通'
+【Composition】
+- Close-up portrait framing, person centered
+- Face clearly visible with joyful, natural expression
+- The horse companion positioned beside or behind the person
+- Spring couplet held prominently showing the blessing text
+
+【Quality Requirements】
+- Sharp focus on face, professional portrait quality
+- Vibrant festive colors, especially red and gold
+- Clean composition without distracting elements`,
+  negative_prompt: 'blurry, deformed, multiple people, cropped, side view, closed eyes, wrong text, illegible characters, low quality, cartoon, anime, illustration, painting, watermark, signature, text overlay, bad anatomy, extra limbs, missing limbs, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, amputation'
 };
 
 function initHorseYearScene() {

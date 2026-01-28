@@ -973,7 +973,8 @@ I18nPage({
       );
 
       if (key === 'gender') {
-        variables[key] = selectedId === 'male' ? (t('fp_male') || '男性') : (t('fp_female') || '女性');
+        // 对于 prompt 使用英文性别描述
+        variables[key] = selectedId === 'male' ? 'male' : 'female';
       } else if (typeof selectedId === 'number' && !selected) {
         // 滑块值（只有在没有匹配到选项时才当作滑块值处理）
         variables[key] = selectedId;
