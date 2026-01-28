@@ -262,11 +262,25 @@ function createTables() {
       template_content TEXT NOT NULL,
       negative_prompt TEXT,
       variables TEXT,
+      segments TEXT,
+      model_config TEXT,
       is_active INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // 为已存在的表添加新字段（如果不存在）
+  try {
+    db.exec(`ALTER TABLE prompt_templates ADD COLUMN segments TEXT`);
+  } catch (e) {
+    // 字段已存在，忽略错误
+  }
+  try {
+    db.exec(`ALTER TABLE prompt_templates ADD COLUMN model_config TEXT`);
+  } catch (e) {
+    // 字段已存在，忽略错误
+  }
 
   // ==================== 照片规格表 ====================
   db.exec(`

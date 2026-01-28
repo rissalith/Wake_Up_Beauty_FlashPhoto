@@ -506,15 +506,46 @@
                       <span class="config-tip">（勾选后每个选项需要配置图片）</span>
                     </div>
 
-                    <!-- 品级方案管理 -->
+                    <!-- 品级方案配置（简化版） -->
                     <div class="grade-scheme-section">
-                      <div class="section-title">品级方案配置</div>
-                      <grade-scheme-manager
-                        v-if="form.id && currentStep.step_key"
-                        :scene-id="String(form.id)"
-                        :step-key="currentStep.step_key"
-                        :key="`grade-${currentStep.step_key}`"
-                      />
+                      <div class="section-title">
+                        品级方案配置
+                        <router-link to="/grade-schemes" class="manage-link">
+                          <el-button type="primary" link size="small">前往管理 →</el-button>
+                        </router-link>
+                      </div>
+                      <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
+                        <el-select
+                          v-model="currentStep.config.gradeSchemeId"
+                          placeholder="选择品级方案"
+                          style="width: 200px"
+                          @change="onGradeSchemeChange"
+                        >
+                          <el-option
+                            v-for="scheme in gradeSchemes"
+                            :key="scheme.id"
+                            :label="scheme.name"
+                            :value="scheme.id"
+                          />
+                        </el-select>
+                        <!-- 品级预览 -->
+                        <div v-if="selectedGradeScheme" class="grade-preview">
+                          <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
+                          <div class="grade-preview-list">
+                            <span
+                              v-for="grade in selectedGradeScheme.grades?.slice(0, 6)"
+                              :key="grade.id"
+                              class="grade-preview-item"
+                              :style="{ color: grade.color }"
+                            >
+                              {{ grade.name }}
+                            </span>
+                            <span v-if="selectedGradeScheme.grades?.length > 6" class="grade-more">
+                              +{{ selectedGradeScheme.grades.length - 6 }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                       <el-empty v-else description="请先保存场景" :image-size="60" />
                     </div>
 
@@ -543,25 +574,10 @@
 
         <!-- Prompt模板Tab - 仅编辑模式显示 -->
         <el-tab-pane label="Prompt模板" name="prompt" :disabled="!isEdit">
-          <el-form :model="promptForm" label-width="100px">
-            <el-form-item label="模板名称">
-              <el-input v-model="promptForm.name" placeholder="如: 标准证件照模板" />
-            </el-form-item>
-            <el-form-item label="Prompt模板">
-              <el-input v-model="promptForm.template" type="textarea" :rows="8"
-                        placeholder="支持变量: {{gender}}, {{background}}, {{spec}} 等" />
-              <div class="template-vars">
-                可用变量:
-                <el-tag size="small" v-for="v in availableVars" :key="v" @click="insertVar(v)">
-                  {{ getVarDisplay(v) }}
-                </el-tag>
-              </div>
-            </el-form-item>
-            <el-form-item label="负面提示词">
-              <el-input v-model="promptForm.negative_prompt" type="textarea" :rows="2"
-                        placeholder="模糊, 变形, 多人..." />
-            </el-form-item>
-          </el-form>
+          <prompt-template-editor
+            v-model="promptFormData"
+            :scene-steps="steps"
+          />
         </el-tab-pane>
       </el-tabs>
 
@@ -943,6 +959,7 @@ import request from '@/api'
 import { translateToEnglish, batchTranslateToEnglish } from '@/utils/translate'
 import DrawPoolManager from '@/components/DrawPoolManager.vue'
 import GradeSchemeManager from '@/components/GradeSchemeManager.vue'
+import PromptTemplateEditor from '@/components/PromptTemplateEditor.vue'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -987,6 +1004,33 @@ const sceneIconFolderFilter = ref('')  // 文件夹筛选
 const selectedSceneIcon = ref('')
 const filteredSceneIcons = ref([])  // 筛选后的图标列表
 
+// 品级方案相关
+const gradeSchemes = ref([])
+const selectedGradeScheme = computed(() => {
+  if (!currentStep.value?.config?.gradeSchemeId) return null
+  return gradeSchemes.value.find(s => s.id === currentStep.value.config.gradeSchemeId)
+})
+
+// 加载品级方案列表
+async function loadGradeSchemes() {
+  try {
+    const res = await api.get('/api/admin/grade-schemes')
+    gradeSchemes.value = res.data.data || []
+  } catch (error) {
+    console.error('加载品级方案失败:', error)
+  }
+}
+
+// 品级方案选择变化
+function onGradeSchemeChange(schemeId) {
+  if (currentStep.value) {
+    if (!currentStep.value.config) {
+      currentStep.value.config = {}
+    }
+    currentStep.value.config.gradeSchemeId = schemeId
+  }
+}
+
 const filteredStepIcons = computed(() => {
   if (!stepIconSearch.value) return stepIcons.value
   const keyword = stepIconSearch.value.toLowerCase()
@@ -1026,7 +1070,18 @@ const promptForm = reactive({
   name: '',
   template: '',
   negative_prompt: '',
+  segments: null,
+  model_config: null,
   is_active: true
+})
+
+// 用于 PromptTemplateEditor 的双向绑定数据
+const promptFormData = ref({
+  name: '',
+  template: '',
+  negative_prompt: '',
+  segments: null,
+  model_config: null
 })
 
 const form = reactive({
@@ -1226,14 +1281,31 @@ async function editScene(row) {
     if (prompts.length > 0) {
       Object.assign(promptForm, prompts[0])
       promptForm.is_active = prompts[0].is_active === 1
+      // 同步到 promptFormData
+      promptFormData.value = {
+        name: prompts[0].name || '',
+        template: prompts[0].template || prompts[0].template_content || '',
+        negative_prompt: prompts[0].negative_prompt || '',
+        segments: prompts[0].segments || null,
+        model_config: prompts[0].model_config || null
+      }
     } else {
       Object.assign(promptForm, {
         id: null,
         name: `${row.name}模板`,
         template: '',
         negative_prompt: '',
+        segments: null,
+        model_config: null,
         is_active: true
       })
+      promptFormData.value = {
+        name: `${row.name}模板`,
+        template: '',
+        negative_prompt: '',
+        segments: null,
+        model_config: null
+      }
     }
   } catch (error) {
     console.error('加载Prompt失败:', error)
@@ -1242,8 +1314,17 @@ async function editScene(row) {
       name: `${row.name}模板`,
       template: '',
       negative_prompt: '',
+      segments: null,
+      model_config: null,
       is_active: true
     })
+    promptFormData.value = {
+      name: `${row.name}模板`,
+      template: '',
+      negative_prompt: '',
+      segments: null,
+      model_config: null
+    }
   }
 
   dialogVisible.value = true
@@ -1309,7 +1390,15 @@ async function saveAll() {
         config: step.config || {}
       }))
 
-      // 准备Prompt数据
+      // 准备Prompt数据 - 从 promptFormData 同步
+      if (promptFormData.value) {
+        promptForm.name = promptFormData.value.name || promptForm.name
+        promptForm.template = promptFormData.value.template || ''
+        promptForm.negative_prompt = promptFormData.value.negative_prompt || ''
+        promptForm.segments = promptFormData.value.segments || null
+        promptForm.model_config = promptFormData.value.model_config || null
+      }
+
       const promptData = promptForm.template ? {
         ...promptForm,
         scene_id: form.id
@@ -2507,6 +2596,7 @@ async function copyToClipboard(text) {
 
 onMounted(() => {
   loadScenes()
+  loadGradeSchemes()
 })
 </script>
 
@@ -3049,6 +3139,52 @@ onMounted(() => {
   margin-bottom: 10px;
   padding-left: 8px;
   border-left: 3px solid #409eff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grade-scheme-section .manage-link {
+  text-decoration: none;
+}
+
+.grade-scheme-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grade-preview {
+  background: #f5f7fa;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.grade-preview-title {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.grade-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grade-preview-item {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 8px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+}
+
+.grade-more {
+  font-size: 12px;
+  color: #909399;
+  padding: 2px 8px;
 }
 
 /* 无需配置选项的组件提示 */

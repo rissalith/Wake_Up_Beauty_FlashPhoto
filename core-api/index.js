@@ -994,14 +994,16 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
         const templateContent = prompt.template;
         const templateName = prompt.name || prompt.template_name || '';
         const negativePrompt = prompt.negative_prompt || '';
+        const segments = prompt.segments || null;
+        const modelConfig = prompt.model_config || null;
         const existing = db.prepare(`SELECT id FROM prompt_templates WHERE scene_id = ?`).get(sceneId);
         if (existing) {
-          db.prepare(`UPDATE prompt_templates SET template = ?, name = ?, negative_prompt = ?, updated_at = datetime('now') WHERE scene_id = ?`).run(
-            templateContent, templateName, negativePrompt, sceneId
+          db.prepare(`UPDATE prompt_templates SET template = ?, name = ?, negative_prompt = ?, segments = ?, model_config = ?, updated_at = datetime('now') WHERE scene_id = ?`).run(
+            templateContent, templateName, negativePrompt, segments, modelConfig, sceneId
           );
         } else {
-          db.prepare(`INSERT INTO prompt_templates (scene_id, name, template, negative_prompt) VALUES (?, ?, ?, ?)`).run(
-            sceneId, templateName, templateContent, negativePrompt
+          db.prepare(`INSERT INTO prompt_templates (scene_id, name, template, negative_prompt, segments, model_config) VALUES (?, ?, ?, ?, ?, ?)`).run(
+            sceneId, templateName, templateContent, negativePrompt, segments, modelConfig
           );
         }
       }
