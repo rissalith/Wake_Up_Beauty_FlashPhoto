@@ -268,15 +268,35 @@
 
             <!-- 右栏：选项配置 -->
             <div class="step-options-config" v-if="currentStep">
-              <div class="config-section-title">
-                选项配置
-                <div class="config-title-actions">
-                  <el-tooltip content="批量翻译所有选项为英文" placement="top">
-                    <el-button size="small" type="success" link @click="translateAllOptions" :icon="MagicStick">批量翻译</el-button>
-                  </el-tooltip>
-                  <el-button size="small" type="primary" link @click="addOption">+ 添加选项</el-button>
+              <!-- 图片上传组件 - 不需要选项配置 -->
+              <template v-if="currentStep.component_type === 'image_upload'">
+                <div class="no-options-tip">
+                  <el-icon :size="40" color="#909399"><Upload /></el-icon>
+                  <p>图片上传组件</p>
+                  <span>此组件用于用户上传照片，无需配置选项</span>
                 </div>
-              </div>
+              </template>
+
+              <!-- 性别选择组件 - 不需要选项配置 -->
+              <template v-else-if="currentStep.component_type === 'gender_select'">
+                <div class="no-options-tip">
+                  <el-icon :size="40" color="#909399"><User /></el-icon>
+                  <p>性别选择组件</p>
+                  <span>此组件提供男/女选项，无需额外配置</span>
+                </div>
+              </template>
+
+              <!-- 其他需要配置选项的组件 -->
+              <template v-else>
+                <div class="config-section-title">
+                  选项配置
+                  <div class="config-title-actions" v-if="currentStep.component_type !== 'random_dice'">
+                    <el-tooltip content="批量翻译所有选项为英文" placement="top">
+                      <el-button size="small" type="success" link @click="translateAllOptions" :icon="MagicStick">批量翻译</el-button>
+                    </el-tooltip>
+                    <el-button size="small" type="primary" link @click="addOption">+ 添加选项</el-button>
+                  </div>
+                </div>
 
               <!-- 性别筛选（仅启用性别分类时显示） -->
               <div v-if="currentStep.component_type === 'image_tags' && currentStep.gender_based" class="options-filter-compact">
@@ -487,6 +507,7 @@
                   </div>
                 </template>
               </div>
+              </template>
             </div>
             <div class="step-options-empty" v-else>
               <el-empty description="选择步骤后配置选项" :image-size="60" />
@@ -889,7 +910,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, FolderOpened, InfoFilled, MagicStick, Document, CircleCheckFilled, PictureFilled, Loading, Picture, CircleCheck, Clock } from '@element-plus/icons-vue'
+import { Plus, FolderOpened, InfoFilled, MagicStick, Document, CircleCheckFilled, PictureFilled, Loading, Picture, CircleCheck, Clock, Upload, User } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
 import draggable from 'vuedraggable'
 import request from '@/api'
@@ -2956,6 +2977,29 @@ onMounted(() => {
 .dice-pool-manager {
   max-height: 400px;
   overflow-y: auto;
+}
+
+/* 无需配置选项的组件提示 */
+.no-options-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #909399;
+  text-align: center;
+}
+
+.no-options-tip p {
+  margin: 15px 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #606266;
+}
+
+.no-options-tip span {
+  font-size: 13px;
+}
 }
 
 .options-filter-compact {
