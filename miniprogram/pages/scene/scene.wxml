@@ -48,7 +48,8 @@
     <block wx:for="{{steps}}" wx:key="step_key">
       <!-- 跳过图片上传类型 -->
       <block wx:if="{{item.component_type !== 'image_upload'}}">
-        <view class="config-section" wx:if="{{stepOptions[item.step_key] && stepOptions[item.step_key].length > 0}}">
+        <!-- 摇骰子组件不需要 options，单独处理 -->
+        <view class="config-section" wx:if="{{item.component_type === 'random_dice' || (stepOptions[item.step_key] && stepOptions[item.step_key].length > 0)}}">
           <view class="section-title">
             <image class="step-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
             <text>{{item.title}}</text>
