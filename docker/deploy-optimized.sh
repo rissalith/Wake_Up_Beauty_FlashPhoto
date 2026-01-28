@@ -231,7 +231,19 @@ build_admin_frontend() {
 }
 
 # 更新服务
+# 参数: --skip-frontend 跳过前端构建（当前端已通过其他方式部署时使用）
 update_services() {
+    local skip_frontend=false
+
+    # 解析参数
+    for arg in "$@"; do
+        case $arg in
+            --skip-frontend)
+                skip_frontend=true
+                ;;
+        esac
+    done
+
     print_info "正在更新服务..."
 
     # 清理旧容器
@@ -240,8 +252,12 @@ update_services() {
     # 确保网络和卷存在
     ensure_resources
 
-    # 构建管理后台前端
-    build_admin_frontend || print_warning "前端构建失败，继续部署..."
+    # 构建管理后台前端（除非指定跳过）
+    if [ "$skip_frontend" = true ]; then
+        print_info "跳过前端构建（已通过 CI/CD 部署）"
+    else
+        build_admin_frontend || print_warning "前端构建失败，继续部署..."
+    fi
 
     # 拉取最新镜像
     docker compose -f "$COMPOSE_FILE" pull
