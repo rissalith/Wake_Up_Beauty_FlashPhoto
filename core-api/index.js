@@ -892,12 +892,14 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
         // 3. 保存所有选项
         for (const step of steps) {
           const realStepId = stepIdMap[step.id] || step.id;
+          console.log(`[batch-save] 处理步骤选项: step.id=${step.id}, step.step_key=${step.step_key}, realStepId=${realStepId}, options数量=${(step.options || []).length}`);
           if (!realStepId) continue;
 
           // 获取要保留的选项ID列表
           const keepOptionIds = (step.options || [])
             .filter(o => o.id && !String(o.id).startsWith('temp_') && typeof o.id === 'number')
             .map(o => o.id);
+          console.log(`[batch-save] 步骤 ${step.step_key}: keepOptionIds=${JSON.stringify(keepOptionIds)}`);
 
           // 删除该步骤下被移除的选项
           if (keepOptionIds.length > 0) {
@@ -909,6 +911,7 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
           if (!step.options) continue;
 
           for (const opt of step.options) {
+            console.log(`[batch-save] 处理选项: opt.id=${opt.id}, opt.option_key=${opt.option_key}, opt.label=${opt.label}, opt.color=${opt.color}`);
             const label = opt.label || opt.name || '';
             const labelEn = opt.label_en || opt.name_en || '';
             const image = opt.image || opt.image_url || '';
@@ -951,6 +954,7 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.id
               );
             } else {
+              console.log(`[batch-save] 插入新选项: step_id=${realStepId}, option_key=${opt.option_key}, label=${label}, color=${color}`);
               db.prepare(`INSERT INTO step_options (step_id, option_key, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                 realStepId,
@@ -967,6 +971,7 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.extra_points || 0,
                 metadataStr
               );
+              console.log(`[batch-save] 选项插入成功`);
             }
           }
         }
