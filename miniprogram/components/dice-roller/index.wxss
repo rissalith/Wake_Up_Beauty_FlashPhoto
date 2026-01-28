@@ -138,6 +138,41 @@
   box-shadow: 0 3rpx 10rpx rgba(139, 0, 0, 0.5);
 }
 
+/* 品级文字 */
+.rarity-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+/* 品级背景色 */
+.dice-wrapper.show-rarity.rarity-legendary {
+  background: linear-gradient(145deg, #ff9800, #e65100);
+  border-color: #ffcc02;
+}
+
+.dice-wrapper.show-rarity.rarity-epic {
+  background: linear-gradient(145deg, #9c27b0, #6a1b9a);
+  border-color: #ce93d8;
+}
+
+.dice-wrapper.show-rarity.rarity-rare {
+  background: linear-gradient(145deg, #2196f3, #1565c0);
+  border-color: #90caf9;
+}
+
+.dice-wrapper.show-rarity.rarity-uncommon {
+  background: linear-gradient(145deg, #4caf50, #2e7d32);
+  border-color: #a5d6a7;
+}
+
+.dice-wrapper.show-rarity.rarity-common {
+  background: linear-gradient(145deg, #9e9e9e, #616161);
+  border-color: #bdbdbd;
+}
+
 /* 状态提示 */
 .dice-status {
   margin-top: 16rpx;

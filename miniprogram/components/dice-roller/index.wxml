@@ -23,14 +23,21 @@
       </view>
     </view>
 
-    <!-- 右侧：骰子 -->
+    <!-- 右侧：骰子/品级显示 -->
     <view class="dice-area">
-      <view class="dice-wrapper" bindtap="onDiceTap">
-        <dice-cube
-          is-rolling="{{isRolling}}"
-          current-face="{{currentDiceFace}}"
-          size="small"
-        />
+      <view class="dice-wrapper {{result && !isRolling ? 'show-rarity rarity-' + (result.rarity || 'common') : ''}}" bindtap="onDiceTap">
+        <!-- 抽取后显示品级 -->
+        <block wx:if="{{result && !isRolling}}">
+          <text class="rarity-text">{{result.rarity_name || '普通'}}</text>
+        </block>
+        <!-- 未抽取或抽取中显示骰子 -->
+        <block wx:else>
+          <dice-cube
+            is-rolling="{{isRolling}}"
+            current-face="{{currentDiceFace}}"
+            size="{{80}}"
+          />
+        </block>
       </view>
       <!-- 状态提示 -->
       <view class="dice-status">
