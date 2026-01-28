@@ -10,6 +10,7 @@
  */
 
 const logger = require('./logger');
+const { getBeijingISOString } = require('./timeUtil');
 
 // API 地址
 const API_BASE = 'https://pop-pub.com/api';
@@ -125,7 +126,7 @@ async function trackPageView(pagePath, query = {}, pageName = '') {
     page_path: pagePath,
     page_query: JSON.stringify(query),
     network_type: networkType,
-    client_time: new Date().toISOString()
+    client_time: getBeijingISOString()
   };
 
   addToQueue(behavior);
@@ -144,7 +145,7 @@ function trackPageLeave(pagePath, duration) {
     behavior_name: extractPageName(pagePath) + '_leave',
     page_path: pagePath,
     duration: duration,
-    client_time: new Date().toISOString()
+    client_time: getBeijingISOString()
   };
 
   addToQueue(behavior);
@@ -172,7 +173,7 @@ function trackClick(elementId, elementType, elementText = '', extra = {}) {
     element_type: elementType,
     element_text: elementText,
     extra_data: JSON.stringify(extra),
-    client_time: new Date().toISOString()
+    client_time: getBeijingISOString()
   };
 
   addToQueue(behavior);
@@ -195,7 +196,7 @@ function trackEvent(eventName, eventData = {}) {
     behavior_name: eventName,
     page_path: pagePath,
     extra_data: JSON.stringify(eventData),
-    client_time: new Date().toISOString()
+    client_time: getBeijingISOString()
   };
 
   addToQueue(behavior);
@@ -219,7 +220,7 @@ function trackError(errorType, errorMessage, extra = {}) {
     behavior_name: errorType,
     page_path: pagePath,
     extra_data: JSON.stringify({ message: errorMessage, ...extra }),
-    client_time: new Date().toISOString()
+    client_time: getBeijingISOString()
   };
 
   addToQueue(behavior);

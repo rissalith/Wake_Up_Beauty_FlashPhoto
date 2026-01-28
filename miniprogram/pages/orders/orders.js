@@ -1,6 +1,7 @@
 const { I18nPage } = require('../../utils/i18nPage');
 const { t, getLangData } = require('../../utils/lang');
 const api = require('../../config/api');
+const { formatBeijingTime } = require('../../utils/timeUtil');
 
 I18nPage({
   data: {
@@ -122,16 +123,9 @@ I18nPage({
     return match ? parseInt(match[1]) : 1;
   },
 
-  // 格式化时间
+  // 格式化时间（北京时间）
   formatTime(timeStr) {
-    if (!timeStr) return '';
-    const date = new Date(timeStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hour}:${minute}`;
+    return formatBeijingTime(timeStr, 'full');
   },
 
   // 跳转到首页

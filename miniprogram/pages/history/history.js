@@ -7,6 +7,7 @@ const { api } = require('../../config/api.js');
 const aiService = require('../../utils/ai-service.js');
 const configManager = require('../../utils/configManager.js');
 const tracker = require('../../utils/tracker.js');
+const { getBeijingISOString } = require('../../utils/timeUtil.js');
 
 Page({
   data: {
@@ -571,7 +572,7 @@ Page({
       spec: item.spec || '证件照',
       bg_color: item.bgName || '',
       status: 'done',
-      created_at: item.createTime ? new Date(item.createTime).toISOString() : new Date().toISOString()
+      created_at: item.createTime ? new Date(item.createTime).toISOString() : getBeijingISOString()
     }).then(() => {
       // 标记为已同步
       let history = wx.getStorageSync('photoHistory') || [];

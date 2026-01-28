@@ -1,5 +1,6 @@
 const lang = require('../../utils/lang.js');
 const { api } = require('../../config/api.js');
+const { formatBeijingTime } = require('../../utils/timeUtil.js');
 
 // 类型图标样式映射 (CSS类名)
 const TYPE_ICON_CLASSES = {
@@ -90,15 +91,9 @@ Page({
     }
   },
 
-  // 格式化时间
+  // 格式化时间（北京时间）
   formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hour}:${minute}`;
+    return formatBeijingTime(timestamp, 'full');
   },
 
   // 处理记录数据，添加图标和文本

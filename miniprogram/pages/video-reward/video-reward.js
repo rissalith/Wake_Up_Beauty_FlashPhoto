@@ -2,6 +2,7 @@
  * 看视频得醒币页面
  */
 const { request } = require('../../config/api');
+const { getBeijingDateString } = require('../../utils/timeUtil');
 
 const MAX_DAILY_COUNT = 5; // 每日最多观看次数
 
@@ -89,9 +90,9 @@ Page({
     }
   },
 
-  // 获取今天的日期字符串 (ISO格式: YYYY-MM-DD)
+  // 获取今天的日期字符串 (北京时间: YYYY-MM-DD)
   getTodayStr() {
-    return new Date().toISOString().split('T')[0];
+    return getBeijingDateString();
   },
 
   // 开始观看视频

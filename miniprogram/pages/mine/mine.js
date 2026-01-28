@@ -5,6 +5,7 @@ const { uploadWxTempFile, COS_CONFIG, getUserId } = require('../../utils/cos.js'
 const { canShowRecharge, getPlatformTips, isIOS } = require('../../utils/platform.js');
 const configManager = require('../../utils/configManager.js');
 const tracker = require('../../utils/tracker.js');
+const { formatBeijingTime } = require('../../utils/timeUtil.js');
 
 Page({
   data: {
@@ -140,16 +141,9 @@ Page({
       const res = await api.getPointsRecords(userId, 1, 3);
       if (res.code === 0 || res.code === 200) {
         const recentRecords = res.data.list.map(record => {
-          // 格式化时间，兼容 iOS (将 yyyy-mm-dd 转换为 yyyy/mm/dd)
-          const dateStr = record.created_at ? record.created_at.replace(/-/g, '/') : '';
-          const date = dateStr ? new Date(dateStr) : new Date();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hour = String(date.getHours()).padStart(2, '0');
-          const minute = String(date.getMinutes()).padStart(2, '0');
           return {
             ...record,
-            timeStr: `${month}-${day} ${hour}:${minute}`
+            timeStr: formatBeijingTime(record.created_at, 'short')
           };
         });
         this.setData({ recentPointsRecords: recentRecords });
