@@ -44,7 +44,7 @@ function runDeploy(branch, callback) {
     `cd ${DEPLOY_PATH}`,
     'git fetch origin',
     `git reset --hard origin/${branch}`,
-    'bash docker/deploy-optimized.sh update --skip-frontend'  // 跳过前端构建，因为 CI/CD 已经上传了
+    'bash docker/deploy-optimized.sh update'
   ].join(' && ');
 
   log(`开始部署，分支: ${branch}`);
