@@ -51,6 +51,13 @@
         </template>
       </el-table-column>
 
+      <!-- 概率 -->
+      <el-table-column label="概率" width="70" align="center">
+        <template #default="{ row }">
+          <span class="probability">{{ getItemProbability(row) }}</span>
+        </template>
+      </el-table-column>
+
       <!-- 启用 -->
       <el-table-column prop="is_active" label="启用" width="55" align="center">
         <template #default="{ row }">
@@ -322,6 +329,34 @@ const getGradeCount = (gradeName) => {
   return items.value.filter(item => item.rarity === gradeName).length
 }
 
+// 计算词条抽中概率
+const getItemProbability = (item) => {
+  if (!item.rarity || grades.value.length === 0) return '-'
+
+  // 计算所有品级权重之和
+  const totalWeight = grades.value.reduce((sum, g) => sum + (g.weight || 0), 0)
+  if (totalWeight === 0) return '-'
+
+  // 找到该词条所属品级
+  const grade = grades.value.find(g => g.name === item.rarity)
+  if (!grade) return '-'
+
+  // 该品级的词条数量
+  const gradeItemCount = items.value.filter(i => i.rarity === item.rarity && i.is_active === 1).length
+  if (gradeItemCount === 0) return '-'
+
+  // 概率 = (品级权重 / 总权重) * (1 / 该品级词条数)
+  const probability = (grade.weight / totalWeight) * (1 / gradeItemCount) * 100
+
+  if (probability < 0.01) {
+    return '<0.01%'
+  } else if (probability < 1) {
+    return probability.toFixed(2) + '%'
+  } else {
+    return probability.toFixed(1) + '%'
+  }
+}
+
 // ==================== 词条相关 ====================
 const loading = ref(false)
 const items = ref([])
@@ -584,6 +619,12 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
   border-radius: 3px;
   color: #fff;
   font-size: 11px;
+}
+
+.probability {
+  font-size: 12px;
+  color: #e6a23c;
+  font-weight: 500;
 }
 
 .pagination-wrapper {
