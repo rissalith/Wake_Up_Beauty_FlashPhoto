@@ -231,15 +231,15 @@ build_admin_frontend() {
 }
 
 # 更新服务
-# 参数: --skip-frontend 跳过前端构建（当前端已通过其他方式部署时使用）
+# 参数: --with-frontend 包含前端构建（默认跳过，因为服务器内存不足容易 OOM）
 update_services() {
-    local skip_frontend=false
+    local build_frontend=false
 
     # 解析参数
     for arg in "$@"; do
         case $arg in
-            --skip-frontend)
-                skip_frontend=true
+            --with-frontend)
+                build_frontend=true
                 ;;
         esac
     done
@@ -252,11 +252,11 @@ update_services() {
     # 确保网络和卷存在
     ensure_resources
 
-    # 构建管理后台前端（除非指定跳过）
-    if [ "$skip_frontend" = true ]; then
-        print_info "跳过前端构建（已通过 CI/CD 部署）"
-    else
+    # 构建管理后台前端（仅当明确指定时）
+    if [ "$build_frontend" = true ]; then
         build_admin_frontend || print_warning "前端构建失败，继续部署..."
+    else
+        print_info "跳过前端构建（使用现有前端文件，如需重建请使用 --with-frontend）"
     fi
 
     # 拉取最新镜像
