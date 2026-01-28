@@ -1,26 +1,25 @@
-/* 摇骰子容器组件样式（重构版） */
+/* 摇骰子容器组件样式 - 新春风格 */
 .dice-roller {
-  padding: 30rpx;
-  background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
-  border-radius: 24rpx;
-  margin: 20rpx 0;
+  padding: 30rpx 20rpx;
+  background: transparent;
+  margin: 0;
 }
 
 /* 标题区域 */
 .dice-header {
   text-align: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
 }
 
 .dice-title {
-  font-size: 36rpx;
-  font-weight: bold;
+  font-size: 32rpx;
+  font-weight: 600;
   color: #333;
   display: block;
 }
 
 .dice-subtitle {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #999;
   margin-top: 8rpx;
   display: block;
@@ -31,7 +30,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300rpx;
+  min-height: 280rpx;
 }
 
 /* 骰子包装器 */
@@ -44,12 +43,12 @@
 /* 骰子提示 */
 .dice-hint {
   margin-top: 20rpx;
-  font-size: 28rpx;
-  color: #666;
+  font-size: 26rpx;
+  color: #888;
 }
 
 .rolling-hint {
-  color: #d32f2f;
+  color: #d4956a;
   animation: pulse 0.5s infinite;
 }
 
@@ -65,10 +64,11 @@
   justify-content: center;
   margin-top: 20rpx;
   padding: 12rpx 24rpx;
-  background: #e8f5e9;
+  background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e9 100%);
   border-radius: 20rpx;
   color: #4caf50;
-  font-size: 28rpx;
+  font-size: 26rpx;
+  border: 1rpx solid #c8e6c9;
 }
 
 .confirmed-icon {
@@ -79,9 +79,9 @@
 /* 免费次数提示 */
 .free-hint {
   text-align: center;
-  margin-top: 20rpx;
-  font-size: 24rpx;
-  color: #999;
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: #aaa;
 }
 
 /* 付费确认弹窗 */
@@ -113,11 +113,12 @@
   border-radius: 24rpx;
   padding: 40rpx;
   text-align: center;
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.15);
 }
 
 .confirm-title {
-  font-size: 36rpx;
-  font-weight: bold;
+  font-size: 34rpx;
+  font-weight: 600;
   color: #333;
 }
 
@@ -128,14 +129,14 @@
 }
 
 .confirm-balance {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #999;
   margin-top: 12rpx;
 }
 
 .confirm-btns {
   display: flex;
-  margin-top: 40rpx;
+  margin-top: 36rpx;
   gap: 20rpx;
 }
 
@@ -143,15 +144,23 @@
   flex: 1;
   padding: 20rpx;
   border-radius: 40rpx;
-  font-size: 30rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn:active {
+  transform: scale(0.96);
 }
 
 .confirm-btn.cancel {
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
   color: #666;
+  border: 1rpx solid #ddd;
 }
 
 .confirm-btn.ok {
-  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  background: linear-gradient(135deg, #d4956a 0%, #c17f4e 100%);
   color: #fff;
+  box-shadow: 0 4rpx 15rpx rgba(193, 127, 78, 0.3);
 }
