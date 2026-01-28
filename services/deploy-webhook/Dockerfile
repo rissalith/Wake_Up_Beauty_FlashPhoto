@@ -2,8 +2,8 @@ FROM m.daocloud.io/docker.io/library/node:18-alpine
 
 WORKDIR /app
 
-# 安装 git、docker CLI 和 docker compose 插件
-RUN apk add --no-cache git docker-cli docker-cli-compose bash
+# 安装 git、docker CLI、docker compose 插件和 util-linux（包含 nsenter）
+RUN apk add --no-cache git docker-cli docker-cli-compose bash util-linux
 
 # 复制 package.json
 COPY package.json ./

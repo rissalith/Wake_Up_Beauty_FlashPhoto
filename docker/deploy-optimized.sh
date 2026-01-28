@@ -232,8 +232,10 @@ build_admin_frontend() {
 
 # 更新服务
 # 参数: --skip-frontend 跳过前端构建
+# 参数: --with-frontend 强制构建前端（默认跳过，因为内存限制）
 update_services() {
-    local skip_frontend=false
+    local skip_frontend=true  # 默认跳过前端构建（避免 OOM）
+    local with_frontend=false
 
     # 解析参数
     for arg in "$@"; do
@@ -241,30 +243,25 @@ update_services() {
             --skip-frontend)
                 skip_frontend=true
                 ;;
+            --with-frontend)
+                with_frontend=true
+                skip_frontend=false
+                ;;
         esac
     done
 
     print_info "正在更新服务..."
 
-    # 清理旧容器
-    cleanup_old_containers
-
-    # 确保网络和卷存在
+    # 确保网络和卷存在（不清理旧容器，使用滚动更新）
     ensure_resources
 
-    # 构建管理后台前端（默认构建，除非指定跳过）
-    if [ "$skip_frontend" = true ]; then
-        print_info "跳过前端构建"
-    else
-        build_admin_frontend || print_warning "前端构建失败，继续部署..."
-    fi
-
     # 拉取最新基础镜像（redis, nginx）
+    print_info "拉取基础镜像..."
     docker compose -f "$COMPOSE_FILE" pull redis nginx --quiet || true
 
-    # 启动服务（使用现有镜像，仅在代码变化时重建）
-    # --no-deps 避免依赖问题，--remove-orphans 清理孤立容器
-    docker compose -f "$COMPOSE_FILE" up -d --build --remove-orphans nginx redis core-api ai-service pay-service
+    # 先启动服务（使用滚动更新，不停机）
+    print_info "启动服务（滚动更新）..."
+    docker compose -f "$COMPOSE_FILE" up -d --build --remove-orphans
 
     # 清理旧镜像
     docker image prune -f --filter "until=24h" || true
@@ -274,6 +271,14 @@ update_services() {
     # 执行健康检查
     sleep 10
     health_check
+
+    # 最后构建前端（失败不影响服务运行）
+    if [ "$skip_frontend" = true ]; then
+        print_info "跳过前端构建（使用现有前端文件，如需重建请使用 --with-frontend）"
+    else
+        print_info "开始构建前端..."
+        build_admin_frontend || print_warning "前端构建失败，服务已正常运行"
+    fi
 }
 
 # 查看日志

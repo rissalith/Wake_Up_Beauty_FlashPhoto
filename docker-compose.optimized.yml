@@ -132,6 +132,10 @@ services:
       dockerfile: Dockerfile
     container_name: flashphoto-deploy-webhook
     restart: always
+    # 特权模式，允许使用 nsenter 进入宿主机命名空间
+    privileged: true
+    # 使用宿主机 PID 命名空间，允许 nsenter -t 1
+    pid: host
     expose:
       - "3004"
     environment:
@@ -155,9 +159,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 2G
         reservations:
-          memory: 64M
+          memory: 256M
 
   # ==================== 支付服务 ====================
   pay-service:

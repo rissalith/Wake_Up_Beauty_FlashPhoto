@@ -40,12 +40,10 @@ function verifySignature(payload, signature) {
 }
 
 function runDeploy(branch, callback) {
-  const commands = [
-    `cd ${DEPLOY_PATH}`,
-    'git fetch origin',
-    `git reset --hard origin/${branch}`,
-    'bash docker/deploy-optimized.sh update'
-  ].join(' && ');
+  // 使用 nsenter 在宿主机命名空间执行命令，避免容器内存限制
+  // -t 1 表示进入 PID 1 (init) 的命名空间
+  // -m -u -n -i 分别表示 mount, uts, network, ipc 命名空间
+  const commands = `nsenter -t 1 -m -u -n -i bash -c "cd ${DEPLOY_PATH} && git fetch origin && git reset --hard origin/${branch} && bash docker/deploy-optimized.sh update"`;
 
   log(`开始部署，分支: ${branch}`);
   log(`执行命令: ${commands}`);
