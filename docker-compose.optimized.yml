@@ -155,9 +155,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
         reservations:
-          memory: 32M
+          memory: 64M
 
   # ==================== 支付服务 ====================
   pay-service:
