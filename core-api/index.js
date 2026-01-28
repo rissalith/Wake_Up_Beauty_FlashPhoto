@@ -79,6 +79,7 @@ const adminStatsRoutes = require('./routes/admin/stats');
 const adminConfigRoutes = require('./routes/admin/config');
 const adminScenesRoutes = require('./routes/admin/scenes');
 const adminMonitorRoutes = require('./routes/admin/monitor');
+const adminGradeSchemesRoutes = require('./routes/admin/grade-schemes');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -111,6 +112,7 @@ app.use('/api/admin/stats', adminStatsRoutes);
 app.use('/api/admin/config', adminConfigRoutes);
 app.use('/api/admin/scenes', adminScenesRoutes);
 app.use('/api/admin/monitor', adminMonitorRoutes);
+app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);

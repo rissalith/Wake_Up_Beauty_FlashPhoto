@@ -417,6 +417,60 @@ function createTables() {
     )
   `);
 
+  // ==================== 品级方案主表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS grade_schemes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scheme_key TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      description TEXT,
+      category TEXT DEFAULT 'general',
+      is_system INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ==================== 品级定义表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS grade_definitions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scheme_id INTEGER NOT NULL,
+      grade_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      description TEXT,
+      weight INTEGER DEFAULT 100,
+      probability REAL,
+      prompt_text TEXT,
+      style_config TEXT,
+      color TEXT DEFAULT '#409eff',
+      bg_color TEXT,
+      text_color TEXT,
+      sort_order INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (scheme_id) REFERENCES grade_schemes(id) ON DELETE CASCADE,
+      UNIQUE(scheme_id, grade_key)
+    )
+  `);
+
+  // ==================== 步骤-品级方案映射表 ====================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS step_scheme_mappings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scene_id TEXT NOT NULL,
+      step_key TEXT NOT NULL,
+      scheme_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (scheme_id) REFERENCES grade_schemes(id) ON DELETE CASCADE,
+      UNIQUE(scene_id, step_key)
+    )
+  `);
+
   // ==================== 操作日志表 ====================
   db.exec(`
     CREATE TABLE IF NOT EXISTS operation_logs (
@@ -529,7 +583,13 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_draw_records_created_at ON user_draw_records(created_at)',
     // 视频奖励记录索引
     'CREATE INDEX IF NOT EXISTS idx_video_reward_user ON video_reward_records(user_id)',
-    'CREATE INDEX IF NOT EXISTS idx_video_reward_created_at ON video_reward_records(created_at)'
+    'CREATE INDEX IF NOT EXISTS idx_video_reward_created_at ON video_reward_records(created_at)',
+    // 品级方案索引
+    'CREATE INDEX IF NOT EXISTS idx_grade_schemes_key ON grade_schemes(scheme_key)',
+    'CREATE INDEX IF NOT EXISTS idx_grade_schemes_category ON grade_schemes(category)',
+    'CREATE INDEX IF NOT EXISTS idx_grade_definitions_scheme ON grade_definitions(scheme_id)',
+    'CREATE INDEX IF NOT EXISTS idx_grade_definitions_key ON grade_definitions(grade_key)',
+    'CREATE INDEX IF NOT EXISTS idx_step_scheme_mappings_scene_step ON step_scheme_mappings(scene_id, step_key)'
   ];
   
   indexes.forEach(sql => {

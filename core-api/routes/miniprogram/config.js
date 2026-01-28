@@ -405,4 +405,102 @@ router.get('/cos/info', (req, res) => {
   });
 });
 
+// ========== 品级方案接口 ==========
+
+// 获取步骤的品级配置（含样式）
+router.get('/step-grades/:sceneId/:stepKey', (req, res) => {
+  try {
+    const db = getDb();
+    const { sceneId, stepKey } = req.params;
+
+    // 查找步骤-方案映射
+    const mapping = db.prepare(`
+      SELECT m.*, s.name as scheme_name, s.scheme_key
+      FROM step_scheme_mappings m
+      JOIN grade_schemes s ON m.scheme_id = s.id
+      WHERE m.scene_id = ? AND m.step_key = ?
+    `).get(sceneId, stepKey);
+
+    if (!mapping) {
+      return res.json({
+        code: 0,
+        data: null,
+        msg: '该步骤未配置品级方案'
+      });
+    }
+
+    // 获取方案的品级列表
+    const grades = db.prepare(`
+      SELECT * FROM grade_definitions
+      WHERE scheme_id = ? AND is_active = 1
+      ORDER BY sort_order ASC, id ASC
+    `).all(mapping.scheme_id);
+
+    // 解析 style_config JSON
+    const gradesWithParsedStyle = grades.map(grade => ({
+      id: grade.id,
+      gradeKey: grade.grade_key,
+      name: grade.name,
+      nameEn: grade.name_en,
+      description: grade.description,
+      weight: grade.weight,
+      probability: grade.probability,
+      promptText: grade.prompt_text,
+      color: grade.color,
+      bgColor: grade.bg_color,
+      textColor: grade.text_color,
+      styleConfig: grade.style_config ? JSON.parse(grade.style_config) : null
+    }));
+
+    res.json({
+      code: 0,
+      data: {
+        scheme: {
+          id: mapping.scheme_id,
+          name: mapping.scheme_name,
+          schemeKey: mapping.scheme_key
+        },
+        grades: gradesWithParsedStyle
+      }
+    });
+  } catch (error) {
+    console.error('获取步骤品级配置错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+// 获取所有可用的品级方案列表（供小程序端选择使用）
+router.get('/grade-schemes', (req, res) => {
+  try {
+    const db = getDb();
+    const { category } = req.query;
+
+    let sql = 'SELECT id, scheme_key, name, name_en, category FROM grade_schemes WHERE is_active = 1';
+    const params = [];
+
+    if (category) {
+      sql += ' AND category = ?';
+      params.push(category);
+    }
+
+    sql += ' ORDER BY sort_order ASC, id ASC';
+
+    const schemes = db.prepare(sql).all(...params);
+
+    res.json({
+      code: 0,
+      data: schemes.map(s => ({
+        id: s.id,
+        schemeKey: s.scheme_key,
+        name: s.name,
+        nameEn: s.name_en,
+        category: s.category
+      }))
+    });
+  } catch (error) {
+    console.error('获取品级方案列表错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 module.exports = router;

@@ -249,6 +249,17 @@
                     <el-option label="摇骰子" value="random_dice" />
                   </el-select>
                 </el-form-item>
+                <!-- 摇骰子定价配置 -->
+                <div v-if="currentStep.component_type === 'random_dice'" class="dice-pricing-config">
+                  <el-form-item label="免费次数">
+                    <el-input-number v-model="currentStep.free_count" :min="0" :max="99" size="small" style="width: 100%" />
+                  </el-form-item>
+                  <el-form-item label="每次消耗">
+                    <el-input-number v-model="currentStep.cost_per_roll" :min="0" :max="999" size="small" style="width: 100%">
+                      <template #suffix>醒币</template>
+                    </el-input-number>
+                  </el-form-item>
+                </div>
                 <div class="switch-row">
                   <el-form-item label="必填">
                     <el-switch v-model="currentStep.is_required" />
@@ -494,7 +505,22 @@
                       <el-checkbox v-model="currentStep.config.showImage" size="small">显示图片</el-checkbox>
                       <span class="config-tip">（勾选后每个选项需要配置图片）</span>
                     </div>
+
+                    <!-- 品级方案管理 -->
+                    <div class="grade-scheme-section">
+                      <div class="section-title">品级方案配置</div>
+                      <grade-scheme-manager
+                        v-if="form.id && currentStep.step_key"
+                        :scene-id="String(form.id)"
+                        :step-key="currentStep.step_key"
+                        :key="`grade-${currentStep.step_key}`"
+                      />
+                      <el-empty v-else description="请先保存场景" :image-size="60" />
+                    </div>
+
+                    <!-- 词条池管理 -->
                     <div class="dice-pool-manager">
+                      <div class="section-title">词条池管理</div>
                       <draw-pool-manager
                         v-if="form.id && currentStep.step_key"
                         :scene-id="form.id"
@@ -916,6 +942,7 @@ import draggable from 'vuedraggable'
 import request from '@/api'
 import { translateToEnglish, batchTranslateToEnglish } from '@/utils/translate'
 import DrawPoolManager from '@/components/DrawPoolManager.vue'
+import GradeSchemeManager from '@/components/GradeSchemeManager.vue'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -1180,6 +1207,8 @@ async function editScene(row) {
         is_visible: s.is_visible === 1,
         gender_based: s.gender_based === 1 || s.gender_based === true || config.gender_based || false,  // 优先从根级别读取
         icon: s.icon || config.icon || '',  // 优先从根级别读取图标
+        free_count: s.free_count !== undefined ? s.free_count : 1,  // 摇骰子免费次数
+        cost_per_roll: s.cost_per_roll !== undefined ? s.cost_per_roll : 10,  // 摇骰子每次消耗
         options
       }
     })
@@ -1392,6 +1421,8 @@ function addStep() {
     is_required: false,
     is_visible: true,
     gender_based: false,  // 默认不启用性别分类
+    free_count: 1,  // 摇骰子免费次数
+    cost_per_roll: 10,  // 摇骰子每次消耗醒币
     config: {},
     options: []
   }
@@ -2263,6 +2294,8 @@ async function applyGeneratedConfig(config) {
         is_required: step.is_required !== false,
         is_visible: step.is_visible !== false,
         gender_based: step.gender_based || false,
+        free_count: step.free_count !== undefined ? step.free_count : 1,
+        cost_per_roll: step.cost_per_roll !== undefined ? step.cost_per_roll : 10,
         icon: '',
         config: {},
         options: step.options?.map((opt, optIdx) => ({
@@ -2319,6 +2352,8 @@ async function applyGeneratedConfig(config) {
         is_required: step.is_required !== false,
         is_visible: step.is_visible !== false,
         gender_based: step.gender_based || false,
+        free_count: step.free_count !== undefined ? step.free_count : 1,
+        cost_per_roll: step.cost_per_roll !== undefined ? step.cost_per_roll : 10,
         icon: '',
         config: {},
         options: step.options?.map((opt, optIdx) => ({
@@ -2934,6 +2969,27 @@ onMounted(() => {
   margin-bottom: 8px;
 }
 
+/* 摇骰子定价配置 */
+.dice-pricing-config {
+  display: flex;
+  gap: 12px;
+  background: #fef9e7;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: 1px solid #f5d89a;
+}
+
+.dice-pricing-config .el-form-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.dice-pricing-config .el-form-item__label {
+  font-size: 12px;
+  color: #b88a00;
+}
+
 /* 右栏：选项配置 */
 .step-options-config {
   flex: 1;
@@ -2977,6 +3033,22 @@ onMounted(() => {
 .dice-pool-manager {
   max-height: 400px;
   overflow-y: auto;
+}
+
+.grade-scheme-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #e0e0e0;
+}
+
+.grade-scheme-section .section-title,
+.dice-pool-manager .section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 10px;
+  padding-left: 8px;
+  border-left: 3px solid #409eff;
 }
 
 /* 无需配置选项的组件提示 */

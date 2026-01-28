@@ -175,3 +175,31 @@
   color: #ffd700;
   margin-left: 8rpx;
 }
+
+/* 动态动画效果 */
+.animation-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animation-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animation-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 4rpx 30rpx rgba(255, 215, 0, 0.4); }
+  50% { box-shadow: 0 4rpx 50rpx rgba(255, 215, 0, 0.7); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}

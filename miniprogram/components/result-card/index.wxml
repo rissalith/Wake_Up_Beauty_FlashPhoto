@@ -2,25 +2,37 @@
 <view class="result-card" animation="{{animationData}}" wx:if="{{result}}">
   <!-- 成语结果 -->
   <block wx:if="{{drawType === 'phrase'}}">
-    <view class="result-phrase {{showRarity && result.rarity ? getRarityClass(result.rarity) : ''}}">
-      <text class="phrase-text">{{result.phrase}}</text>
+    <view
+      class="result-phrase {{animationClass}} {{!dynamicCardStyle && showRarity && result.rarity ? getRarityClass(result.rarity) : ''}}"
+      style="{{dynamicCardStyle}}"
+    >
+      <text class="phrase-text" style="{{dynamicTextStyle}}">{{result.phrase}}</text>
       <text class="phrase-en" wx:if="{{result.phrase_en}}">{{result.phrase_en}}</text>
       <view class="phrase-rarity" wx:if="{{showRarity && result.rarity}}">
-        <text class="rarity-tag {{getRarityClass(result.rarity)}}">{{getRarityText(result.rarity)}}</text>
+        <text
+          class="rarity-tag {{!dynamicBadgeStyle ? getRarityClass(result.rarity) : ''}}"
+          style="{{dynamicBadgeStyle}}"
+        >{{getRarityText(result.rarity)}}</text>
       </view>
     </view>
   </block>
 
   <!-- 马品级结果 -->
   <block wx:else>
-    <view class="result-horse {{getRarityClass(result.grade_key)}}">
+    <view
+      class="result-horse {{animationClass}} {{!dynamicCardStyle ? getRarityClass(result.grade_key) : ''}}"
+      style="{{dynamicCardStyle}}"
+    >
       <image class="horse-image" src="{{result.image}}" mode="aspectFit" wx:if="{{result.image}}"></image>
       <view class="horse-placeholder" wx:else>
         <text class="horse-icon">🐴</text>
       </view>
-      <text class="horse-name">{{result.name}}</text>
+      <text class="horse-name" style="{{dynamicTextStyle}}">{{result.name}}</text>
       <view class="horse-rarity" wx:if="{{showRarity}}">
-        <text class="rarity-tag {{getRarityClass(result.grade_key)}}">{{getRarityText(result.grade_key)}}</text>
+        <text
+          class="rarity-tag {{!dynamicBadgeStyle ? getRarityClass(result.grade_key) : ''}}"
+          style="{{dynamicBadgeStyle}}"
+        >{{getRarityText(result.grade_key)}}</text>
       </view>
       <text class="horse-desc" wx:if="{{result.description}}">{{result.description}}</text>
     </view>
