@@ -26,8 +26,12 @@ router.post('/roll', async (req, res) => {
 
     const db = getDb();
 
-    // 检查用户是否存在
-    const user = db.prepare('SELECT * FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    // 检查用户是否存在（兼容有无 user_id 列的情况）
+    let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    if (!user) {
+      // 尝试通过 openid 查找
+      user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
+    }
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
@@ -159,8 +163,11 @@ router.get('/free-count/:userId/:sceneId/:drawType', (req, res) => {
 
     const db = getDb();
 
-    // 获取真实用户ID
-    const user = db.prepare('SELECT id FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    // 获取真实用户ID（兼容有无 user_id 列的情况）
+    let user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    if (!user) {
+      user = db.prepare('SELECT id FROM users WHERE openid = ?').get(userId);
+    }
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
@@ -198,8 +205,11 @@ router.get('/records/:userId', (req, res) => {
 
     const db = getDb();
 
-    // 获取真实用户ID
-    const user = db.prepare('SELECT id FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    // 获取真实用户ID（兼容有无 user_id 列的情况）
+    let user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    if (!user) {
+      user = db.prepare('SELECT id FROM users WHERE openid = ?').get(userId);
+    }
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
