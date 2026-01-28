@@ -1,7 +1,6 @@
 {
   "component": true,
   "usingComponents": {
-    "dice-cube": "../dice-cube/index",
-    "result-card": "../result-card/index"
+    "dice-cube": "../dice-cube/index"
   }
 }

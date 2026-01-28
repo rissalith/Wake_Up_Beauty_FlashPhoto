@@ -1,53 +1,135 @@
-/* 摇骰子容器组件样式 - 新春风格 */
+/* 摇骰子容器组件样式 - 横向布局版 */
 .dice-roller {
-  padding: 30rpx 20rpx;
-  background: transparent;
-  margin: 0;
+  padding: 20rpx 0;
 }
 
-/* 标题区域 */
-.dice-header {
+/* 主内容区：横向布局 */
+.dice-main {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+/* ========== 左侧结果区域 ========== */
+.result-area {
+  flex: 1;
+  min-height: 160rpx;
+}
+
+/* 成语卡片 */
+.phrase-card {
+  padding: 30rpx 24rpx;
+  background: linear-gradient(180deg, #fff9e6 0%, #fff5d6 100%);
+  border-radius: 16rpx;
+  border: 2rpx solid #d4a84b;
   text-align: center;
-  margin-bottom: 24rpx;
 }
 
-.dice-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+.phrase-text {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #8b4513;
+  letter-spacing: 8rpx;
   display: block;
 }
 
-.dice-subtitle {
-  font-size: 24rpx;
-  color: #999;
+.phrase-en {
+  font-size: 22rpx;
+  color: #a08060;
   margin-top: 8rpx;
   display: block;
+  font-style: italic;
 }
 
-/* 骰子容器 */
-.dice-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 280rpx;
+/* 马品级卡片 */
+.horse-card {
+  padding: 24rpx;
+  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+  border-radius: 16rpx;
+  border: 2rpx solid #e8e8e8;
+  text-align: center;
 }
 
-/* 骰子包装器 */
-.dice-wrapper {
+.horse-card.legendary {
+  border-color: #ffb74d;
+  background: linear-gradient(180deg, #fff 0%, #fff8e1 100%);
+}
+
+.horse-card.epic {
+  border-color: #ba68c8;
+  background: linear-gradient(180deg, #fff 0%, #f3e5f5 100%);
+}
+
+.horse-card.rare {
+  border-color: #64b5f6;
+  background: linear-gradient(180deg, #fff 0%, #e3f2fd 100%);
+}
+
+.horse-img {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 12rpx;
+}
+
+.horse-placeholder {
+  font-size: 60rpx;
+  line-height: 1;
+}
+
+.horse-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-top: 12rpx;
+  display: block;
+}
+
+/* 空占位 */
+.empty-placeholder {
+  padding: 40rpx 24rpx;
+  background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
+  border-radius: 16rpx;
+  border: 2rpx dashed #ddd;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #bbb;
+}
+
+/* ========== 右侧骰子区域 ========== */
+.dice-area {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 140rpx;
 }
 
-/* 骰子提示 */
-.dice-hint {
-  margin-top: 20rpx;
-  font-size: 26rpx;
-  color: #888;
+.dice-wrapper {
+  padding: 16rpx;
+  background: linear-gradient(180deg, #fff 0%, #f8f8f8 100%);
+  border-radius: 16rpx;
+  border: 2rpx solid #eee;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
-.rolling-hint {
+.dice-wrapper:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 状态提示 */
+.dice-status {
+  margin-top: 12rpx;
+}
+
+.status-text {
+  font-size: 20rpx;
+  color: #999;
+}
+
+.status-text.rolling {
   color: #d4956a;
   animation: pulse 0.5s infinite;
 }
@@ -57,34 +139,28 @@
   50% { opacity: 0.5; }
 }
 
-/* 已确认提示 */
-.confirmed-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20rpx;
-  padding: 12rpx 24rpx;
-  background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e9 100%);
-  border-radius: 20rpx;
+/* 费用提示 */
+.cost-hint {
+  margin-top: 8rpx;
+}
+
+.free-tag {
+  font-size: 20rpx;
   color: #4caf50;
-  font-size: 26rpx;
-  border: 1rpx solid #c8e6c9;
+  padding: 4rpx 12rpx;
+  background: #e8f5e9;
+  border-radius: 10rpx;
 }
 
-.confirmed-icon {
-  margin-right: 8rpx;
-  font-weight: bold;
+.cost-tag {
+  font-size: 20rpx;
+  color: #d4956a;
+  padding: 4rpx 12rpx;
+  background: #fff5eb;
+  border-radius: 10rpx;
 }
 
-/* 免费次数提示 */
-.free-hint {
-  text-align: center;
-  margin-top: 16rpx;
-  font-size: 22rpx;
-  color: #aaa;
-}
-
-/* 付费确认弹窗 */
+/* ========== 付费确认弹窗 ========== */
 .confirm-modal {
   position: fixed;
   top: 0;

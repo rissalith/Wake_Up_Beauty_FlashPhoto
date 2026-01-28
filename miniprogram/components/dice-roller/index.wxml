@@ -1,56 +1,49 @@
-<!-- 摇骰子容器组件（重构版） -->
+<!-- 摇骰子容器组件 - 横向布局版 -->
 <view class="dice-roller">
-  <!-- 标题区域 -->
-  <view class="dice-header" wx:if="{{title}}">
-    <text class="dice-title">{{title}}</text>
-    <text class="dice-subtitle" wx:if="{{subtitle}}">{{subtitle}}</text>
-  </view>
+  <!-- 主内容区：结果卡片 + 骰子 -->
+  <view class="dice-main">
+    <!-- 左侧：结果卡片 -->
+    <view class="result-area">
+      <block wx:if="{{result && !isRolling}}">
+        <!-- 成语结果 -->
+        <view class="phrase-card" wx:if="{{drawType === 'phrase'}}">
+          <text class="phrase-text">{{result.phrase}}</text>
+          <text class="phrase-en" wx:if="{{result.phrase_en}}">{{result.phrase_en}}</text>
+        </view>
+        <!-- 马品级结果 -->
+        <view class="horse-card {{result.grade_key}}" wx:else>
+          <image class="horse-img" src="{{result.image}}" mode="aspectFit" wx:if="{{result.image}}"/>
+          <view class="horse-placeholder" wx:else>🐴</view>
+          <text class="horse-name">{{result.name}}</text>
+        </view>
+      </block>
+      <!-- 未抽取时的占位 -->
+      <view class="empty-placeholder" wx:else>
+        <text class="empty-text">点击骰子抽取</text>
+      </view>
+    </view>
 
-  <!-- 骰子/结果区域 -->
-  <view class="dice-container">
-    <!-- 未抽取或正在摇 - 显示骰子 -->
-    <block wx:if="{{!result || isRolling}}">
-      <view class="dice-wrapper">
+    <!-- 右侧：骰子 -->
+    <view class="dice-area">
+      <view class="dice-wrapper" bindtap="onDiceTap">
         <dice-cube
           is-rolling="{{isRolling}}"
           current-face="{{currentDiceFace}}"
-          disabled="{{confirmed}}"
-          bind:tap="onDiceTap"
+          size="small"
         />
-        <view class="dice-hint" wx:if="{{!isRolling && !confirmed}}">
-          <text>点击摇一摇</text>
-        </view>
-        <view class="dice-hint rolling-hint" wx:elif="{{isRolling}}">
-          <text>摇骰子中...</text>
-        </view>
       </view>
-    </block>
-
-    <!-- 已抽取 - 显示结果 -->
-    <block wx:elif="{{result && !isRolling}}">
-      <result-card
-        draw-type="{{drawType}}"
-        result="{{result}}"
-        show-rarity="{{showRarity}}"
-        show-reroll="{{!confirmed}}"
-        show-confirm="{{!confirmed}}"
-        free-count="{{freeCount}}"
-        cost-per-roll="{{costPerRoll}}"
-        bind:reroll="onResultReroll"
-        bind:confirm="onResultConfirm"
-      />
-      <!-- 已确认状态提示 -->
-      <view class="confirmed-hint" wx:if="{{confirmed}}">
-        <text class="confirmed-icon">✓</text>
-        <text>已选择</text>
+      <!-- 状态提示 -->
+      <view class="dice-status">
+        <text class="status-text rolling" wx:if="{{isRolling}}">抽取中...</text>
+        <text class="status-text" wx:elif="{{result}}">再摇一次</text>
+        <text class="status-text" wx:else>点击抽取</text>
       </view>
-    </block>
-  </view>
-
-  <!-- 免费次数提示 -->
-  <view class="free-hint" wx:if="{{!confirmed}}">
-    <text wx:if="{{freeCount > 0}}">今日免费次数: {{freeCount}}次</text>
-    <text wx:else>每次消耗 {{costPerRoll}} 醒币</text>
+      <!-- 费用提示 -->
+      <view class="cost-hint">
+        <text wx:if="{{freeCount > 0}}" class="free-tag">免费</text>
+        <text wx:else class="cost-tag">{{costPerRoll}}醒币</text>
+      </view>
+    </view>
   </view>
 
   <!-- 付费确认弹窗 -->
