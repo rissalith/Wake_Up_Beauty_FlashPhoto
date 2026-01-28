@@ -66,10 +66,12 @@
       </el-table-column>
 
       <!-- 操作 -->
-      <el-table-column label="操作" width="80" align="center" fixed="right">
+      <el-table-column label="操作" width="90" align="center" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="editItem(row)">编辑</el-button>
-          <el-button type="danger" link size="small" @click="deleteItem(row)">删除</el-button>
+          <div class="action-btns">
+            <el-button type="primary" link size="small" @click="editItem(row)">编辑</el-button>
+            <el-button type="danger" link size="small" @click="deleteItem(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -578,6 +580,13 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 <style scoped>
 .draw-pool-manager {
   padding: 5px 0;
+}
+
+.action-btns {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .toolbar {
