@@ -97,16 +97,16 @@ jobs:
       - name: Wait for Deployment
         run: |
           echo "等待部署完成..."
-          sleep 60
+          sleep 120
 
       - name: Verify Deployment
         id: verify
         run: |
           echo "验证部署状态..."
 
-          # 检查健康状态
-          for i in {1..5}; do
-            echo "尝试 $i/5..."
+          # 检查健康状态（增加重试次数和间隔）
+          for i in {1..10}; do
+            echo "尝试 $i/10..."
 
             HEALTH=$(curl -sf "https://${{ env.DOMAIN }}/api/health" || echo "failed")
 
@@ -116,7 +116,7 @@ jobs:
               exit 0
             fi
 
-            sleep 10
+            sleep 15
           done
 
           echo "健康检查失败"
