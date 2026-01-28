@@ -216,9 +216,9 @@ build_admin_frontend() {
         npm install --silent
     fi
 
-    # 构建（增加 Node.js 内存限制避免 OOM）
+    # 构建（增加 Node.js 内存限制到 2GB 避免 OOM）
     print_info "执行前端构建..."
-    NODE_OPTIONS='--max-old-space-size=1024' npm run build
+    NODE_OPTIONS='--max-old-space-size=2048' npm run build
 
     # 清理旧文件并复制新文件
     print_info "部署前端文件到 core-api..."
