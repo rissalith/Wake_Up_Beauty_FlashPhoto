@@ -259,17 +259,15 @@ update_services() {
         print_info "跳过前端构建（使用现有前端文件，如需重建请使用 --with-frontend）"
     fi
 
-    # 拉取最新镜像
-    docker compose -f "$COMPOSE_FILE" pull
+    # 拉取最新基础镜像（redis, nginx）
+    docker compose -f "$COMPOSE_FILE" pull redis nginx --quiet || true
 
-    # 重新构建并启动（排除 deploy-webhook，避免自我中断）
-    # 先构建除 webhook 外的服务
-    docker compose -f "$COMPOSE_FILE" build nginx redis core-api ai-service pay-service
-    # 启动除 deploy-webhook 外的服务
-    docker compose -f "$COMPOSE_FILE" up -d --force-recreate --no-deps nginx redis core-api ai-service pay-service
+    # 启动服务（使用现有镜像，仅在代码变化时重建）
+    # --no-deps 避免依赖问题，--remove-orphans 清理孤立容器
+    docker compose -f "$COMPOSE_FILE" up -d --build --remove-orphans nginx redis core-api ai-service pay-service
 
     # 清理旧镜像
-    docker image prune -f
+    docker image prune -f --filter "until=24h" || true
 
     print_success "服务更新完成"
 
