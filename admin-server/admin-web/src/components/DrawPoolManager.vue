@@ -87,17 +87,26 @@
           <span>品级权重决定抽中概率，权重越高概率越大。抽奖时先按权重抽品级，再从该品级词条中随机选一个。</span>
         </div>
         <div class="grades-list" v-if="grades.length > 0">
+          <!-- 表头 -->
+          <div class="grades-header">
+            <span class="header-color">颜色</span>
+            <span class="header-name">名称</span>
+            <span class="header-name-en">英文</span>
+            <span class="header-weight">权重</span>
+            <span class="header-action">操作</span>
+          </div>
           <div v-for="grade in grades" :key="grade.id" class="grade-item" :style="{ borderLeftColor: grade.color }">
             <div class="grade-color">
               <el-color-picker v-model="grade.color" size="small" @change="updateGrade(grade)" />
             </div>
-            <div class="grade-info">
-              <el-input v-model="grade.name" size="small" style="width: 80px" @blur="updateGrade(grade)" />
-              <el-input v-model="grade.name_en" size="small" style="width: 80px" placeholder="英文" @blur="updateGrade(grade)" />
+            <div class="grade-name">
+              <el-input v-model="grade.name" size="small" @blur="updateGrade(grade)" />
+            </div>
+            <div class="grade-name-en">
+              <el-input v-model="grade.name_en" size="small" placeholder="英文" @blur="updateGrade(grade)" />
             </div>
             <div class="grade-weight">
-              <span class="weight-label">权重:</span>
-              <el-input-number v-model="grade.weight" :min="1" :max="10000" size="small" style="width: 100px" @change="updateGrade(grade)" />
+              <el-input-number v-model="grade.weight" :min="1" :max="10000" size="small" @change="updateGrade(grade)" />
             </div>
             <div class="grade-actions">
               <el-button type="danger" link size="small" @click="deleteGrade(grade)">删除</el-button>
@@ -620,42 +629,74 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 .grades-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+}
+
+/* 表头 */
+.grades-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #909399;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.grades-header .header-color {
+  width: 40px;
+  text-align: center;
+}
+
+.grades-header .header-name {
+  width: 100px;
+}
+
+.grades-header .header-name-en {
+  width: 100px;
+}
+
+.grades-header .header-weight {
+  width: 120px;
+}
+
+.grades-header .header-action {
+  width: 50px;
+  text-align: center;
 }
 
 .grade-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: #f5f7fa;
   border-radius: 4px;
   border-left: 3px solid #409eff;
 }
 
 .grade-color {
+  width: 40px;
   flex-shrink: 0;
 }
 
-.grade-info {
-  display: flex;
-  gap: 8px;
-  flex: 1;
+.grade-name {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.grade-name-en {
+  width: 100px;
+  flex-shrink: 0;
 }
 
 .grade-weight {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.weight-label {
-  font-size: 12px;
-  color: #909399;
+  width: 120px;
+  flex-shrink: 0;
 }
 
 .grade-actions {
+  width: 50px;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .grades-empty {
