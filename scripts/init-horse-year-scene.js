@@ -326,15 +326,15 @@ function initHorseYearScene() {
       if (existingPrompt) {
         db.prepare(`
           UPDATE prompt_templates SET
-            name = ?,
-            template = ?,
+            template_name = ?,
+            template_content = ?,
             negative_prompt = ?,
             updated_at = CURRENT_TIMESTAMP
           WHERE scene_id = ?
         `).run(promptTemplate.name, promptTemplate.template, promptTemplate.negative_prompt, sceneDbId);
       } else {
         db.prepare(`
-          INSERT INTO prompt_templates (scene_id, name, template, negative_prompt)
+          INSERT INTO prompt_templates (scene_id, template_name, template_content, negative_prompt)
           VALUES (?, ?, ?, ?)
         `).run(sceneDbId, promptTemplate.name, promptTemplate.template, promptTemplate.negative_prompt);
       }

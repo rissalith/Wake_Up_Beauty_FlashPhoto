@@ -158,14 +158,25 @@ router.get('/scene/:sceneId', (req, res) => {
     });
 
     // 4. 获取 Prompt 模板
-    const prompt = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ? LIMIT 1').get(scene.id);
+    const promptRow = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ? LIMIT 1').get(scene.id);
+
+    // 转换字段名以匹配前端期望的格式
+    const prompt = promptRow ? {
+      id: promptRow.id,
+      scene_id: promptRow.scene_id,
+      name: promptRow.template_name,
+      template: promptRow.template_content,  // 前端期望 prompt.template
+      negative_prompt: promptRow.negative_prompt,
+      variables: promptRow.variables,
+      is_active: promptRow.is_active
+    } : null;
 
     res.json({
       code: 200,
       data: {
         scene,
         steps: stepsWithOptions,
-        prompt: prompt || null
+        prompt
       }
     });
   } catch (error) {

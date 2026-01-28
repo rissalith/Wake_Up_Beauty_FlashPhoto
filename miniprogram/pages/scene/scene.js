@@ -653,6 +653,8 @@ I18nPage({
       if (res.code === 0) {
         const result = res.data.result;
         const value = drawType === 'phrase' ? result.phrase : result.grade_key;
+        // 对于 horse 类型，使用 prompt_text 作为 prompt 变量值
+        const promptValue = drawType === 'phrase' ? result.phrase : (result.prompt_text || result.name);
 
         this.setData({
           [`diceSteps.${stepKey}.result`]: result,
@@ -660,7 +662,7 @@ I18nPage({
           [`diceSteps.${stepKey}.freeCount`]: res.data.isFree
             ? this.data.diceSteps[stepKey].freeCount - 1
             : this.data.diceSteps[stepKey].freeCount,
-          [`selections.${stepKey}`]: value,
+          [`selections.${stepKey}`]: promptValue,
           userPoints: res.data.newBalance || this.data.userPoints
         }, () => {
           this.logCurrentPrompt();

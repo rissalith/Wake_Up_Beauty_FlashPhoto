@@ -260,6 +260,7 @@ function createTables() {
       scene_id INTEGER NOT NULL,
       template_name TEXT,
       template_content TEXT NOT NULL,
+      negative_prompt TEXT,
       variables TEXT,
       is_active INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
