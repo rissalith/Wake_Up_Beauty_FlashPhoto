@@ -924,8 +924,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
             if (opt.id && !String(opt.id).startsWith('temp_') && typeof opt.id === 'number') {
               db.prepare(`UPDATE step_options SET
                 option_key = ?,
-                name = ?,
-                name_en = ?,
                 label = ?,
                 label_en = ?,
                 color = ?,
@@ -941,8 +939,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.option_key || '',
                 label,
                 labelEn,
-                label,
-                labelEn,
                 color,
                 image,
                 promptText,
@@ -955,12 +951,10 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
                 opt.id
               );
             } else {
-              db.prepare(`INSERT INTO step_options (step_id, option_key, name, name_en, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+              db.prepare(`INSERT INTO step_options (step_id, option_key, label, label_en, color, image, prompt_text, sort_order, is_visible, is_default, gender, extra_points, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
                 realStepId,
                 opt.option_key || '',
-                label,
-                labelEn,
                 label,
                 labelEn,
                 color,
