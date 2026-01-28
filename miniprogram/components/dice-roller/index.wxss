@@ -48,8 +48,35 @@
   border-radius: 16rpx;
   border: 2rpx solid #e8e8e8;
   text-align: center;
+  min-height: 120rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
+/* 马品级颜色 */
+.horse-card.divine {
+  border-color: #ff6b6b;
+  background: linear-gradient(180deg, #fff 0%, #ffebee 100%);
+}
+
+.horse-card.gold {
+  border-color: #ffd700;
+  background: linear-gradient(180deg, #fff 0%, #fffde7 100%);
+}
+
+.horse-card.silver {
+  border-color: #b0bec5;
+  background: linear-gradient(180deg, #fff 0%, #eceff1 100%);
+}
+
+.horse-card.common {
+  border-color: #e0e0e0;
+  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+}
+
+/* 兼容旧的稀有度样式 */
 .horse-card.legendary {
   border-color: #ffb74d;
   background: linear-gradient(180deg, #fff 0%, #fff8e1 100%);
@@ -71,17 +98,18 @@
   border-radius: 12rpx;
 }
 
-.horse-placeholder {
-  font-size: 60rpx;
-  line-height: 1;
-}
-
 .horse-name {
   font-size: 28rpx;
   font-weight: 600;
   color: #333;
   margin-top: 12rpx;
   display: block;
+}
+
+/* 没有图片时的文字样式 */
+.horse-name.no-image {
+  font-size: 36rpx;
+  margin-top: 0;
 }
 
 /* 空占位 */
