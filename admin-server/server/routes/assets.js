@@ -126,7 +126,8 @@ router.get('/list', authMiddleware, async (req, res) => {
         mine: { normal: '', active: '' }
       },
       sceneIcons: [],
-      uiIcons: []
+      uiIcons: [],
+      generalAssets: []
     };
 
     contents.forEach(item => {
@@ -179,6 +180,11 @@ router.get('/list', authMiddleware, async (req, res) => {
       // UI图标
       else if (key.startsWith('icon/') && fileName && (fileName.endsWith('.svg') || fileName.endsWith('.png'))) {
         result.uiIcons.push({ key, url, fileName });
+      }
+
+      // 一般素材 (general/ 目录下的文件)
+      else if (key.startsWith('general/') && fileName) {
+        result.generalAssets.push({ key, url, fileName });
       }
     });
 
@@ -293,6 +299,10 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 
       case 'ui-icon':
         key = `icon/${file.originalname}`;
+        break;
+
+      case 'general':
+        key = `general/${timestamp}${ext}`;
         break;
 
       default:

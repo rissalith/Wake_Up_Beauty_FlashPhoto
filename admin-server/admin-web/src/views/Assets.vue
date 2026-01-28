@@ -272,6 +272,47 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- 一般素材 -->
+      <el-tab-pane label="一般素材" name="general">
+        <div class="asset-section">
+          <div class="section-header">
+            <span class="section-title">一般素材</span>
+            <span class="section-tip">用于场景步骤调用等通用素材</span>
+          </div>
+          <div class="scene-assets-grid" v-loading="loading">
+            <el-upload
+              class="scene-asset-upload"
+              :action="uploadUrl"
+              :headers="uploadHeaders"
+              :data="{ category: 'general' }"
+              :show-file-list="false"
+              :on-success="handleGeneralAssetUpload"
+              :before-upload="beforeUpload"
+              accept="image/*"
+            >
+              <div class="upload-placeholder">
+                <el-icon><Plus /></el-icon>
+                <span>上传一般素材</span>
+                <span class="upload-tip">支持 PNG/JPG/WebP，建议尺寸 512×512px</span>
+              </div>
+            </el-upload>
+            <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key">
+              <img :src="asset.url" :alt="asset.fileName" />
+              <div class="asset-info">
+                <span class="asset-name">{{ asset.fileName }}</span>
+                <div class="asset-actions">
+                  <el-button type="primary" link size="small" @click="copyUrl(asset.url)">复制URL</el-button>
+                  <el-button type="danger" link size="small" @click="deleteAsset(asset.key)">删除</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="generalAssets.length === 0 && !loading" class="empty-tip">
+            暂无一般素材，请上传图片
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -330,6 +371,10 @@ const initingIcons = ref(false)
 // 场景素材
 const sceneAssets = ref([])
 const loadingSceneAssets = ref(false)
+
+// 一般素材
+const generalAssets = ref([])
+
 const filteredUiIcons = computed(() => {
   if (!iconSearch.value) return uiIcons.value
   const keyword = iconSearch.value.toLowerCase()
@@ -374,6 +419,9 @@ async function loadAssets() {
       
       // 解析场景素材（sceneIcons）
       sceneAssets.value = data.sceneIcons || []
+
+      // 解析一般素材
+      generalAssets.value = data.generalAssets || []
     }
   } catch (error) {
     console.error('加载素材失败:', error)
@@ -504,6 +552,20 @@ function handleTabbarUpload(response, name, state) {
 function handleUiIconUpload(response) {
   if ((response.code === 200 || response.code === 0) && response.data?.url) {
     uiIcons.value.push({
+      key: response.data.key,
+      url: response.data.url,
+      fileName: response.data.fileName
+    })
+    ElMessage.success('上传成功')
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+// 一般素材上传
+function handleGeneralAssetUpload(response) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
+    generalAssets.value.push({
       key: response.data.key,
       url: response.data.url,
       fileName: response.data.fileName
