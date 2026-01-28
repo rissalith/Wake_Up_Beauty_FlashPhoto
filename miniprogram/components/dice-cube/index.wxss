@@ -10,10 +10,10 @@
 .dice {
   width: 100%;
   height: 100%;
-  background: linear-gradient(145deg, #ffffff, #e6e6e6);
-  border-radius: 24rpx;
-  box-shadow: 8rpx 8rpx 20rpx rgba(0, 0, 0, 0.15),
-              -4rpx -4rpx 10rpx rgba(255, 255, 255, 0.8);
+  background: linear-gradient(145deg, #fffef5, #f5e6c8);
+  border-radius: 16rpx;
+  box-shadow: inset 0 2rpx 4rpx rgba(255, 255, 255, 0.8),
+              inset 0 -2rpx 4rpx rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
