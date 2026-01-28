@@ -121,9 +121,20 @@ router.get('/scene/:sceneId', (req, res) => {
         return localizedOpt;
       });
 
+      // 解析 config JSON 字符串
+      let parsedConfig = {};
+      if (step.config) {
+        try {
+          parsedConfig = typeof step.config === 'string' ? JSON.parse(step.config) : step.config;
+        } catch (e) {
+          console.error('[Config] Failed to parse step config:', step.step_key, e.message);
+        }
+      }
+
       // 构建步骤对象
       const stepObj = {
         ...step,
+        config: parsedConfig,  // 使用解析后的 config 对象
         name: step.step_name || step.name,
         // 根据语言返回对应的标题
         title: useEnglish ? (step.title_en || step.title) : step.title,
