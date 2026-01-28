@@ -32,57 +32,10 @@ jobs:
               }'
           fi
 
-  build:
+  deploy:
     needs: notify-start
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Admin Frontend Dependencies
-        working-directory: admin-server/admin-web
-        run: npm ci
-
-      - name: Build Admin Frontend
-        working-directory: admin-server/admin-web
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: admin-frontend
-          path: admin-server/admin-web/dist
-          retention-days: 1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: admin-frontend
-          path: dist
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Upload Frontend to Server
-        run: |
-          echo "上传前端构建产物到服务器..."
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} "rm -rf ${{ env.DEPLOY_PATH }}/core-api/public/admin/* && mkdir -p ${{ env.DEPLOY_PATH }}/core-api/public/admin"
-          scp -o StrictHostKeyChecking=no -r dist/* root@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/core-api/public/admin/
-          echo "前端上传完成"
-
       - name: Trigger Deploy via Webhook
         id: deploy
         run: |
