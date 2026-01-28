@@ -88,70 +88,20 @@
       />
     </div>
 
-    <!-- 品级管理弹窗 -->
-    <el-dialog v-model="gradesDialogVisible" title="品级管理" width="550px">
+    <!-- 品级方案管理弹窗 -->
+    <el-dialog v-model="gradesDialogVisible" title="品级方案管理" width="700px">
       <div class="grades-dialog-content">
         <div class="grades-tip">
           <el-icon><InfoFilled /></el-icon>
-          <span>品级权重决定抽中概率，权重越高概率越大。抽奖时先按权重抽品级，再从该品级词条中随机选一个。</span>
+          <span>每个步骤可以选择不同的品级方案。品级方案可以复用，例如"马品级方案"和"题词品级方案"可以分别配置。</span>
         </div>
-        <div class="grades-list" v-if="grades.length > 0">
-          <!-- 表头 -->
-          <div class="grades-header">
-            <span class="header-color">颜色</span>
-            <span class="header-name">名称</span>
-            <span class="header-name-en">英文</span>
-            <span class="header-weight">权重</span>
-            <span class="header-action">操作</span>
-          </div>
-          <div v-for="grade in grades" :key="grade.id" class="grade-item" :style="{ borderLeftColor: grade.color }">
-            <div class="grade-color">
-              <el-color-picker v-model="grade.color" size="small" @change="updateGrade(grade)" />
-            </div>
-            <div class="grade-name">
-              <el-input v-model="grade.name" size="small" @blur="updateGrade(grade)" />
-            </div>
-            <div class="grade-name-en">
-              <el-input v-model="grade.name_en" size="small" placeholder="英文" @blur="updateGrade(grade)" />
-            </div>
-            <div class="grade-weight">
-              <el-input-number v-model="grade.weight" :min="1" :max="10000" size="small" @change="updateGrade(grade)" />
-            </div>
-            <div class="grade-actions">
-              <el-button type="danger" link size="small" @click="deleteGrade(grade)">删除</el-button>
-            </div>
-          </div>
-        </div>
-        <div class="grades-empty" v-else>
-          <span>暂无品级，请添加</span>
-        </div>
-        <div class="grades-add">
-          <el-button type="primary" size="small" :icon="Plus" @click="showAddGradeDialog">添加品级</el-button>
-        </div>
+        <GradeSchemeManager
+          v-if="gradesDialogVisible && sceneId && stepKey"
+          :scene-id="String(sceneId)"
+          :step-key="stepKey"
+          @change="onSchemeChange"
+        />
       </div>
-    </el-dialog>
-
-    <!-- 品级添加对话框 -->
-    <el-dialog v-model="gradeDialogVisible" title="添加品级" width="400px" append-to-body>
-      <el-form :model="gradeForm" :rules="gradeRules" ref="gradeFormRef" label-width="80px" size="small">
-        <el-form-item label="品级名称" prop="name">
-          <el-input v-model="gradeForm.name" placeholder="如：大吉、普通、史诗" />
-        </el-form-item>
-        <el-form-item label="英文名">
-          <el-input v-model="gradeForm.nameEn" placeholder="如：Great Luck" />
-        </el-form-item>
-        <el-form-item label="权重" prop="weight">
-          <el-input-number v-model="gradeForm.weight" :min="1" :max="10000" style="width: 100%" />
-          <div class="form-tip">权重越高，抽中该品级的概率越大</div>
-        </el-form-item>
-        <el-form-item label="颜色">
-          <el-color-picker v-model="gradeForm.color" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button size="small" @click="gradeDialogVisible = false">取消</el-button>
-        <el-button type="primary" size="small" @click="saveGrade">保存</el-button>
-      </template>
     </el-dialog>
 
     <!-- 词条添加/编辑对话框 -->
@@ -206,6 +156,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Search, InfoFilled } from '@element-plus/icons-vue'
 import request from '@/api'
+import GradeSchemeManager from './GradeSchemeManager.vue'
 
 const props = defineProps({
   sceneId: {
@@ -225,97 +176,43 @@ const props = defineProps({
 // ==================== 品级相关 ====================
 const grades = ref([])
 const gradesDialogVisible = ref(false)
-const gradeDialogVisible = ref(false)
-const gradeFormRef = ref(null)
-const gradeForm = reactive({
-  id: null,
-  name: '',
-  nameEn: '',
-  weight: 100,
-  color: '#409eff'
-})
-
-const gradeRules = {
-  name: [{ required: true, message: '请输入品级名称', trigger: 'blur' }],
-  weight: [{ required: true, message: '请输入权重', trigger: 'blur' }]
-}
 
 // 显示品级管理弹窗
 const showGradesDialog = () => {
   gradesDialogVisible.value = true
 }
 
-// 加载品级列表
+// 品级方案变更回调
+const onSchemeChange = (schemeId) => {
+  // 重新加载品级列表
+  loadGrades()
+}
+
+// 加载品级列表（从品级方案中获取）
 const loadGrades = async () => {
   if (!props.sceneId || !props.stepKey) return
 
   try {
-    const res = await request.get(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`)
-    if (res.code === 0) {
-      grades.value = res.data || []
+    // 先尝试从品级方案映射中获取
+    const res = await request.get(`/admin/grade-schemes/mapping/${props.sceneId}/${props.stepKey}`)
+    if (res.code === 0 && res.data && res.data.grades) {
+      grades.value = res.data.grades || []
+    } else {
+      // 如果没有映射，尝试从旧的 draw_pool_grades 表获取
+      const oldRes = await request.get(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`)
+      if (oldRes.code === 0) {
+        grades.value = oldRes.data || []
+      }
     }
   } catch (error) {
-    console.error('加载品级失败:', error)
-  }
-}
-
-// 显示添加品级对话框
-const showAddGradeDialog = () => {
-  Object.assign(gradeForm, { id: null, name: '', nameEn: '', weight: 100, color: '#409eff' })
-  gradeDialogVisible.value = true
-}
-
-// 保存品级
-const saveGrade = async () => {
-  try {
-    await gradeFormRef.value.validate()
-
-    const data = {
-      name: gradeForm.name,
-      nameEn: gradeForm.nameEn,
-      weight: gradeForm.weight,
-      color: gradeForm.color
-    }
-
-    await request.post(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`, data)
-    ElMessage.success('添加成功')
-
-    gradeDialogVisible.value = false
-    loadGrades()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('保存品级失败:', error)
-      ElMessage.error('保存失败')
-    }
-  }
-}
-
-// 更新品级
-const updateGrade = async (grade) => {
-  try {
-    await request.put(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades/${grade.id}`, {
-      name: grade.name,
-      nameEn: grade.name_en,
-      weight: grade.weight,
-      color: grade.color
-    })
-  } catch (error) {
-    console.error('更新品级失败:', error)
-    ElMessage.error('更新失败')
-  }
-}
-
-// 删除品级
-const deleteGrade = async (grade) => {
-  try {
-    await ElMessageBox.confirm(`确定删除品级"${grade.name}"吗？`, '确认删除', { type: 'warning' })
-    await request.delete(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades/${grade.id}`)
-    ElMessage.success('删除成功')
-    loadGrades()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除品级失败:', error)
-      ElMessage.error('删除失败')
+    // 如果品级方案 API 失败，回退到旧的 API
+    try {
+      const oldRes = await request.get(`/admin/scenes/${props.sceneId}/draw-pool/${props.stepKey}/grades`)
+      if (oldRes.code === 0) {
+        grades.value = oldRes.data || []
+      }
+    } catch (e) {
+      console.error('加载品级失败:', e)
     }
   }
 }
@@ -654,7 +551,7 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 
 /* 品级管理弹窗样式 */
 .grades-dialog-content {
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -674,90 +571,5 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 .grades-tip .el-icon {
   color: #409eff;
   margin-top: 2px;
-}
-
-.grades-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 表头 */
-.grades-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #909399;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.grades-header .header-color {
-  width: 40px;
-  text-align: center;
-}
-
-.grades-header .header-name {
-  width: 100px;
-}
-
-.grades-header .header-name-en {
-  width: 100px;
-}
-
-.grades-header .header-weight {
-  width: 120px;
-}
-
-.grades-header .header-action {
-  width: 50px;
-  text-align: center;
-}
-
-.grade-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  border-left: 3px solid #409eff;
-}
-
-.grade-color {
-  width: 40px;
-  flex-shrink: 0;
-}
-
-.grade-name {
-  width: 100px;
-  flex-shrink: 0;
-}
-
-.grade-name-en {
-  width: 100px;
-  flex-shrink: 0;
-}
-
-.grade-weight {
-  width: 120px;
-  flex-shrink: 0;
-}
-
-.grade-actions {
-  width: 50px;
-  flex-shrink: 0;
-  text-align: center;
-}
-
-.grades-empty {
-  padding: 30px;
-  text-align: center;
-  color: #909399;
-  font-size: 13px;
-}
-
-.grades-add {
-  margin-top: 15px;
-  text-align: center;
 }
 </style>

@@ -625,6 +625,7 @@ function ensureGradesTable(db) {
       name_en TEXT,
       weight INTEGER DEFAULT 100,
       color TEXT DEFAULT '#409eff',
+      prompt_text TEXT,
       sort_order INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -632,6 +633,12 @@ function ensureGradesTable(db) {
   try {
     db.exec('CREATE INDEX IF NOT EXISTS idx_draw_pool_grades_scene_step ON draw_pool_grades(scene_id, step_key)');
   } catch (e) {}
+  // 为已存在的表添加 prompt_text 字段
+  try {
+    db.exec('ALTER TABLE draw_pool_grades ADD COLUMN prompt_text TEXT');
+  } catch (e) {
+    // 字段已存在，忽略错误
+  }
 }
 
 // 获取品级列表
@@ -659,16 +666,16 @@ router.post('/:sceneId/draw-pool/:stepKey/grades', (req, res) => {
     ensureGradesTable(db);
 
     const { sceneId, stepKey } = req.params;
-    const { name, nameEn, weight, color, sortOrder } = req.body;
+    const { name, nameEn, weight, color, sortOrder, promptText } = req.body;
 
     if (!name) {
       return res.status(400).json({ code: -1, msg: '品级名称不能为空' });
     }
 
     const result = dbRun(db, `
-      INSERT INTO draw_pool_grades (scene_id, step_key, name, name_en, weight, color, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [sceneId, stepKey, name, nameEn || null, weight || 100, color || '#409eff', sortOrder || 0]);
+      INSERT INTO draw_pool_grades (scene_id, step_key, name, name_en, weight, color, prompt_text, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [sceneId, stepKey, name, nameEn || null, weight || 100, color || '#409eff', promptText || null, sortOrder || 0]);
 
     saveDatabase();
 
@@ -684,7 +691,7 @@ router.put('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
   try {
     const db = getDb();
     const { id } = req.params;
-    const { name, nameEn, weight, color, sortOrder } = req.body;
+    const { name, nameEn, weight, color, sortOrder, promptText } = req.body;
 
     const fields = [];
     const values = [];
@@ -693,6 +700,7 @@ router.put('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
     if (nameEn !== undefined) { fields.push('name_en = ?'); values.push(nameEn); }
     if (weight !== undefined) { fields.push('weight = ?'); values.push(weight); }
     if (color !== undefined) { fields.push('color = ?'); values.push(color); }
+    if (promptText !== undefined) { fields.push('prompt_text = ?'); values.push(promptText); }
     if (sortOrder !== undefined) { fields.push('sort_order = ?'); values.push(sortOrder); }
 
     if (fields.length === 0) {
