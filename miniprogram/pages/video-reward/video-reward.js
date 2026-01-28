@@ -89,10 +89,9 @@ Page({
     }
   },
 
-  // 获取今天的日期字符串
+  // 获取今天的日期字符串 (ISO格式: YYYY-MM-DD)
   getTodayStr() {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    return new Date().toISOString().split('T')[0];
   },
 
   // 开始观看视频
@@ -145,61 +144,64 @@ Page({
 
   // 领取奖励
   async claimReward() {
+    const userId = wx.getStorageSync('userId');
+    const pointsPerVideo = this.data.pointsPerVideo;
+
     try {
-      const userId = wx.getStorageSync('userId');
-      const pointsPerVideo = this.data.pointsPerVideo;
-
-      // 先更新本地计数
-      const todayKey = `video_reward_${userId}_${this.getTodayStr()}`;
-      const totalKey = `video_reward_total_${userId}`;
-      const newCount = this.data.todayCount + 1;
-      const newTotal = this.data.totalEarned + pointsPerVideo;
-      wx.setStorageSync(todayKey, newCount);
-      wx.setStorageSync(totalKey, newTotal);
-
-      // 更新本地余额
-      const currentBalance = wx.getStorageSync('userPoints') || 0;
-      const newBalance = currentBalance + pointsPerVideo;
-      wx.setStorageSync('userPoints', newBalance);
-
-      this.setData({
-        isWatching: false,
-        showSuccess: true,
-        earnedPoints: pointsPerVideo,
-        currentBalance: newBalance,
-        todayCount: newCount,
-        totalEarned: newTotal,
-        remainCount: Math.max(0, MAX_DAILY_COUNT - newCount)
+      // 先调用服务器API
+      const res = await request({
+        url: '/video-reward/claim',
+        method: 'POST',
+        data: {
+          userId,
+          videoId: 'default',
+          watchDuration: this.data.videoDuration
+        }
       });
 
-      // 尝试同步到服务器
-      try {
-        const res = await request({
-          url: '/video-reward/claim',
-          method: 'POST',
-          data: {
-            userId,
-            videoId: 'default',
-            watchDuration: this.data.videoDuration
-          }
+      if (res.code === 0) {
+        // 服务器成功后，更新本地存储
+        const todayKey = `video_reward_${userId}_${this.getTodayStr()}`;
+        const totalKey = `video_reward_total_${userId}`;
+        const newCount = this.data.todayCount + 1;
+        const newTotal = this.data.totalEarned + res.data.pointsEarned;
+        wx.setStorageSync(todayKey, newCount);
+        wx.setStorageSync(totalKey, newTotal);
+        wx.setStorageSync('userPoints', res.data.newBalance);
+
+        this.setData({
+          isWatching: false,
+          showSuccess: true,
+          earnedPoints: res.data.pointsEarned,
+          currentBalance: res.data.newBalance,
+          todayCount: newCount,
+          totalEarned: newTotal,
+          remainCount: Math.max(0, MAX_DAILY_COUNT - newCount)
         });
-
-        if (res.code === 0) {
-          // 服务器返回的余额可能更准确
-          wx.setStorageSync('userPoints', res.data.newBalance);
-          this.setData({
-            currentBalance: res.data.newBalance
-          });
-        }
-      } catch (e) {
-        console.log('[VideoReward] Server sync failed, reward saved locally');
+      } else if (res.code === -3) {
+        // 今日次数已达上限
+        this.setData({
+          isWatching: false,
+          remainCount: 0,
+          todayCount: res.data?.todayCount || MAX_DAILY_COUNT
+        });
+        wx.showToast({
+          title: res.msg || '今日次数已用完',
+          icon: 'none'
+        });
+      } else {
+        // 其他错误
+        this.setData({ isWatching: false });
+        wx.showToast({
+          title: res.msg || '领取失败',
+          icon: 'none'
+        });
       }
-
     } catch (error) {
       console.error('[VideoReward] Claim error:', error);
       this.setData({ isWatching: false });
       wx.showToast({
-        title: '领取失败',
+        title: '网络错误，请重试',
         icon: 'none'
       });
     }

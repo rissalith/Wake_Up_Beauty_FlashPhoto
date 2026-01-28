@@ -40,6 +40,22 @@ router.post('/claim', async (req, res) => {
       });
     }
 
+    // 检查今日领取次数
+    const MAX_DAILY_COUNT = 5;
+    const today = new Date().toISOString().split('T')[0];
+    const todayCount = db.prepare(`
+      SELECT COUNT(*) as count FROM video_reward_records
+      WHERE user_id = ? AND DATE(created_at) = ?
+    `).get(realUserId, today).count;
+
+    if (todayCount >= MAX_DAILY_COUNT) {
+      return res.status(400).json({
+        code: -3,
+        msg: '今日领取次数已达上限',
+        data: { maxCount: MAX_DAILY_COUNT, todayCount }
+      });
+    }
+
     // 获取奖励配置
     const rewardConfig = db.prepare("SELECT * FROM point_rewards WHERE type = 'watch_video'").get();
     const rewardPoints = rewardConfig?.points || 10;
@@ -109,13 +125,16 @@ router.get('/status/:userId', (req, res) => {
     const rewardConfig = db.prepare("SELECT * FROM point_rewards WHERE type = 'watch_video'").get();
     const rewardPoints = rewardConfig?.points || 10;
 
+    const MAX_DAILY_COUNT = 5;
+
     res.json({
       code: 0,
       data: {
         todayCount,
         todayPoints,
         pointsPerVideo: rewardPoints,
-        canClaim: true,  // 无限次
+        canClaim: todayCount < MAX_DAILY_COUNT,
+        maxDailyCount: MAX_DAILY_COUNT,
         currentBalance: user.points
       }
     });
