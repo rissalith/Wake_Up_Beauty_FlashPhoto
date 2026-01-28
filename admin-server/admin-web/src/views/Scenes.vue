@@ -3000,7 +3000,6 @@ onMounted(() => {
 .no-options-tip span {
   font-size: 13px;
 }
-}
 
 .options-filter-compact {
   display: flex;
