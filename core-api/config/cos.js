@@ -688,11 +688,16 @@ async function getAllAssets() {
       result.uiIcons.push({ key, url, fileName });
     }
 
-    // Logo图片
+    // Logo图片 - 支持 logo/ 目录和根目录的 logo.png
     else if (key.startsWith('logo/') && fileName) {
       const logoKey = fileName.replace(/\.[^.]+$/, ''); // 去掉扩展名
       if (!result.logos) result.logos = {};
       result.logos[logoKey] = url;
+    }
+    // 根目录的 logo.png 作为主Logo
+    else if (key === 'logo.png') {
+      if (!result.logos) result.logos = {};
+      result.logos['logo-main'] = url;
     }
 
     // 关于页面图片

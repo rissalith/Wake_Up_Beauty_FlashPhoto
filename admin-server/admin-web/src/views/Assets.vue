@@ -420,7 +420,6 @@
                 <el-icon class="is-loading"><Loading /></el-icon>
               </div>
               <div class="asset-info">
-                <span class="asset-name">{{ task.name || '生成中...' }}</span>
                 <el-tag size="small" type="warning">AI生成中</el-tag>
               </div>
             </div>

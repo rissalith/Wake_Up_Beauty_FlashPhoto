@@ -642,7 +642,9 @@ app.post('/api/assets/ai-generate', async (req, res) => {
       req.end();
     });
 
-    if (aiResponse.code !== 0 || !aiResponse.data?.imageBase64) {
+    // AI服务返回 code: 200 和 imageData 字段
+    const imageBase64 = aiResponse.data?.imageData || aiResponse.data?.imageBase64;
+    if ((aiResponse.code !== 0 && aiResponse.code !== 200) || !imageBase64) {
       return res.status(500).json({
         code: 500,
         message: aiResponse.message || 'AI生成失败'
@@ -656,7 +658,7 @@ app.post('/api/assets/ai-generate', async (req, res) => {
       code: 0,
       message: '生成成功',
       data: {
-        imageBase64: aiResponse.data.imageBase64,
+        imageBase64: imageBase64,
         mimeType: aiResponse.data.mimeType || 'image/png'
       }
     });
