@@ -1016,7 +1016,7 @@ const selectedGradeScheme = computed(() => {
 async function loadGradeSchemes() {
   try {
     const res = await request.get('/admin/grade-schemes')
-    gradeSchemes.value = res.data.data || []
+    gradeSchemes.value = res.data.list || []
   } catch (error) {
     console.error('加载品级方案失败:', error)
   }
