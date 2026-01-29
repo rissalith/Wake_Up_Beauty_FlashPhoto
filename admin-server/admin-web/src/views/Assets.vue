@@ -328,6 +328,16 @@
                 <span class="upload-tip">输入描述生成图片</span>
               </div>
             </div>
+            <!-- 正在生成中的占位图 -->
+            <div class="scene-asset-item generating-placeholder" v-for="task in generatingTasks" :key="task.id">
+              <div class="generating-animation">
+                <el-icon class="is-loading"><Loading /></el-icon>
+              </div>
+              <div class="asset-info">
+                <span class="asset-name">{{ task.name || '生成中...' }}</span>
+                <el-tag size="small" type="warning">AI生成中</el-tag>
+              </div>
+            </div>
             <!-- 素材列表 -->
             <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key" @click="showAssetDetail(asset)">
               <img :src="asset.url" :alt="asset.fileName" />
@@ -342,7 +352,7 @@
               </div>
             </div>
           </div>
-          <div v-if="generalAssets.length === 0 && !loading" class="empty-tip">
+          <div v-if="generalAssets.length === 0 && generatingTasks.length === 0 && !loading" class="empty-tip">
             暂无一般素材，请上传图片或使用AI生成
           </div>
         </div>
@@ -385,6 +395,9 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="aiDialogVisible = false">取消</el-button>
+          <el-button v-if="!aiGeneratedImage && !aiGenerating" type="info" @click="generateInBackground">
+            后台生成
+          </el-button>
           <el-button v-if="aiGeneratedImage" type="warning" @click="regenerateImage" :loading="aiGenerating">
             重新生成
           </el-button>
@@ -440,7 +453,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, MagicStick } from '@element-plus/icons-vue'
+import { Plus, Delete, MagicStick, Loading } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import request from '@/api'
 
@@ -503,6 +516,10 @@ const aiFolder = ref('ai-generated')
 const aiGeneratedImage = ref('')
 const aiGenerating = ref(false)
 const aiSaving = ref(false)
+
+// 后台生成任务列表
+const generatingTasks = ref([])
+let taskIdCounter = 0
 
 // 素材详情
 const assetDetailVisible = ref(false)
@@ -808,6 +825,70 @@ async function saveAiImage() {
     ElMessage.error('保存失败: ' + error.message)
   } finally {
     aiSaving.value = false
+  }
+}
+
+// 后台生成图片（关闭弹窗，显示占位图）
+async function generateInBackground() {
+  if (!aiPrompt.value.trim()) {
+    ElMessage.warning('请输入图片描述')
+    return
+  }
+
+  // 创建任务
+  const taskId = ++taskIdCounter
+  const task = {
+    id: taskId,
+    name: aiImageName.value || '生成中...',
+    prompt: aiPrompt.value,
+    folder: aiFolder.value
+  }
+
+  // 添加到任务列表
+  generatingTasks.value.unshift(task)
+
+  // 关闭弹窗
+  aiDialogVisible.value = false
+  ElMessage.info('已开始后台生成，完成后会自动添加到列表')
+
+  // 后台执行生成
+  try {
+    const res = await request.post('/assets/ai-generate', {
+      prompt: task.prompt
+    }, { timeout: 150000 })
+
+    if (res.code === 0 && res.data?.imageBase64) {
+      // 生成成功，保存到COS
+      const saveRes = await request.post('/assets/ai-save', {
+        imageBase64: res.data.imageBase64,
+        prompt: task.prompt,
+        name: task.name,
+        folder: task.folder
+      })
+
+      if (saveRes.code === 0) {
+        // 添加到素材列表
+        generalAssets.value.unshift({
+          key: saveRes.data.key,
+          url: saveRes.data.url,
+          fileName: saveRes.data.fileName,
+          displayName: task.name || saveRes.data.fileName,
+          source: 'ai-generated',
+          prompt: task.prompt
+        })
+        ElMessage.success(`图片"${task.name || '未命名'}"生成完成`)
+      }
+    } else {
+      ElMessage.error(`图片生成失败: ${res.message || '未知错误'}`)
+    }
+  } catch (error) {
+    ElMessage.error(`图片生成失败: ${error.message}`)
+  } finally {
+    // 从任务列表移除
+    const index = generatingTasks.value.findIndex(t => t.id === taskId)
+    if (index > -1) {
+      generatingTasks.value.splice(index, 1)
+    }
   }
 }
 
@@ -1478,5 +1559,25 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* 生成中占位图 */
+.generating-placeholder {
+  border: 2px dashed #e6a23c !important;
+  background: linear-gradient(135deg, #fdf6ec 0%, #fef0e6 100%);
+}
+
+.generating-animation {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(230, 162, 60, 0.1);
+}
+
+.generating-animation .el-icon {
+  font-size: 40px;
+  color: #e6a23c;
 }
 </style>

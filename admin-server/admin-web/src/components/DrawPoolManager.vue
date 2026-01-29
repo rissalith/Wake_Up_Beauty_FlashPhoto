@@ -165,19 +165,27 @@
     </el-dialog>
 
     <!-- COS图片选择对话框 -->
-    <el-dialog v-model="cosPickerVisible" title="选择素材图片" width="80%" style="max-width: 800px;">
+    <el-dialog v-model="cosPickerVisible" title="选择素材图片" width="85%" style="max-width: 900px;">
       <div class="cos-picker">
+        <!-- Tab分类 -->
+        <el-tabs v-model="cosActiveTab" type="card" @tab-change="onCosTabChange">
+          <el-tab-pane label="全部" name="all" />
+          <el-tab-pane label="Banner" name="banner" />
+          <el-tab-pane label="场景素材" name="scene" />
+          <el-tab-pane label="AI生成" name="ai-generated" />
+          <el-tab-pane label="马匹素材" name="horses" />
+          <el-tab-pane label="图标" name="icon" />
+          <el-tab-pane label="其他" name="misc" />
+        </el-tabs>
+
         <div class="cos-picker-header">
-          <el-select v-model="cosFilterFolder" placeholder="选择文件夹" clearable style="width: 180px" @change="filterCosImages">
-            <el-option label="全部文件夹" value="" />
-            <el-option v-for="folder in cosFolders" :key="folder" :label="folder || '根目录'" :value="folder" />
-          </el-select>
-          <el-input v-model="cosSearchKeyword" placeholder="搜索文件名..." clearable style="width: 160px" @input="filterCosImages" />
+          <el-input v-model="cosSearchKeyword" placeholder="搜索文件名..." clearable style="width: 200px" @input="filterCosImages">
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
           <el-button @click="loadCosImages" :loading="cosLoading">刷新</el-button>
+          <span class="filter-result" v-if="filteredCosImages.length > 0">共 {{ filteredCosImages.length }} 张</span>
         </div>
-        <div class="cos-filter-tags" v-if="filteredCosImages.length > 0">
-          <span class="filter-result">共 {{ filteredCosImages.length }} 张图片</span>
-        </div>
+
         <div class="cos-image-grid" v-loading="cosLoading">
           <div
             v-for="img in filteredCosImages"
@@ -328,8 +336,19 @@ const cosImages = ref([])
 const filteredCosImages = ref([])
 const cosFolders = ref([])
 const cosSearchKeyword = ref('')
-const cosFilterFolder = ref('')
+const cosActiveTab = ref('all')
 const selectedCosImage = ref('')
+
+// Tab到文件夹的映射
+const tabFolderMap = {
+  'all': null,
+  'banner': ['banner', 'banner-en', 'banner-tw'],
+  'scene': ['scene', 'scenes'],
+  'ai-generated': ['ai-generated'],
+  'horses': ['horses'],
+  'icon': ['icon', 'icons'],
+  'misc': ['misc', 'feedback']
+}
 
 const form = reactive({
   id: null,
@@ -638,13 +657,24 @@ async function loadCosImages() {
   }
 }
 
+// Tab切换
+function onCosTabChange() {
+  filterCosImages()
+}
+
 // 筛选COS图片
 function filterCosImages() {
   let result = cosImages.value
 
-  // 文件夹筛选
-  if (cosFilterFolder.value) {
-    result = result.filter(img => img.folderPath === cosFilterFolder.value)
+  // 按Tab分类筛选
+  if (cosActiveTab.value !== 'all') {
+    const folders = tabFolderMap[cosActiveTab.value] || []
+    if (folders.length > 0) {
+      result = result.filter(img => {
+        const folderPath = (img.folderPath || '').toLowerCase()
+        return folders.some(f => folderPath.includes(f.toLowerCase()))
+      })
+    }
   }
 
   // 关键词搜索
