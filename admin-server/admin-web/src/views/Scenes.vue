@@ -3232,10 +3232,6 @@ onMounted(() => {
   padding: 2px 8px;
   border-radius: 4px;
 }
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
-}
 
 .grade-more {
   font-size: 12px;
