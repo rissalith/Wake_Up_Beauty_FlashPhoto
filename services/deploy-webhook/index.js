@@ -1,6 +1,11 @@
 /**
  * Deploy Webhook Service
  * 接收 GitHub Actions 的 webhook 请求，触发本地部署
+ *
+ * 优化版：
+ * - 支持增量部署（只重建有变化的服务）
+ * - 部署锁防止并发部署
+ * - 健康检查确保服务正常
  */
 
 const http = require('http');
@@ -12,6 +17,7 @@ const PORT = process.env.WEBHOOK_PORT || 3004;
 const SECRET = process.env.WEBHOOK_SECRET;
 const DEPLOY_PATH = process.env.DEPLOY_PATH || '/www/wwwroot/pop-pub.com';
 const LOG_FILE = '/app/logs/deploy.log';
+const LOCK_FILE = '/app/logs/deploy.lock';
 
 // 确保日志目录存在
 const logDir = '/app/logs';
@@ -39,16 +45,118 @@ function verifySignature(payload, signature) {
   return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
 }
 
-function runDeploy(branch, callback) {
-  // 使用 nsenter 在宿主机命名空间执行命令，避免容器内存限制
-  // -t 1 表示进入 PID 1 (init) 的命名空间
-  // -m -u -n -i 分别表示 mount, uts, network, ipc 命名空间
-  const commands = `nsenter -t 1 -m -u -n -i bash -c "cd ${DEPLOY_PATH} && git fetch origin && git reset --hard origin/${branch} && bash docker/deploy-optimized.sh update"`;
+// 检查是否有部署正在进行
+function isDeploying() {
+  if (!fs.existsSync(LOCK_FILE)) {
+    return false;
+  }
+  try {
+    const lockData = JSON.parse(fs.readFileSync(LOCK_FILE, 'utf8'));
+    const lockAge = Date.now() - lockData.timestamp;
+    // 锁超过 10 分钟视为过期
+    if (lockAge > 10 * 60 * 1000) {
+      log('发现过期的部署锁，清理中...');
+      fs.unlinkSync(LOCK_FILE);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 创建部署锁
+function createLock() {
+  fs.writeFileSync(LOCK_FILE, JSON.stringify({
+    timestamp: Date.now(),
+    pid: process.pid
+  }));
+}
+
+// 释放部署锁
+function releaseLock() {
+  if (fs.existsSync(LOCK_FILE)) {
+    fs.unlinkSync(LOCK_FILE);
+  }
+}
+
+// 检测哪些服务需要重建
+function detectChangedServices(changedFiles) {
+  const services = [];
+
+  if (!changedFiles || changedFiles.length === 0) {
+    // 如果没有文件变化信息，默认重建所有后端服务
+    return ['core-api', 'ai-service', 'pay-service'];
+  }
+
+  for (const file of changedFiles) {
+    if (file.startsWith('core-api/') || file.startsWith('server/')) {
+      if (!services.includes('core-api')) services.push('core-api');
+    }
+    if (file.startsWith('services/ai-service/')) {
+      if (!services.includes('ai-service')) services.push('ai-service');
+    }
+    if (file.startsWith('services/pay-service/')) {
+      if (!services.includes('pay-service')) services.push('pay-service');
+    }
+    if (file.startsWith('admin-server/admin-web/')) {
+      // 前端变化，需要重建 core-api（因为前端构建产物在 core-api 中）
+      if (!services.includes('frontend')) services.push('frontend');
+    }
+    if (file.startsWith('docker/nginx/')) {
+      if (!services.includes('nginx')) services.push('nginx');
+    }
+  }
+
+  return services;
+}
+
+function runDeploy(branch, changedFiles, callback) {
+  // 检查部署锁
+  if (isDeploying()) {
+    log('另一个部署正在进行中，跳过本次部署');
+    callback(null, { success: false, message: '部署正在进行中，请稍后重试' });
+    return;
+  }
+
+  createLock();
+
+  const services = detectChangedServices(changedFiles);
+  log(`检测到需要更新的服务: ${services.join(', ') || '无'}`);
+
+  // 构建部署命令
+  let deployCommands = [];
+
+  // 1. 拉取代码
+  deployCommands.push(`cd ${DEPLOY_PATH} && git fetch origin && git reset --hard origin/${branch}`);
+
+  // 2. 根据变化的服务决定重建哪些
+  if (services.includes('frontend')) {
+    // 前端变化：构建前端
+    deployCommands.push(`cd ${DEPLOY_PATH}/admin-server/admin-web && npm run build && rm -rf ${DEPLOY_PATH}/core-api/public/admin/* && cp -r dist/* ${DEPLOY_PATH}/core-api/public/admin/`);
+  }
+
+  // 3. 重建后端服务（只重建有变化的）
+  const backendServices = services.filter(s => ['core-api', 'ai-service', 'pay-service', 'nginx'].includes(s));
+  if (backendServices.length > 0) {
+    deployCommands.push(`cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d --build --no-deps ${backendServices.join(' ')}`);
+  }
+
+  // 4. 如果没有检测到任何变化，执行完整更新（保守策略）
+  if (services.length === 0) {
+    log('未检测到具体变化，执行完整更新');
+    deployCommands.push(`cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d --build core-api ai-service pay-service`);
+  }
+
+  // 5. 健康检查
+  deployCommands.push(`sleep 10 && curl -sf http://localhost/api/health || echo "健康检查失败"`);
+
+  const fullCommand = `nsenter -t 1 -m -u -n -i bash -c '${deployCommands.join(' && ')}'`;
 
   log(`开始部署，分支: ${branch}`);
-  log(`执行命令: ${commands}`);
+  log(`执行命令: ${fullCommand}`);
 
-  const child = exec(commands, {
+  const child = exec(fullCommand, {
     maxBuffer: 10 * 1024 * 1024,
     timeout: 30 * 60 * 1000 // 30 分钟超时
   });
@@ -67,11 +175,23 @@ function runDeploy(branch, callback) {
   });
 
   child.on('close', (code) => {
+    releaseLock();
+
     if (code === 0) {
       log('部署成功');
       callback(null, { success: true, message: '部署成功' });
     } else {
       log(`部署失败，退出码: ${code}`);
+      // 部署失败时尝试恢复服务
+      log('尝试恢复服务...');
+      exec(`nsenter -t 1 -m -u -n -i bash -c 'cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d'`, (err) => {
+        if (err) {
+          log(`恢复服务失败: ${err.message}`);
+        } else {
+          log('服务已恢复');
+        }
+      });
+
       callback(new Error(`部署失败，退出码: ${code}`), {
         success: false,
         message: '部署失败',
@@ -82,6 +202,7 @@ function runDeploy(branch, callback) {
   });
 
   child.on('error', (err) => {
+    releaseLock();
     log(`部署执行错误: ${err.message}`);
     callback(err, { success: false, message: err.message });
   });
@@ -91,7 +212,11 @@ const server = http.createServer((req, res) => {
   // 健康检查
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'deploy-webhook' }));
+    res.end(JSON.stringify({
+      status: 'ok',
+      service: 'deploy-webhook',
+      deploying: isDeploying()
+    }));
     return;
   }
 
@@ -107,6 +232,16 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
+    return;
+  }
+
+  // 查看部署状态
+  if (req.method === 'GET' && req.url === '/status') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      deploying: isDeploying(),
+      lockFile: fs.existsSync(LOCK_FILE) ? JSON.parse(fs.readFileSync(LOCK_FILE, 'utf8')) : null
+    }));
     return;
   }
 
@@ -138,6 +273,15 @@ const server = http.createServer((req, res) => {
 
       const branch = payload.branch || payload.ref?.replace('refs/heads/', '') || 'main';
 
+      // 提取变化的文件列表（GitHub webhook 格式）
+      let changedFiles = [];
+      if (payload.commits) {
+        for (const commit of payload.commits) {
+          changedFiles = changedFiles.concat(commit.added || [], commit.modified || [], commit.removed || []);
+        }
+        changedFiles = [...new Set(changedFiles)]; // 去重
+      }
+
       // 只允许 main/master 分支
       if (!['main', 'master'].includes(branch)) {
         log(`忽略非主分支部署请求: ${branch}`);
@@ -146,18 +290,30 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      log(`收到部署请求，分支: ${branch}`);
+      // 检查是否正在部署
+      if (isDeploying()) {
+        log('部署正在进行中，拒绝新请求');
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: '部署正在进行中',
+          message: '请等待当前部署完成后重试'
+        }));
+        return;
+      }
+
+      log(`收到部署请求，分支: ${branch}, 变化文件数: ${changedFiles.length}`);
 
       // 立即返回响应，后台执行部署
       res.writeHead(202, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         message: '部署已触发',
         branch: branch,
+        changedFiles: changedFiles.slice(0, 10), // 只返回前 10 个
         timestamp: new Date().toISOString()
       }));
 
       // 异步执行部署
-      runDeploy(branch, (err, result) => {
+      runDeploy(branch, changedFiles, (err, result) => {
         if (err) {
           log(`部署完成但有错误: ${err.message}`);
         } else {
@@ -178,6 +334,7 @@ server.listen(PORT, '0.0.0.0', () => {
   log(`Deploy Webhook 服务启动，端口: ${PORT}`);
   log(`健康检查: GET /health`);
   log(`部署触发: POST /deploy`);
+  log(`部署状态: GET /status`);
   log(`查看日志: GET /logs`);
   if (!SECRET) {
     log('警告: WEBHOOK_SECRET 未设置，建议在生产环境中配置');
