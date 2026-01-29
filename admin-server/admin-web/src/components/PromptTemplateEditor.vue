@@ -37,16 +37,18 @@
           <span class="section-title">实时预览</span>
         </div>
 
-        <!-- 参数选择器 -->
-        <div class="preview-selectors" v-if="stepsWithOptions.length > 0">
-          <div v-for="step in stepsWithOptions" :key="step.step_key" class="selector-item">
-            <span class="selector-label">{{ step.title }}:</span>
+        <!-- 参数输入/选择器 - 为所有步骤显示 -->
+        <div class="preview-selectors" v-if="sceneSteps.length > 0">
+          <div v-for="step in sceneSteps" :key="step.step_key" class="selector-item">
+            <span class="selector-label">{{ step.title || step.step_key }}:</span>
+            <!-- 有固定选项的步骤用下拉框 -->
             <el-select
+              v-if="step.options && step.options.length > 0"
               v-model="previewSelections[step.step_key]"
               size="small"
               placeholder="选择"
               clearable
-              style="width: 120px"
+              style="width: 140px"
             >
               <el-option
                 v-for="opt in step.options"
@@ -55,6 +57,14 @@
                 :value="opt.prompt_text || opt.label"
               />
             </el-select>
+            <!-- 没有固定选项的步骤（如摇骰子）用输入框 -->
+            <el-input
+              v-else
+              v-model="previewSelections[step.step_key]"
+              size="small"
+              :placeholder="getPlaceholder(step)"
+              style="width: 140px"
+            />
           </div>
         </div>
 
@@ -157,6 +167,17 @@ const previewParts = computed(() => {
 // 获取变量显示文本
 function getVarDisplay(key) {
   return '{{' + key + '}}'
+}
+
+// 获取输入框占位符
+function getPlaceholder(step) {
+  const placeholders = {
+    'gender': '如：男士/女士',
+    'phrase': '如：马到成功',
+    'horse': '如：金色骏马',
+    'upload': '用户照片'
+  }
+  return placeholders[step.step_key] || '输入测试值'
 }
 
 // 获取部分的样式类
