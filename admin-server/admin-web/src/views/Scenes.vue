@@ -311,37 +311,33 @@
                       品级方案管理
                     </div>
                     <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
-                      <el-select
-                        v-model="currentStep.config.gradeSchemeId"
-                        placeholder="选择品级方案"
-                        style="width: 200px"
-                        size="small"
-                        @change="onGradeSchemeChange"
-                      >
-                        <el-option
-                          v-for="scheme in gradeSchemes"
-                          :key="scheme.id"
-                          :label="scheme.name"
-                          :value="scheme.id"
-                        />
-                      </el-select>
-                      <el-button type="primary" size="small" @click="showGradeSchemeManager">编辑方案</el-button>
+                      <div class="grade-scheme-row">
+                        <el-select
+                          v-model="currentStep.config.gradeSchemeId"
+                          placeholder="选择品级方案"
+                          style="width: 180px"
+                          size="small"
+                          @change="onGradeSchemeChange"
+                        >
+                          <el-option
+                            v-for="scheme in gradeSchemes"
+                            :key="scheme.id"
+                            :label="scheme.name"
+                            :value="scheme.id"
+                          />
+                        </el-select>
+                        <el-button size="small" @click="showGradeSchemeManager">编辑</el-button>
+                      </div>
                       <!-- 品级预览 -->
                       <div v-if="selectedGradeScheme" class="grade-preview">
-                        <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
-                        <div class="grade-preview-list">
-                          <span
-                            v-for="grade in selectedGradeScheme.grades?.slice(0, 6)"
-                            :key="grade.id"
-                            class="grade-preview-item"
-                            :style="{ color: grade.color }"
-                          >
-                            {{ grade.name }}
-                          </span>
-                          <span v-if="selectedGradeScheme.grades?.length > 6" class="grade-more">
-                            +{{ selectedGradeScheme.grades.length - 6 }}
-                          </span>
-                        </div>
+                        <span
+                          v-for="grade in selectedGradeScheme.grades"
+                          :key="grade.id"
+                          class="grade-preview-item"
+                          :style="{ background: grade.color, color: '#fff' }"
+                        >
+                          {{ grade.name }}
+                        </span>
                       </div>
                     </div>
                     <el-empty v-else description="请先保存场景" :image-size="60" />
@@ -1048,7 +1044,19 @@ function onGradeSchemeManagerChange() {
 async function loadGradeSchemes() {
   try {
     const res = await request.get('/admin/grade-schemes')
-    gradeSchemes.value = res.data.list || []
+    const schemes = res.data.list || []
+    // 为每个方案加载品级详情
+    for (const scheme of schemes) {
+      try {
+        const detailRes = await request.get(`/admin/grade-schemes/${scheme.id}`)
+        if (detailRes.code === 0 && detailRes.data) {
+          scheme.grades = detailRes.data.grades || []
+        }
+      } catch (e) {
+        scheme.grades = []
+      }
+    }
+    gradeSchemes.value = schemes
   } catch (error) {
     console.error('加载品级方案失败:', error)
   }
@@ -3204,31 +3212,26 @@ onMounted(() => {
 .grade-scheme-selector {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.grade-preview {
-  background: #f5f7fa;
-  border-radius: 6px;
-  padding: 12px;
-}
-
-.grade-preview-title {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.grade-preview-list {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
+.grade-scheme-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grade-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .grade-preview-item {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
   padding: 2px 8px;
+  border-radius: 4px;
+}
   background: #fff;
   border-radius: 4px;
   border: 1px solid #ebeef5;
