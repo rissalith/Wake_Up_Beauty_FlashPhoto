@@ -1300,6 +1300,21 @@ async function editScene(row) {
         options
       }
     })
+
+    // 为每个步骤加载品级方案映射
+    for (const step of steps.value) {
+      if (step.step_key) {
+        try {
+          const mappingRes = await request.get(`/admin/grade-schemes/mapping/${row.id}/${step.step_key}`)
+          if (mappingRes.code === 0 && mappingRes.data?.scheme_id) {
+            step.config.gradeSchemeId = mappingRes.data.scheme_id
+          }
+        } catch (e) {
+          // 忽略映射加载错误
+        }
+      }
+    }
+
     currentStepIndex.value = steps.value.length > 0 ? 0 : -1
   } catch (error) {
     console.error('加载步骤失败:', error)
