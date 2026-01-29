@@ -59,12 +59,25 @@ router.get(['/overview', '/dashboard'], async (req, res) => {
       FROM invites WHERE status = 'completed'
     `).get();
 
+    // 获取醒币获取来源统计（只统计正向获取，不包括消费）
+    const pointsSources = db.prepare(`
+      SELECT
+        type,
+        SUM(amount) as total,
+        COUNT(*) as count
+      FROM points_records
+      WHERE amount > 0 AND type != 'consume'
+      GROUP BY type
+      ORDER BY total DESC
+    `).all();
+
     const data = {
       users: { total: userStats.total, today: userStats.today, active: userStats.active },
       points: { total: userStats.totalPoints, todayRecharge: pointsStats.todayRecharge, todayConsume: pointsStats.todayConsume },
       photos: { total: photoStats.total, today: photoStats.today, success: photoStats.success, failed: photoStats.failed },
       orders: { total: orderStats.total, paid: orderStats.paid, revenue: orderStats.revenue },
-      invites: { total: inviteStats.total, today: inviteStats.today }
+      invites: { total: inviteStats.total, today: inviteStats.today },
+      pointsSources: pointsSources
     };
 
     // 缓存结果
