@@ -220,21 +220,12 @@ const presets = {
   ]
 }
 
-// 可用变量列表
+// 可用变量列表 - 只显示当前场景实际配置的步骤
 const availableVariables = computed(() => {
-  const vars = [
-    { key: 'gender', label: '{{gender}} 性别' },
-    { key: 'background', label: '{{background}} 背景' },
-    { key: 'spec', label: '{{spec}} 规格' },
-    { key: 'phrase', label: '{{phrase}} 题词' },
-    { key: 'grade_prompt', label: '{{grade_prompt}} 品级' },
-    { key: 'horse', label: '{{horse}} 马' },
-    { key: 'style', label: '{{style}} 风格' },
-    { key: 'clothing', label: '{{clothing}} 服装' }
-  ]
-  // 添加场景步骤中的变量
+  const vars = []
+  // 只从场景步骤中获取变量
   props.sceneSteps.forEach(step => {
-    if (step.step_key && !vars.find(v => v.key === step.step_key)) {
+    if (step.step_key) {
       vars.push({ key: step.step_key, label: `{{${step.step_key}}} ${step.title || step.step_key}` })
     }
   })
