@@ -1,9 +1,10 @@
 /**
  * 生成4种马的图片并上传到COS
- * 在服务器上运行: node scripts/generate-horse-images.js
+ * 在服务器 core-api 目录运行: node ../scripts/generate-horse-images.js
  */
 
-const axios = require('axios');
+const https = require('https');
+const http = require('http');
 const COS = require('cos-nodejs-sdk-v5');
 require('dotenv').config();
 
@@ -17,8 +18,9 @@ const ASSET_BUCKET = process.env.COS_ASSET_BUCKET || 'xingmeishantu-1310044729';
 const ASSET_REGION = process.env.COS_ASSET_REGION || 'ap-shanghai';
 const ASSET_BASE_URL = `https://${ASSET_BUCKET}.cos.${ASSET_REGION}.myqcloud.com`;
 
-// AI服务地址
-const AI_SERVICE_URL = 'http://localhost:3002/api/ai/generate-image';
+// AI服务地址 (Docker内部网络)
+const AI_SERVICE_HOST = 'flashphoto-ai-service';
+const AI_SERVICE_PORT = 3002;
 
 // 4种马的配置
 const horses = [
@@ -60,23 +62,56 @@ async function uploadToCOS(buffer, key) {
   });
 }
 
+// HTTP请求封装
+function httpRequest(options, postData) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error('Invalid JSON response'));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(120000, () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+    if (postData) req.write(postData);
+    req.end();
+  });
+}
+
 // 生成单张图片
 async function generateImage(horse) {
   console.log(`\n正在生成: ${horse.name}`);
   console.log(`Prompt: ${horse.prompt}`);
 
   try {
-    const response = await axios.post(AI_SERVICE_URL, {
-      prompt: horse.prompt
-    }, {
-      timeout: 120000
-    });
+    const postData = JSON.stringify({ prompt: horse.prompt });
 
-    if (response.data.code === 0 && response.data.data?.imageBase64) {
+    const options = {
+      hostname: AI_SERVICE_HOST,
+      port: AI_SERVICE_PORT,
+      path: '/api/ai/generate-image',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const response = await httpRequest(options, postData);
+
+    if (response.code === 0 && response.data?.imageBase64) {
       console.log(`✓ 图片生成成功`);
 
       // 转换base64为buffer
-      const imageBuffer = Buffer.from(response.data.data.imageBase64, 'base64');
+      const imageBuffer = Buffer.from(response.data.imageBase64, 'base64');
 
       // 上传到COS
       const key = `horses/${horse.name}.png`;
@@ -85,7 +120,7 @@ async function generateImage(horse) {
       console.log(`✓ 上传成功: ${result.url}`);
       return result;
     } else {
-      console.error(`✗ 生成失败:`, response.data.message || '未知错误');
+      console.error(`✗ 生成失败:`, response.message || '未知错误');
       return null;
     }
   } catch (error) {
