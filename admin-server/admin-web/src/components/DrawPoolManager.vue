@@ -55,7 +55,7 @@
       v-loading="loading"
       stripe
       size="small"
-      max-height="350"
+      max-height="500"
       @selection-change="handleSelectionChange"
     >
       <!-- 序号列 -->
