@@ -26,7 +26,7 @@
     <div class="stats-bar">
       <span>共 {{ total }} 项</span>
       <span v-for="g in grades" :key="g.id" class="stat-item" :style="{ background: g.color }">
-        {{ g.name }}: {{ getGradeCount(g.name) }}
+        {{ g.name }}: {{ getGradeCount(g.grade_key) }}
       </span>
     </div>
 
@@ -252,8 +252,8 @@ const getGradeColor = (rarityName) => {
 }
 
 // 获取品级词条数量
-const getGradeCount = (gradeName) => {
-  return items.value.filter(item => item.rarity === gradeName).length
+const getGradeCount = (gradeKey) => {
+  return items.value.filter(item => item.rarity === gradeKey).length
 }
 
 // 计算词条抽中概率
