@@ -41,10 +41,6 @@
           <el-icon><Grid /></el-icon>
           <span>场景管理</span>
         </el-menu-item>
-        <el-menu-item index="/grade-schemes">
-          <el-icon><Medal /></el-icon>
-          <span>品级方案</span>
-        </el-menu-item>
         <el-menu-item index="/assets">
           <el-icon><FolderOpened /></el-icon>
           <span>素材管理</span>

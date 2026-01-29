@@ -297,11 +297,77 @@
                 </div>
               </template>
 
+              <!-- random_dice类型（摇骰子/抽奖）专用配置 - 单独处理 -->
+              <template v-else-if="currentStep.component_type === 'random_dice'">
+                <div class="random-dice-config-standalone">
+                  <div class="dice-config-header">
+                    <el-checkbox v-model="currentStep.config.showImage" size="small">显示图片</el-checkbox>
+                    <span class="config-tip">（勾选后每个选项需要配置图片）</span>
+                  </div>
+
+                  <!-- 品级方案配置（简化版） -->
+                  <div class="grade-scheme-section">
+                    <div class="section-title">
+                      品级方案配置
+                      <router-link to="/grade-schemes" class="manage-link">
+                        <el-button type="primary" link size="small">前往管理 →</el-button>
+                      </router-link>
+                    </div>
+                    <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
+                      <el-select
+                        v-model="currentStep.config.gradeSchemeId"
+                        placeholder="选择品级方案"
+                        style="width: 200px"
+                        @change="onGradeSchemeChange"
+                      >
+                        <el-option
+                          v-for="scheme in gradeSchemes"
+                          :key="scheme.id"
+                          :label="scheme.name"
+                          :value="scheme.id"
+                        />
+                      </el-select>
+                      <!-- 品级预览 -->
+                      <div v-if="selectedGradeScheme" class="grade-preview">
+                        <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
+                        <div class="grade-preview-list">
+                          <span
+                            v-for="grade in selectedGradeScheme.grades?.slice(0, 6)"
+                            :key="grade.id"
+                            class="grade-preview-item"
+                            :style="{ color: grade.color }"
+                          >
+                            {{ grade.name }}
+                          </span>
+                          <span v-if="selectedGradeScheme.grades?.length > 6" class="grade-more">
+                            +{{ selectedGradeScheme.grades.length - 6 }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <el-empty v-else description="请先保存场景" :image-size="60" />
+                  </div>
+
+                  <!-- 词条池管理 -->
+                  <div class="dice-pool-manager">
+                    <div class="section-title">词条池管理</div>
+                    <draw-pool-manager
+                      v-if="form.id && currentStep.step_key"
+                      :scene-id="form.id"
+                      :step-key="currentStep.step_key"
+                      :show-image="currentStep.config?.showImage || false"
+                      :key="currentStep.step_key"
+                    />
+                    <el-empty v-else description="请先保存场景" :image-size="60" />
+                  </div>
+                </div>
+              </template>
+
               <!-- 其他需要配置选项的组件 -->
               <template v-else>
                 <div class="config-section-title">
                   选项配置
-                  <div class="config-title-actions" v-if="currentStep.component_type !== 'random_dice'">
+                  <div class="config-title-actions">
                     <el-tooltip content="批量翻译所有选项为英文" placement="top">
                       <el-button size="small" type="success" link @click="translateAllOptions" :icon="MagicStick">批量翻译</el-button>
                     </el-tooltip>
@@ -498,71 +564,6 @@
                   </div>
                 </template>
 
-                <!-- random_dice类型（摇骰子/抽奖）专用配置 -->
-                <template v-if="currentStep.component_type === 'random_dice'">
-                  <div class="random-dice-config">
-                    <div class="dice-config-header">
-                      <el-checkbox v-model="currentStep.config.showImage" size="small">显示图片</el-checkbox>
-                      <span class="config-tip">（勾选后每个选项需要配置图片）</span>
-                    </div>
-
-                    <!-- 品级方案配置（简化版） -->
-                    <div class="grade-scheme-section">
-                      <div class="section-title">
-                        品级方案配置
-                        <router-link to="/grade-schemes" class="manage-link">
-                          <el-button type="primary" link size="small">前往管理 →</el-button>
-                        </router-link>
-                      </div>
-                      <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
-                        <el-select
-                          v-model="currentStep.config.gradeSchemeId"
-                          placeholder="选择品级方案"
-                          style="width: 200px"
-                          @change="onGradeSchemeChange"
-                        >
-                          <el-option
-                            v-for="scheme in gradeSchemes"
-                            :key="scheme.id"
-                            :label="scheme.name"
-                            :value="scheme.id"
-                          />
-                        </el-select>
-                        <!-- 品级预览 -->
-                        <div v-if="selectedGradeScheme" class="grade-preview">
-                          <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
-                          <div class="grade-preview-list">
-                            <span
-                              v-for="grade in selectedGradeScheme.grades?.slice(0, 6)"
-                              :key="grade.id"
-                              class="grade-preview-item"
-                              :style="{ color: grade.color }"
-                            >
-                              {{ grade.name }}
-                            </span>
-                            <span v-if="selectedGradeScheme.grades?.length > 6" class="grade-more">
-                              +{{ selectedGradeScheme.grades.length - 6 }}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <el-empty v-else description="请先保存场景" :image-size="60" />
-                    </div>
-
-                    <!-- 词条池管理 -->
-                    <div class="dice-pool-manager">
-                      <div class="section-title">词条池管理</div>
-                      <draw-pool-manager
-                        v-if="form.id && currentStep.step_key"
-                        :scene-id="form.id"
-                        :step-key="currentStep.step_key"
-                        :show-image="currentStep.config?.showImage || false"
-                        :key="currentStep.step_key"
-                      />
-                      <el-empty v-else description="请先保存场景" :image-size="60" />
-                    </div>
-                  </div>
-                </template>
               </div>
               </template>
             </div>
@@ -3101,6 +3102,11 @@ onMounted(() => {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px dashed #e0e0e0;
+}
+
+/* random_dice 独立配置（不在 options-scroll-area 内） */
+.random-dice-config-standalone {
+  padding: 10px 0;
 }
 
 .dice-config-header {
