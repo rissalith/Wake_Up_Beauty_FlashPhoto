@@ -573,6 +573,7 @@
           <prompt-template-editor
             v-model="promptFormData"
             :scene-steps="steps"
+            :scene-id="form.id"
           />
         </el-tab-pane>
       </el-tabs>

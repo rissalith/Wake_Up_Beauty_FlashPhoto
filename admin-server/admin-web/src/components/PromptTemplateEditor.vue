@@ -37,13 +37,17 @@
           <span class="section-title">实时预览</span>
         </div>
 
-        <!-- 参数输入/选择器 - 为所有步骤显示 -->
+        <!-- 参数输入/选择器 -->
         <div class="preview-selectors" v-if="sceneSteps.length > 0">
           <div v-for="step in sceneSteps" :key="step.step_key" class="selector-item">
             <span class="selector-label">{{ step.title || step.step_key }}:</span>
+
+            <!-- upload 类型：只显示占位符 -->
+            <el-tag v-if="step.step_key === 'upload'" size="small" type="info">用户照片</el-tag>
+
             <!-- 有固定选项的步骤用下拉框 -->
             <el-select
-              v-if="step.options && step.options.length > 0"
+              v-else-if="step.options && step.options.length > 0"
               v-model="previewSelections[step.step_key]"
               size="small"
               placeholder="选择"
@@ -57,7 +61,26 @@
                 :value="opt.prompt_text || opt.label"
               />
             </el-select>
-            <!-- 没有固定选项的步骤（如摇骰子）用输入框 -->
+
+            <!-- 摇骰子类型：从词条池加载选项 -->
+            <el-select
+              v-else-if="step.component_type === 'dice' && drawPoolOptions[step.step_key]"
+              v-model="previewSelections[step.step_key]"
+              size="small"
+              placeholder="选择"
+              clearable
+              filterable
+              style="width: 160px"
+            >
+              <el-option
+                v-for="item in drawPoolOptions[step.step_key]"
+                :key="item.id"
+                :label="item.name"
+                :value="item.prompt_text || item.name"
+              />
+            </el-select>
+
+            <!-- 其他类型：输入框 -->
             <el-input
               v-else
               v-model="previewSelections[step.step_key]"
@@ -82,6 +105,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/api'
 
 const props = defineProps({
   modelValue: {
@@ -97,6 +121,10 @@ const props = defineProps({
   sceneSteps: {
     type: Array,
     default: () => []
+  },
+  sceneId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -105,6 +133,32 @@ const emit = defineEmits(['update:modelValue'])
 const textareaRef = ref(null)
 const localTemplate = ref('')
 const previewSelections = ref({})
+const drawPoolOptions = ref({})
+
+// 加载摇骰子步骤的词条池数据
+async function loadDrawPoolOptions() {
+  if (!props.sceneId) return
+
+  for (const step of props.sceneSteps) {
+    if (step.component_type === 'dice' && step.step_key) {
+      try {
+        const res = await request.get(`/admin/scenes/${props.sceneId}/draw-pool/${step.step_key}`, {
+          params: { pageSize: 100 }
+        })
+        if (res.code === 0) {
+          drawPoolOptions.value[step.step_key] = res.data.list || []
+        }
+      } catch (e) {
+        console.error('加载词条池失败:', e)
+      }
+    }
+  }
+}
+
+// 监听 sceneSteps 变化，加载词条池
+watch(() => props.sceneSteps, () => {
+  loadDrawPoolOptions()
+}, { immediate: true })
 
 // 只显示有选项的步骤（用于预览选择器）
 const stepsWithOptions = computed(() => {
