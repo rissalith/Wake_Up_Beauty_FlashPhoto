@@ -31,13 +31,27 @@
     </div>
 
     <!-- 批量操作栏 -->
-    <div class="batch-bar" v-if="selectedItems.length > 0">
-      <span class="selected-count">已选 {{ selectedItems.length }} 项</span>
-      <el-select v-model="batchRarity" placeholder="选择品级" size="small" style="width: 100px">
-        <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
-      </el-select>
-      <el-button type="primary" size="small" @click="batchSetRarity" :disabled="!batchRarity">批量设置</el-button>
-      <el-button size="small" @click="clearSelection">取消选择</el-button>
+    <div class="batch-bar">
+      <div class="batch-select-row">
+        <span class="batch-label">快速选择:</span>
+        <el-input
+          v-model="rangeInput"
+          placeholder="序号范围，如 1-20 或 1,3,5,10-15"
+          size="small"
+          style="width: 200px"
+          @keyup.enter="selectByRange"
+        />
+        <el-button size="small" @click="selectByRange">选取</el-button>
+        <el-button size="small" @click="selectAll">全选</el-button>
+        <el-button size="small" @click="clearSelection" v-if="selectedItems.length > 0">清除</el-button>
+      </div>
+      <div class="batch-action-row" v-if="selectedItems.length > 0">
+        <span class="selected-count">已选 {{ selectedItems.length }} 项</span>
+        <el-select v-model="batchRarity" placeholder="选择品级" size="small" style="width: 100px">
+          <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
+        </el-select>
+        <el-button type="primary" size="small" @click="batchSetRarity" :disabled="!batchRarity">设置品级</el-button>
+      </div>
     </div>
 
     <!-- 列表 -->
@@ -50,6 +64,9 @@
       max-height="350"
       @selection-change="handleSelectionChange"
     >
+      <!-- 序号列 -->
+      <el-table-column type="index" label="#" width="45" :index="getRowIndex" />
+
       <!-- 多选列 -->
       <el-table-column type="selection" width="40" />
 
@@ -290,6 +307,7 @@ const searchKeyword = ref('')
 const tableRef = ref(null)
 const selectedItems = ref([])
 const batchRarity = ref('')
+const rangeInput = ref('')
 
 // 对话框
 const dialogVisible = ref(false)
@@ -434,6 +452,72 @@ const clearSelection = () => {
   tableRef.value?.clearSelection()
   selectedItems.value = []
   batchRarity.value = ''
+  rangeInput.value = ''
+}
+
+// 获取行序号（用于显示）
+const getRowIndex = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
+}
+
+// 全选当前页
+const selectAll = () => {
+  items.value.forEach(row => {
+    tableRef.value?.toggleRowSelection(row, true)
+  })
+}
+
+// 按序号范围选择
+const selectByRange = () => {
+  if (!rangeInput.value.trim()) {
+    ElMessage.warning('请输入序号范围')
+    return
+  }
+
+  // 先清除现有选择
+  tableRef.value?.clearSelection()
+
+  // 解析序号范围，支持格式: 1-20, 1,3,5, 1-10,15,20-25
+  const indices = new Set()
+  const parts = rangeInput.value.split(',')
+
+  for (const part of parts) {
+    const trimmed = part.trim()
+    if (trimmed.includes('-')) {
+      const [start, end] = trimmed.split('-').map(n => parseInt(n.trim()))
+      if (!isNaN(start) && !isNaN(end)) {
+        for (let i = start; i <= end; i++) {
+          indices.add(i)
+        }
+      }
+    } else {
+      const num = parseInt(trimmed)
+      if (!isNaN(num)) {
+        indices.add(num)
+      }
+    }
+  }
+
+  // 根据序号选择行（序号从1开始，转换为当前页的索引）
+  const pageStart = (currentPage.value - 1) * pageSize.value + 1
+  const pageEnd = pageStart + items.value.length - 1
+  let selectedCount = 0
+
+  indices.forEach(idx => {
+    if (idx >= pageStart && idx <= pageEnd) {
+      const rowIndex = idx - pageStart
+      if (items.value[rowIndex]) {
+        tableRef.value?.toggleRowSelection(items.value[rowIndex], true)
+        selectedCount++
+      }
+    }
+  })
+
+  if (selectedCount > 0) {
+    ElMessage.success(`已选择 ${selectedCount} 项`)
+  } else {
+    ElMessage.warning('未找到匹配的序号，请检查范围是否在当前页内')
+  }
 }
 
 // 批量设置品级
@@ -582,6 +666,27 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 .toolbar-right {
   display: flex;
   gap: 8px;
+}
+
+/* 范围选择 */
+.range-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0f9eb;
+  border: 1px solid #c2e7b0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.range-select .el-input {
+  width: 200px;
+}
+
+.range-hint {
+  font-size: 12px;
+  color: #67c23a;
 }
 
 /* 统计栏 */
