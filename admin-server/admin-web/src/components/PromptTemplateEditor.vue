@@ -54,8 +54,8 @@
               clearable
               style="width: 120px"
             >
-              <el-option label="男士" value="male" />
-              <el-option label="女士" value="female" />
+              <el-option label="男士" value="男士" />
+              <el-option label="女士" value="女士" />
             </el-select>
 
             <!-- 有固定选项的步骤用下拉框 -->

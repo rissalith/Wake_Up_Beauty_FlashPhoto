@@ -122,7 +122,7 @@
         </el-form-item>
         <el-form-item label="品级" prop="rarity">
           <el-select v-model="form.rarity" style="width: 100%">
-            <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
+            <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.grade_key" />
           </el-select>
         </el-form-item>
         <el-form-item label="Prompt">
