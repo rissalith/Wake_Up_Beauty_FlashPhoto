@@ -7,11 +7,8 @@
           <el-option label="全部" value="" />
           <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.grade_key" />
         </el-select>
-        <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 100px" @clear="loadItems" @keyup.enter="loadItems">
-          <template #append>
-            <el-button :icon="Search" @click="loadItems" />
-          </template>
-        </el-input>
+        <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 120px" @clear="loadItems" @keyup.enter="loadItems" />
+        <el-button :icon="Search" size="small" @click="loadItems" />
       </div>
       <div class="toolbar-right">
         <el-button type="primary" size="small" :icon="Plus" @click="showAddDialog" :disabled="grades.length === 0">添加</el-button>

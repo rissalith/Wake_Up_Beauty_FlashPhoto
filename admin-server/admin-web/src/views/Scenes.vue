@@ -315,6 +315,7 @@
                         v-model="currentStep.config.gradeSchemeId"
                         placeholder="选择品级方案"
                         style="width: 200px"
+                        size="small"
                         @change="onGradeSchemeChange"
                       >
                         <el-option
@@ -324,7 +325,7 @@
                           :value="scheme.id"
                         />
                       </el-select>
-                      <el-button type="primary" link size="small" @click="showGradeSchemeManager">编辑方案 →</el-button>
+                      <el-button type="primary" size="small" @click="showGradeSchemeManager">编辑方案</el-button>
                       <!-- 品级预览 -->
                       <div v-if="selectedGradeScheme" class="grade-preview">
                         <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
