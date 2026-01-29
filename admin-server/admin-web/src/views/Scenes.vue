@@ -325,7 +325,6 @@
                         />
                       </el-select>
                       <el-button type="primary" link size="small" @click="showGradeSchemeManager">编辑方案 →</el-button>
-                      </el-select>
                       <!-- 品级预览 -->
                       <div v-if="selectedGradeScheme" class="grade-preview">
                         <div class="grade-preview-title">当前方案品级 ({{ selectedGradeScheme.grades?.length || 0 }}个)</div>
