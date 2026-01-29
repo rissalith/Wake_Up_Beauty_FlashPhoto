@@ -25,7 +25,7 @@
               class="var-btn"
               @click="insertVariable(step.step_key)"
             >
-              {{ '{{' + step.step_key + '}}' }}
+              <span v-text="getVarDisplay(step.step_key)"></span>
             </el-button>
           </div>
         </div>
@@ -153,6 +153,11 @@ const previewParts = computed(() => {
 
   return parts.length > 0 ? parts : [{ text: '(暂无内容)', type: 'empty' }]
 })
+
+// 获取变量显示文本
+function getVarDisplay(key) {
+  return '{{' + key + '}}'
+}
 
 // 获取部分的样式类
 function getPartClass(part) {
