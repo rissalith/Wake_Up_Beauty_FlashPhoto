@@ -305,11 +305,10 @@
                     <span class="config-tip">（勾选后每个选项需要配置图片）</span>
                   </div>
 
-                  <!-- 品级方案配置（简化版） -->
+                  <!-- 品级方案管理 -->
                   <div class="grade-scheme-section">
                     <div class="section-title">
-                      品级方案配置
-                      <el-button type="primary" link size="small" @click="showGradeSchemeManager">管理方案 →</el-button>
+                      品级方案管理
                     </div>
                     <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
                       <el-select
@@ -324,6 +323,8 @@
                           :label="scheme.name"
                           :value="scheme.id"
                         />
+                      </el-select>
+                      <el-button type="primary" link size="small" @click="showGradeSchemeManager">编辑方案 →</el-button>
                       </el-select>
                       <!-- 品级预览 -->
                       <div v-if="selectedGradeScheme" class="grade-preview">

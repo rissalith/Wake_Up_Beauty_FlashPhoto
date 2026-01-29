@@ -3,12 +3,9 @@
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <el-button size="small" @click="showGradesDialog">
-          品级管理 ({{ grades.length }})
-        </el-button>
         <el-select v-model="filterGrade" placeholder="品级筛选" clearable size="small" style="width: 100px" @change="loadItems">
           <el-option label="全部" value="" />
-          <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
+          <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.grade_key" />
         </el-select>
         <el-input v-model="searchKeyword" placeholder="搜索" clearable size="small" style="width: 100px" @clear="loadItems" @keyup.enter="loadItems">
           <template #append>
@@ -114,24 +111,6 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 - 已移除，直接显示所有数据 -->
-
-    <!-- 品级方案管理弹窗 -->
-    <el-dialog v-model="gradesDialogVisible" title="品级方案管理" width="700px">
-      <div class="grades-dialog-content">
-        <div class="grades-tip">
-          <el-icon><InfoFilled /></el-icon>
-          <span>每个步骤可以选择不同的品级方案。品级方案可以复用，例如"马品级方案"和"题词品级方案"可以分别配置。</span>
-        </div>
-        <GradeSchemeManager
-          v-if="gradesDialogVisible && sceneId && stepKey"
-          :scene-id="String(sceneId)"
-          :step-key="stepKey"
-          @change="onSchemeChange"
-        />
-      </div>
-    </el-dialog>
-
     <!-- 词条添加/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑词条' : '添加词条'" width="450px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px" size="small">
@@ -182,9 +161,8 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Search, InfoFilled } from '@element-plus/icons-vue'
+import { Plus, Upload, Search } from '@element-plus/icons-vue'
 import request from '@/api'
-import GradeSchemeManager from './GradeSchemeManager.vue'
 
 const props = defineProps({
   sceneId: {
@@ -203,18 +181,6 @@ const props = defineProps({
 
 // ==================== 品级相关 ====================
 const grades = ref([])
-const gradesDialogVisible = ref(false)
-
-// 显示品级管理弹窗
-const showGradesDialog = () => {
-  gradesDialogVisible.value = true
-}
-
-// 品级方案变更回调
-const onSchemeChange = (schemeId) => {
-  // 重新加载品级列表
-  loadGrades()
-}
 
 // 加载品级列表（从品级方案中获取）
 const loadGrades = async () => {
