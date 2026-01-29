@@ -1530,11 +1530,19 @@ onMounted(() => {
 }
 
 .scene-asset-item {
+  width: 150px;
+  height: 180px;
   border: 1px solid #eee;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s;
   cursor: pointer;
+}
+
+.scene-asset-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
 }
 
 .scene-asset-item:hover {
