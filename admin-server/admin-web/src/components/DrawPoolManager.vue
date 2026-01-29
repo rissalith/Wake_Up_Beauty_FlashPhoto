@@ -118,7 +118,18 @@
           <el-input v-model="form.nameEn" placeholder="如：Instant Success" />
         </el-form-item>
         <el-form-item v-if="showImage" label="图片">
-          <el-input v-model="form.image" placeholder="图片URL" />
+          <div class="image-picker">
+            <el-image
+              v-if="form.image"
+              :src="form.image"
+              fit="cover"
+              style="width: 80px; height: 80px; border-radius: 4px; margin-right: 10px;"
+            />
+            <div class="image-picker-actions">
+              <el-button size="small" @click="showCosImagePicker">选择素材</el-button>
+              <el-button v-if="form.image" size="small" type="danger" @click="form.image = ''">清除</el-button>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="品级" prop="rarity">
           <el-select v-model="form.rarity" style="width: 100%">
@@ -150,6 +161,42 @@
       <template #footer>
         <el-button size="small" @click="batchDialogVisible = false">取消</el-button>
         <el-button type="primary" size="small" @click="batchImport">导入</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- COS图片选择对话框 -->
+    <el-dialog v-model="cosPickerVisible" title="选择素材图片" width="80%" style="max-width: 800px;">
+      <div class="cos-picker">
+        <div class="cos-picker-header">
+          <el-select v-model="cosFilterFolder" placeholder="选择文件夹" clearable style="width: 180px" @change="filterCosImages">
+            <el-option label="全部文件夹" value="" />
+            <el-option v-for="folder in cosFolders" :key="folder" :label="folder || '根目录'" :value="folder" />
+          </el-select>
+          <el-input v-model="cosSearchKeyword" placeholder="搜索文件名..." clearable style="width: 160px" @input="filterCosImages" />
+          <el-button @click="loadCosImages" :loading="cosLoading">刷新</el-button>
+        </div>
+        <div class="cos-filter-tags" v-if="filteredCosImages.length > 0">
+          <span class="filter-result">共 {{ filteredCosImages.length }} 张图片</span>
+        </div>
+        <div class="cos-image-grid" v-loading="cosLoading">
+          <div
+            v-for="img in filteredCosImages"
+            :key="img.key"
+            class="cos-image-item"
+            :class="{ selected: selectedCosImage === img.url }"
+            @click="selectCosImage(img)"
+          >
+            <el-image :src="img.url" fit="cover" lazy />
+            <div class="cos-image-info">
+              <div class="cos-image-name">{{ img.fileName }}</div>
+            </div>
+          </div>
+          <el-empty v-if="!cosLoading && filteredCosImages.length === 0" description="暂无图片" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="cosPickerVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmCosImage" :disabled="!selectedCosImage">确定选择</el-button>
       </template>
     </el-dialog>
   </div>
@@ -273,6 +320,17 @@ const dialogVisible = ref(false)
 const batchDialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref(null)
+
+// COS图片选择相关
+const cosPickerVisible = ref(false)
+const cosLoading = ref(false)
+const cosImages = ref([])
+const filteredCosImages = ref([])
+const cosFolders = ref([])
+const cosSearchKeyword = ref('')
+const cosFilterFolder = ref('')
+const selectedCosImage = ref('')
+
 const form = reactive({
   id: null,
   name: '',
@@ -552,6 +610,69 @@ const batchImport = async () => {
   }
 }
 
+// ==================== COS图片选择 ====================
+// 显示COS图片选择器
+async function showCosImagePicker() {
+  selectedCosImage.value = form.image || ''
+  cosPickerVisible.value = true
+  await loadCosImages()
+}
+
+// 加载COS图片
+async function loadCosImages() {
+  cosLoading.value = true
+  try {
+    const res = await request.get('/photos/cos-images')
+    if (res.code === 200 || res.code === 0) {
+      cosImages.value = res.data || []
+      cosFolders.value = res.folders || []
+      filterCosImages()
+    } else {
+      ElMessage.warning('素材加载失败')
+    }
+  } catch (error) {
+    console.error('加载COS图片失败:', error)
+    ElMessage.error('加载图片列表失败')
+  } finally {
+    cosLoading.value = false
+  }
+}
+
+// 筛选COS图片
+function filterCosImages() {
+  let result = cosImages.value
+
+  // 文件夹筛选
+  if (cosFilterFolder.value) {
+    result = result.filter(img => img.folderPath === cosFilterFolder.value)
+  }
+
+  // 关键词搜索
+  if (cosSearchKeyword.value) {
+    const keyword = cosSearchKeyword.value.toLowerCase()
+    result = result.filter(img =>
+      img.fileName?.toLowerCase().includes(keyword) ||
+      img.key?.toLowerCase().includes(keyword)
+    )
+  }
+
+  filteredCosImages.value = result
+}
+
+// 选择COS图片
+function selectCosImage(img) {
+  selectedCosImage.value = img.url
+}
+
+// 确认选择COS图片
+function confirmCosImage() {
+  if (selectedCosImage.value) {
+    form.image = selectedCosImage.value
+    ElMessage.success('图片已选择')
+  }
+  cosPickerVisible.value = false
+}
+
 // 监听变化
 watch(() => props.sceneId, (newVal) => {
   if (newVal && props.stepKey) {
@@ -713,5 +834,87 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 .grades-tip .el-icon {
   color: #409eff;
   margin-top: 2px;
+}
+
+/* 图片选择器 */
+.image-picker {
+  display: flex;
+  align-items: center;
+}
+
+.image-picker-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* COS图片选择器 */
+.cos-picker {
+  max-height: 60vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cos-picker-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.cos-filter-tags {
+  margin-bottom: 10px;
+}
+
+.filter-result {
+  font-size: 12px;
+  color: #909399;
+}
+
+.cos-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 45vh;
+  padding: 5px;
+}
+
+.cos-image-item {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f5f7fa;
+}
+
+.cos-image-item:hover {
+  border-color: #c0c4cc;
+}
+
+.cos-image-item.selected {
+  border-color: #409EFF;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.cos-image-item .el-image {
+  width: 100%;
+  height: 80px;
+  display: block;
+}
+
+.cos-image-info {
+  padding: 4px 6px;
+  background: #fff;
+}
+
+.cos-image-name {
+  font-size: 11px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
