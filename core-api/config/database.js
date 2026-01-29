@@ -524,6 +524,24 @@ function createTables() {
     )
   `);
 
+  // 素材元数据表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS asset_metadata (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT UNIQUE NOT NULL,
+      url TEXT NOT NULL,
+      name TEXT,
+      source TEXT DEFAULT 'upload',
+      prompt TEXT,
+      folder TEXT,
+      file_size INTEGER,
+      width INTEGER,
+      height INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME
+    )
+  `);
+
   // 创建索引
   createIndexes();
   

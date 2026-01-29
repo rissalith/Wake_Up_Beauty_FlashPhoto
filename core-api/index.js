@@ -587,6 +587,163 @@ app.delete('/api/assets/delete', async (req, res) => {
   }
 });
 
+// AI生成图片
+app.post('/api/assets/ai-generate', async (req, res) => {
+  try {
+    const http = require('http');
+    const { prompt, folder = 'ai-generated' } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ code: 400, message: '请输入生成提示词' });
+    }
+
+    console.log('[Assets] AI生成图片请求, prompt:', prompt.substring(0, 100) + '...');
+
+    // 调用AI服务
+    const postData = JSON.stringify({ prompt });
+    const options = {
+      hostname: process.env.AI_SERVICE_HOST || 'flashphoto-ai-service',
+      port: 3002,
+      path: '/api/ai/generate-image',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const aiResponse = await new Promise((resolve, reject) => {
+      const req = http.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error('AI服务响应解析失败'));
+          }
+        });
+      });
+      req.on('error', reject);
+      req.setTimeout(120000, () => {
+        req.destroy();
+        reject(new Error('AI服务请求超时'));
+      });
+      req.write(postData);
+      req.end();
+    });
+
+    if (aiResponse.code !== 0 || !aiResponse.data?.imageBase64) {
+      return res.status(500).json({
+        code: 500,
+        message: aiResponse.message || 'AI生成失败'
+      });
+    }
+
+    console.log('[Assets] AI图片生成成功');
+
+    // 返回base64图片供预览（不直接上传COS）
+    res.json({
+      code: 0,
+      message: '生成成功',
+      data: {
+        imageBase64: aiResponse.data.imageBase64,
+        mimeType: aiResponse.data.mimeType || 'image/png'
+      }
+    });
+  } catch (error) {
+    console.error('[Assets] AI生成图片失败:', error);
+    res.status(500).json({ code: 500, message: 'AI生成失败: ' + error.message });
+  }
+});
+
+// 确认保存AI生成的图片到COS
+app.post('/api/assets/ai-save', async (req, res) => {
+  try {
+    const { isCOSConfigured, uploadToAssetBucket, ASSET_COS_CONFIG } = require('./config/cos');
+    const db = getDb();
+
+    if (!isCOSConfigured()) {
+      return res.status(503).json({ code: 503, message: 'COS未配置' });
+    }
+
+    const { imageBase64, prompt, name, folder = 'ai-generated' } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ code: 400, message: '缺少图片数据' });
+    }
+
+    // 转换base64为buffer
+    const imageBuffer = Buffer.from(imageBase64, 'base64');
+    const timestamp = Date.now();
+    const fileName = name ? `${name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, '_')}_${timestamp}.png` : `${timestamp}.png`;
+    const key = `${folder}/${fileName}`;
+
+    // 上传到COS
+    const result = await uploadToAssetBucket(imageBuffer, key, 'image/png');
+    console.log('[Assets] AI图片保存成功:', result.url);
+
+    // 保存元数据到数据库
+    try {
+      db.prepare(`
+        INSERT INTO asset_metadata (key, url, name, source, prompt, created_at)
+        VALUES (?, ?, ?, 'ai-generated', ?, datetime('now'))
+      `).run(key, result.url, name || fileName, prompt || '');
+    } catch (dbError) {
+      console.warn('[Assets] 保存元数据失败（表可能不存在）:', dbError.message);
+    }
+
+    res.json({
+      code: 0,
+      message: '保存成功',
+      data: {
+        key: result.key,
+        url: result.url,
+        fileName: fileName
+      }
+    });
+  } catch (error) {
+    console.error('[Assets] AI图片保存失败:', error);
+    res.status(500).json({ code: 500, message: '保存失败: ' + error.message });
+  }
+});
+
+// 获取素材元数据
+app.get('/api/assets/metadata/:key', async (req, res) => {
+  try {
+    const db = getDb();
+    const key = decodeURIComponent(req.params.key);
+
+    const metadata = db.prepare('SELECT * FROM asset_metadata WHERE key = ?').get(key);
+
+    res.json({
+      code: 0,
+      data: metadata || null
+    });
+  } catch (error) {
+    console.error('[Assets] 获取元数据失败:', error);
+    res.status(500).json({ code: 500, message: '获取元数据失败' });
+  }
+});
+
+// 更新素材元数据（重命名等）
+app.put('/api/assets/metadata/:key', async (req, res) => {
+  try {
+    const db = getDb();
+    const key = decodeURIComponent(req.params.key);
+    const { name } = req.body;
+
+    db.prepare(`
+      UPDATE asset_metadata SET name = ?, updated_at = datetime('now') WHERE key = ?
+    `).run(name, key);
+
+    res.json({ code: 0, message: '更新成功' });
+  } catch (error) {
+    console.error('[Assets] 更新元数据失败:', error);
+    res.status(500).json({ code: 500, message: '更新失败' });
+  }
+});
+
 // 获取Banner列表
 app.get('/api/assets/banners', async (req, res) => {
   try {

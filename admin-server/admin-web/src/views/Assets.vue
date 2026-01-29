@@ -281,6 +281,7 @@
             <span class="section-tip">用于场景步骤调用等通用素材</span>
           </div>
           <div class="scene-assets-grid" v-loading="loading">
+            <!-- 上传按钮 -->
             <el-upload
               class="scene-asset-upload"
               :action="uploadUrl"
@@ -293,34 +294,131 @@
             >
               <div class="upload-placeholder">
                 <el-icon><Plus /></el-icon>
-                <span>上传一般素材</span>
-                <span class="upload-tip">支持 PNG/JPG/WebP，建议尺寸 512×512px</span>
+                <span>上传素材</span>
+                <span class="upload-tip">PNG/JPG/WebP</span>
               </div>
             </el-upload>
-            <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key">
+            <!-- AI生成按钮 -->
+            <div class="scene-asset-upload ai-generate-btn" @click="showAiGenerateDialog">
+              <div class="upload-placeholder">
+                <el-icon><MagicStick /></el-icon>
+                <span>AI生成</span>
+                <span class="upload-tip">输入描述生成图片</span>
+              </div>
+            </div>
+            <!-- 素材列表 -->
+            <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key" @click="showAssetDetail(asset)">
               <img :src="asset.url" :alt="asset.fileName" />
               <div class="asset-info">
-                <span class="asset-name">{{ asset.fileName }}</span>
-                <div class="asset-actions">
-                  <el-button type="primary" link size="small" @click="copyUrl(asset.url)">复制URL</el-button>
-                  <el-button type="danger" link size="small" @click="deleteAsset(asset.key)">删除</el-button>
-                </div>
+                <span class="asset-name">{{ asset.displayName || asset.fileName }}</span>
+                <el-tag v-if="asset.source === 'ai-generated'" size="small" type="warning">AI</el-tag>
+              </div>
+              <div class="asset-overlay">
+                <el-button type="primary" size="small" @click.stop="copyUrl(asset.url)">复制URL</el-button>
+                <el-button type="info" size="small" @click.stop="showAssetDetail(asset)">详情</el-button>
+                <el-button type="danger" size="small" @click.stop="deleteAsset(asset.key)">删除</el-button>
               </div>
             </div>
           </div>
           <div v-if="generalAssets.length === 0 && !loading" class="empty-tip">
-            暂无一般素材，请上传图片
+            暂无一般素材，请上传图片或使用AI生成
           </div>
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <!-- AI生成图片对话框 -->
+    <el-dialog v-model="aiDialogVisible" title="AI生成图片" width="600px" :close-on-click-modal="false">
+      <el-form label-width="80px">
+        <el-form-item label="描述">
+          <el-input
+            v-model="aiPrompt"
+            type="textarea"
+            :rows="4"
+            placeholder="请详细描述你想要生成的图片，例如：一匹威风凛凛的银色骏马，鬃毛闪耀着银光，气质高贵优雅，写实风格，4K画质"
+          />
+        </el-form-item>
+        <el-form-item label="保存名称">
+          <el-input v-model="aiImageName" placeholder="可选，用于标识图片" />
+        </el-form-item>
+        <el-form-item label="保存目录">
+          <el-select v-model="aiFolder" style="width: 100%">
+            <el-option label="AI生成" value="ai-generated" />
+            <el-option label="马匹素材" value="horses" />
+            <el-option label="场景素材" value="scenes" />
+            <el-option label="其他" value="misc" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <!-- 预览区域 -->
+      <div v-if="aiGeneratedImage" class="ai-preview">
+        <div class="preview-header">
+          <span>生成结果预览</span>
+          <el-tag type="success">生成成功</el-tag>
+        </div>
+        <el-image :src="'data:image/png;base64,' + aiGeneratedImage" fit="contain" class="preview-image" />
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="aiDialogVisible = false">取消</el-button>
+          <el-button v-if="aiGeneratedImage" type="warning" @click="regenerateImage" :loading="aiGenerating">
+            重新生成
+          </el-button>
+          <el-button v-if="!aiGeneratedImage" type="primary" @click="generateImage" :loading="aiGenerating">
+            {{ aiGenerating ? '生成中...' : '开始生成' }}
+          </el-button>
+          <el-button v-if="aiGeneratedImage" type="success" @click="saveAiImage" :loading="aiSaving">
+            确认保存
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 素材详情对话框 -->
+    <el-dialog v-model="assetDetailVisible" title="素材详情" width="500px">
+      <div v-if="currentAsset" class="asset-detail">
+        <el-image :src="currentAsset.url" fit="contain" class="detail-image" />
+        <el-form label-width="80px" style="margin-top: 15px">
+          <el-form-item label="名称">
+            <el-input v-model="currentAsset.displayName" placeholder="输入名称" />
+          </el-form-item>
+          <el-form-item label="文件名">
+            <span>{{ currentAsset.fileName }}</span>
+          </el-form-item>
+          <el-form-item label="来源">
+            <el-tag :type="currentAsset.source === 'ai-generated' ? 'warning' : 'info'">
+              {{ currentAsset.source === 'ai-generated' ? 'AI生成' : '手动上传' }}
+            </el-tag>
+          </el-form-item>
+          <el-form-item v-if="currentAsset.prompt" label="Prompt">
+            <el-input type="textarea" :rows="3" v-model="currentAsset.prompt" readonly />
+          </el-form-item>
+          <el-form-item v-if="currentAsset.created_at" label="创建时间">
+            <span>{{ currentAsset.created_at }}</span>
+          </el-form-item>
+          <el-form-item label="URL">
+            <el-input v-model="currentAsset.url" readonly>
+              <template #append>
+                <el-button @click="copyUrl(currentAsset.url)">复制</el-button>
+              </template>
+            </el-input>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="assetDetailVisible = false">关闭</el-button>
+        <el-button type="primary" @click="updateAssetName">保存名称</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { Plus, Delete, MagicStick } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import request from '@/api'
 
@@ -374,6 +472,19 @@ const loadingSceneAssets = ref(false)
 
 // 一般素材
 const generalAssets = ref([])
+
+// AI生成相关
+const aiDialogVisible = ref(false)
+const aiPrompt = ref('')
+const aiImageName = ref('')
+const aiFolder = ref('ai-generated')
+const aiGeneratedImage = ref('')
+const aiGenerating = ref(false)
+const aiSaving = ref(false)
+
+// 素材详情
+const assetDetailVisible = ref(false)
+const currentAsset = ref(null)
 
 const filteredUiIcons = computed(() => {
   if (!iconSearch.value) return uiIcons.value
@@ -580,6 +691,133 @@ function handleGeneralAssetUpload(response) {
 function copyIconUrl(icon) {
   navigator.clipboard.writeText(icon.url)
   ElMessage.success('已复制图标URL')
+}
+
+// ==================== AI生成图片 ====================
+// 显示AI生成对话框
+function showAiGenerateDialog() {
+  aiPrompt.value = ''
+  aiImageName.value = ''
+  aiFolder.value = 'ai-generated'
+  aiGeneratedImage.value = ''
+  aiDialogVisible.value = true
+}
+
+// 生成图片
+async function generateImage() {
+  if (!aiPrompt.value.trim()) {
+    ElMessage.warning('请输入图片描述')
+    return
+  }
+
+  aiGenerating.value = true
+  aiGeneratedImage.value = ''
+
+  try {
+    const res = await request.post('/assets/ai-generate', {
+      prompt: aiPrompt.value
+    }, { timeout: 150000 })
+
+    if (res.code === 0 && res.data?.imageBase64) {
+      aiGeneratedImage.value = res.data.imageBase64
+      ElMessage.success('图片生成成功，请确认是否保存')
+    } else {
+      ElMessage.error(res.message || '生成失败')
+    }
+  } catch (error) {
+    ElMessage.error('生成失败: ' + (error.message || '请求超时'))
+  } finally {
+    aiGenerating.value = false
+  }
+}
+
+// 重新生成
+function regenerateImage() {
+  aiGeneratedImage.value = ''
+  generateImage()
+}
+
+// 保存AI生成的图片
+async function saveAiImage() {
+  if (!aiGeneratedImage.value) {
+    ElMessage.warning('请先生成图片')
+    return
+  }
+
+  aiSaving.value = true
+  try {
+    const res = await request.post('/assets/ai-save', {
+      imageBase64: aiGeneratedImage.value,
+      prompt: aiPrompt.value,
+      name: aiImageName.value,
+      folder: aiFolder.value
+    })
+
+    if (res.code === 0) {
+      ElMessage.success('保存成功')
+      aiDialogVisible.value = false
+
+      // 添加到列表
+      generalAssets.value.unshift({
+        key: res.data.key,
+        url: res.data.url,
+        fileName: res.data.fileName,
+        displayName: aiImageName.value || res.data.fileName,
+        source: 'ai-generated',
+        prompt: aiPrompt.value
+      })
+    } else {
+      ElMessage.error(res.message || '保存失败')
+    }
+  } catch (error) {
+    ElMessage.error('保存失败: ' + error.message)
+  } finally {
+    aiSaving.value = false
+  }
+}
+
+// ==================== 素材详情 ====================
+// 显示素材详情
+async function showAssetDetail(asset) {
+  currentAsset.value = { ...asset }
+
+  // 尝试获取元数据
+  try {
+    const res = await request.get(`/assets/metadata/${encodeURIComponent(asset.key)}`)
+    if (res.code === 0 && res.data) {
+      currentAsset.value = {
+        ...currentAsset.value,
+        ...res.data,
+        displayName: res.data.name || asset.fileName
+      }
+    }
+  } catch (e) {
+    // 忽略错误
+  }
+
+  assetDetailVisible.value = true
+}
+
+// 更新素材名称
+async function updateAssetName() {
+  if (!currentAsset.value) return
+
+  try {
+    await request.put(`/assets/metadata/${encodeURIComponent(currentAsset.value.key)}`, {
+      name: currentAsset.value.displayName
+    })
+    ElMessage.success('名称已更新')
+
+    // 更新列表中的显示名称
+    const asset = generalAssets.value.find(a => a.key === currentAsset.value.key)
+    if (asset) {
+      asset.displayName = currentAsset.value.displayName
+    }
+
+    assetDetailVisible.value = false
+  } catch (error) {
+    ElMessage.error('更新失败')
+  }
 }
 
 // 初始化默认图标库
@@ -1118,5 +1356,90 @@ onMounted(() => {
   padding: 40px;
   color: #909399;
   font-size: 14px;
+}
+
+/* AI生成按钮 */
+.ai-generate-btn {
+  cursor: pointer;
+  border-color: #e6a23c !important;
+}
+
+.ai-generate-btn:hover {
+  border-color: #f5a623 !important;
+  background: #fdf6ec;
+}
+
+.ai-generate-btn .upload-placeholder {
+  color: #e6a23c;
+}
+
+/* 素材项悬停效果 */
+.scene-asset-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.asset-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scene-asset-item:hover .asset-overlay {
+  opacity: 1;
+}
+
+.asset-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+}
+
+/* AI预览 */
+.ai-preview {
+  margin-top: 15px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.preview-image {
+  width: 100%;
+  max-height: 400px;
+  border-radius: 4px;
+}
+
+/* 素材详情 */
+.asset-detail .detail-image {
+  width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  background: #f5f7fa;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
