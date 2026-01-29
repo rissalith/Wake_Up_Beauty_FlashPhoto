@@ -47,9 +47,17 @@
               <div class="upload-placeholder">
                 <el-icon><Plus /></el-icon>
                 <span>上传Banner</span>
-                <p>建议尺寸: 750×400px</p>
+                <p>750×400px</p>
               </div>
             </el-upload>
+            <!-- AI生成Banner -->
+            <div class="banner-upload ai-generate-btn" @click="showAiGenerateDialog('banner', 'banner')">
+              <div class="upload-placeholder">
+                <el-icon><MagicStick /></el-icon>
+                <span>AI生成</span>
+                <p>生成轮播图</p>
+              </div>
+            </div>
           </div>
         </div>
       </el-tab-pane>
@@ -59,6 +67,9 @@
         <div class="asset-section">
           <div class="section-header">
             <span class="section-title">首页特色功能区图片</span>
+            <el-button type="warning" size="small" @click="showAiGenerateDialog('feature', 'feature')">
+              <el-icon><MagicStick /></el-icon> AI生成
+            </el-button>
           </div>
           <div class="feature-list">
             <div class="feature-item" v-for="lang in languages" :key="lang.value">
@@ -96,6 +107,9 @@
         <div class="asset-section">
           <div class="section-header">
             <span class="section-title">导航栏标题图片</span>
+            <el-button type="warning" size="small" @click="showAiGenerateDialog('title', 'title')">
+              <el-icon><MagicStick /></el-icon> AI生成
+            </el-button>
           </div>
           <div class="feature-list">
             <div class="feature-item" v-for="lang in languages" :key="lang.value">
@@ -183,7 +197,7 @@
             <span class="section-title">场景配置素材</span>
             <span class="section-tip">用于场景图标、步骤选项示意图等</span>
           </div>
-          
+
           <!-- 上传区域 -->
           <div class="scene-upload-area">
             <el-upload
@@ -199,10 +213,18 @@
             >
               <div class="upload-placeholder">
                 <el-icon><Plus /></el-icon>
-                <span>上传场景素材</span>
-                <p>支持 PNG/JPG/WebP，建议尺寸 512×512px</p>
+                <span>上传素材</span>
+                <p>PNG/JPG/WebP</p>
               </div>
             </el-upload>
+            <!-- AI生成场景素材 -->
+            <div class="scene-asset-upload ai-generate-btn" @click="showAiGenerateDialog('scene-icon', 'scenes')">
+              <div class="upload-placeholder">
+                <el-icon><MagicStick /></el-icon>
+                <span>AI生成</span>
+                <p>生成场景素材</p>
+              </div>
+            </div>
           </div>
           
           <!-- 素材列表 -->
@@ -299,7 +321,7 @@
               </div>
             </el-upload>
             <!-- AI生成按钮 -->
-            <div class="scene-asset-upload ai-generate-btn" @click="showAiGenerateDialog">
+            <div class="scene-asset-upload ai-generate-btn" @click="showAiGenerateDialog('general', 'ai-generated')">
               <div class="upload-placeholder">
                 <el-icon><MagicStick /></el-icon>
                 <span>AI生成</span>
@@ -694,11 +716,24 @@ function copyIconUrl(icon) {
 }
 
 // ==================== AI生成图片 ====================
+// 各栏目默认提示词
+const defaultPrompts = {
+  banner: '生成一张APP首页轮播图，展示AI照片生成功能，现代简约风格，渐变色背景，包含人物剪影和科技元素，尺寸750×400像素，高清画质',
+  feature: '生成一张特色功能展示图，展示AI智能修图功能，扁平化设计风格，明亮的配色，包含相机和魔法棒图标元素，高清画质',
+  title: '生成一个APP导航栏标题图片，文字"醒美闪图"，艺术字体设计，渐变金色效果，透明背景，高清PNG格式',
+  'scene-icon': '生成一个场景图标，圆角方形设计，扁平化风格，明亮的配色，简洁的图形元素，512×512像素，高清画质',
+  general: '生成一张高质量素材图片，写实风格，4K画质，背景简洁，主体突出'
+}
+
+// 当前AI生成的目标类别
+const aiCategory = ref('general')
+
 // 显示AI生成对话框
-function showAiGenerateDialog() {
-  aiPrompt.value = ''
+function showAiGenerateDialog(category = 'general', folder = 'ai-generated') {
+  aiCategory.value = category
+  aiPrompt.value = defaultPrompts[category] || defaultPrompts.general
   aiImageName.value = ''
-  aiFolder.value = 'ai-generated'
+  aiFolder.value = folder
   aiGeneratedImage.value = ''
   aiDialogVisible.value = true
 }
@@ -1275,11 +1310,13 @@ onMounted(() => {
 
 /* 场景素材 */
 .scene-upload-area {
+  display: flex;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .scene-asset-upload {
-  width: 200px;
+  min-width: 150px;
   height: 150px;
 }
 
@@ -1289,8 +1326,8 @@ onMounted(() => {
 }
 
 .scene-assets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
