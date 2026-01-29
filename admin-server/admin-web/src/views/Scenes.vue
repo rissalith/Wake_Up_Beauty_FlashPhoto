@@ -309,9 +309,7 @@
                   <div class="grade-scheme-section">
                     <div class="section-title">
                       品级方案配置
-                      <router-link to="/grade-schemes" class="manage-link">
-                        <el-button type="primary" link size="small">前往管理 →</el-button>
-                      </router-link>
+                      <el-button type="primary" link size="small" @click="showGradeSchemeManager">管理方案 →</el-button>
                     </div>
                     <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
                       <el-select
@@ -947,6 +945,24 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 品级方案管理弹窗 -->
+    <el-dialog
+      v-model="gradeSchemeManagerVisible"
+      title="品级方案管理"
+      width="900px"
+      destroy-on-close
+    >
+      <grade-scheme-manager
+        v-if="gradeSchemeManagerVisible && form.id && currentStep?.step_key"
+        :scene-id="String(form.id)"
+        :step-key="currentStep.step_key"
+        @change="onGradeSchemeManagerChange"
+      />
+      <template #footer>
+        <el-button @click="gradeSchemeManagerVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1007,10 +1023,25 @@ const filteredSceneIcons = ref([])  // 筛选后的图标列表
 
 // 品级方案相关
 const gradeSchemes = ref([])
+const gradeSchemeManagerVisible = ref(false)
 const selectedGradeScheme = computed(() => {
   if (!currentStep.value?.config?.gradeSchemeId) return null
   return gradeSchemes.value.find(s => s.id === currentStep.value.config.gradeSchemeId)
 })
+
+// 显示品级方案管理弹窗
+function showGradeSchemeManager() {
+  if (!form.id || !currentStep.value?.step_key) {
+    ElMessage.warning('请先保存场景')
+    return
+  }
+  gradeSchemeManagerVisible.value = true
+}
+
+// 品级方案管理器变化回调
+function onGradeSchemeManagerChange() {
+  loadGradeSchemes()
+}
 
 // 加载品级方案列表
 async function loadGradeSchemes() {

@@ -55,12 +55,6 @@ const routes = [
         meta: { title: '场景管理' }
       },
       {
-        path: 'grade-schemes',
-        name: 'GradeSchemes',
-        component: () => import('../views/GradeSchemes.vue'),
-        meta: { title: '品级方案' }
-      },
-      {
         path: 'assets',
         name: 'Assets',
         component: () => import('../views/Assets.vue'),
