@@ -379,14 +379,27 @@ function syncFromParent() {
   }
 }
 
+// 防止循环更新的标志
+let isUpdatingFromParent = false
+
 // 监听本地数据变化
 watch([localForm, segments, modelConfig], () => {
-  syncToParent()
+  if (!isUpdatingFromParent) {
+    syncToParent()
+  }
 }, { deep: true })
 
-// 监听父组件数据变化
-watch(() => props.modelValue, () => {
-  syncFromParent()
+// 监听父组件数据变化（仅在初始化时同步，避免循环）
+watch(() => props.modelValue, (newVal, oldVal) => {
+  // 只在 name 或 template 发生实质变化时才同步（避免循环）
+  if (!oldVal || newVal?.name !== oldVal?.name || newVal?.template !== oldVal?.template) {
+    isUpdatingFromParent = true
+    syncFromParent()
+    // 使用 nextTick 确保更新完成后再重置标志
+    setTimeout(() => {
+      isUpdatingFromParent = false
+    }, 0)
+  }
 }, { deep: true })
 
 onMounted(() => {
