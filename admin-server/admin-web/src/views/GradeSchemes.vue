@@ -251,7 +251,7 @@ const filteredSchemes = computed(() => {
 const loadSchemes = async () => {
   loading.value = true
   try {
-    const res = await api.get('/api/admin/grade-schemes')
+    const res = await api.get('/admin/grade-schemes')
     schemes.value = res.data.data || []
     // 如果有当前选中的方案，刷新其数据
     if (currentScheme.value) {
@@ -300,10 +300,10 @@ const saveScheme = async () => {
   saving.value = true
   try {
     if (isEditingScheme.value) {
-      await api.put(`/api/admin/grade-schemes/${currentScheme.value.id}`, schemeForm.value)
+      await api.put(`/admin/grade-schemes/${currentScheme.value.id}`, schemeForm.value)
       ElMessage.success('方案更新成功')
     } else {
-      const res = await api.post('/api/admin/grade-schemes', schemeForm.value)
+      const res = await api.post('/admin/grade-schemes', schemeForm.value)
       ElMessage.success('方案创建成功')
       // 选中新创建的方案
       if (res.data.data) {
@@ -326,7 +326,7 @@ const handleDeleteScheme = async () => {
     await ElMessageBox.confirm('确定要删除该方案吗？删除后无法恢复。', '删除确认', {
       type: 'warning'
     })
-    await api.delete(`/api/admin/grade-schemes/${currentScheme.value.id}`)
+    await api.delete(`/admin/grade-schemes/${currentScheme.value.id}`)
     ElMessage.success('方案删除成功')
     currentScheme.value = null
     await loadSchemes()
@@ -379,7 +379,7 @@ const saveGrade = async () => {
   }
 
   try {
-    await api.put(`/api/admin/grade-schemes/${currentScheme.value.id}`, {
+    await api.put(`/admin/grade-schemes/${currentScheme.value.id}`, {
       ...currentScheme.value,
       grades
     })
@@ -401,7 +401,7 @@ const handleDeleteGrade = async (index) => {
     const grades = [...currentScheme.value.grades]
     grades.splice(index, 1)
 
-    await api.put(`/api/admin/grade-schemes/${currentScheme.value.id}`, {
+    await api.put(`/admin/grade-schemes/${currentScheme.value.id}`, {
       ...currentScheme.value,
       grades
     })
@@ -418,7 +418,7 @@ const handleDeleteGrade = async (index) => {
 // 品级排序变化
 const handleGradeOrderChange = async () => {
   try {
-    await api.put(`/api/admin/grade-schemes/${currentScheme.value.id}`, {
+    await api.put(`/admin/grade-schemes/${currentScheme.value.id}`, {
       ...currentScheme.value,
       grades: currentScheme.value.grades
     })
