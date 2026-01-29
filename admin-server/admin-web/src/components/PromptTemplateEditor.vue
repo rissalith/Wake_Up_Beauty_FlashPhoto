@@ -39,7 +39,7 @@
             </div>
           </template>
           <el-button size="small" class="var-btn" @click="insertVariable(step.step_key)">
-            <span class="var-name">{{ '{{' + step.step_key + '}}' }}</span>
+            <span class="var-name">{{ getVarDisplay(step.step_key) }}</span>
             <span class="step-name">{{ step.title || step.step_key }}</span>
           </el-button>
         </el-tooltip>
@@ -173,6 +173,11 @@ const previewParts = computed(() => {
 
   return parts.length > 0 ? parts : [{ text: '(暂无内容)', type: 'empty' }]
 })
+
+// 获取变量显示文本
+function getVarDisplay(key) {
+  return '{{' + key + '}}'
+}
 
 // 获取部分的样式类
 function getPartClass(part) {
