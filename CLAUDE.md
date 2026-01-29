@@ -10,8 +10,13 @@
 1. **修改代码** → 本地编辑文件
 2. **提交代码** → `git add` + `git commit`
 3. **推送到 GitHub** → `git push`
-4. **服务器拉取** → SSH 到服务器执行 `git pull origin main`
-5. **重建容器** → `docker compose -f docker-compose.optimized.yml up -d --build <service>`
+4. **自动部署** → GitHub Actions 触发 deploy-webhook，自动拉取代码并重建服务
+
+**🔥 自动部署说明：**
+- 每次 `git push` 后，deploy-webhook 会自动触发部署
+- 部署流程：拉取代码 → 重建变化的服务 → reload nginx → 健康检查
+- 前端代码变化需要手动构建：`cd admin-server/admin-web && npm run build`
+- 如需手动部署后端：`docker compose -f docker-compose.optimized.yml up -d --build <service>`
 
 **严禁以下操作：**
 - ❌ 使用 `scp` 直接复制文件到服务器
@@ -79,6 +84,7 @@
 | **Core API** | 3001 | - | 统一后端服务（小程序API + 后台管理API） | Node.js + Express + SQLite |
 | **AI Service** | 3002 | - | AI 图片生成服务 | Node.js + AI API |
 | **Pay Service** | 3003 | - | 支付服务（微信支付 + 虚拟支付） | Node.js + Redis |
+| **Deploy Webhook** | 3004 | - | 自动部署服务（GitHub Actions 触发） | Node.js |
 | **Redis** | 6379 | 16379 | 消息队列 + 缓存 | Redis 7 Alpine |
 
 ### 旧架构 (5 服务)

@@ -111,7 +111,14 @@
           <el-input v-model="schemeForm.name" placeholder="如: 对联品级方案" />
         </el-form-item>
         <el-form-item label="英文名称">
-          <el-input v-model="schemeForm.nameEn" placeholder="如: Couplet Fortune Scheme" />
+          <div class="input-with-translate">
+            <el-input v-model="schemeForm.nameEn" placeholder="如: Couplet Fortune Scheme" />
+            <el-tooltip content="翻译为英文" placement="top">
+              <el-button type="primary" link @click="translateSchemeName" :loading="translatingScheme">
+                <el-icon><MagicStick /></el-icon>
+              </el-button>
+            </el-tooltip>
+          </div>
         </el-form-item>
         <el-form-item label="分类">
           <el-select v-model="schemeForm.category" style="width: 100%">
@@ -141,7 +148,14 @@
           <el-input v-model="gradeForm.name" placeholder="如: 大吉、上上签、传说" />
         </el-form-item>
         <el-form-item label="英文名称">
-          <el-input v-model="gradeForm.nameEn" placeholder="如: Great Fortune" />
+          <div class="input-with-translate">
+            <el-input v-model="gradeForm.nameEn" placeholder="如: Great Fortune" />
+            <el-tooltip content="翻译为英文" placement="top">
+              <el-button type="primary" link @click="translateGradeName" :loading="translatingGrade">
+                <el-icon><MagicStick /></el-icon>
+              </el-button>
+            </el-tooltip>
+          </div>
         </el-form-item>
         <el-form-item label="权重" prop="weight">
           <el-input-number v-model="gradeForm.weight" :min="1" :max="10000" style="width: 100%" />
@@ -186,10 +200,11 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Brush, Rank } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Brush, Rank, MagicStick } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import request from '@/api'
 import GradeStyleEditor from './GradeStyleEditor.vue'
+import { translateToEnglish } from '@/utils/translate'
 
 const props = defineProps({
   sceneId: {
@@ -444,6 +459,44 @@ const showEditGradeDialog = (grade) => {
   gradeDialogVisible.value = true
 }
 
+// 翻译品级名称
+const translatingGrade = ref(false)
+const translateGradeName = async () => {
+  if (!gradeForm.name) {
+    ElMessage.warning('请先输入品级名称')
+    return
+  }
+  translatingGrade.value = true
+  try {
+    const translated = await translateToEnglish(gradeForm.name)
+    gradeForm.nameEn = translated
+    ElMessage.success('翻译成功')
+  } catch (error) {
+    ElMessage.error('翻译失败')
+  } finally {
+    translatingGrade.value = false
+  }
+}
+
+// 翻译方案名称
+const translatingScheme = ref(false)
+const translateSchemeName = async () => {
+  if (!schemeForm.name) {
+    ElMessage.warning('请先输入方案名称')
+    return
+  }
+  translatingScheme.value = true
+  try {
+    const translated = await translateToEnglish(schemeForm.name)
+    schemeForm.nameEn = translated
+    ElMessage.success('翻译成功')
+  } catch (error) {
+    ElMessage.error('翻译失败')
+  } finally {
+    translatingScheme.value = false
+  }
+}
+
 // 保存品级
 const saveGrade = async () => {
   if (!currentScheme.value) return
@@ -616,6 +669,17 @@ defineExpose({
 <style scoped>
 .grade-scheme-manager {
   padding: 10px 0;
+}
+
+/* 输入框带翻译按钮 */
+.input-with-translate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-with-translate .el-input {
+  flex: 1;
 }
 
 .scheme-selector {
