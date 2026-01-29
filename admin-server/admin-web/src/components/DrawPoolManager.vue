@@ -79,18 +79,18 @@
       </el-table-column>
 
       <!-- 名称 -->
-      <el-table-column prop="name" label="名称" min-width="80" show-overflow-tooltip />
-      <el-table-column prop="name_en" label="英文" min-width="80" show-overflow-tooltip />
+      <el-table-column prop="name" label="名称" width="100" show-overflow-tooltip />
+      <el-table-column prop="name_en" label="英文" min-width="140" show-overflow-tooltip />
 
       <!-- 品级 -->
-      <el-table-column prop="rarity" label="品级" width="80" align="center">
+      <el-table-column prop="rarity" label="品级" width="100" align="center">
         <template #default="{ row }">
           <el-tag size="small" :color="getGradeColor(row.rarity)" style="color: #fff; border: none;">{{ row.rarity || '-' }}</el-tag>
         </template>
       </el-table-column>
 
       <!-- 概率 -->
-      <el-table-column label="概率" width="70" align="center">
+      <el-table-column label="概率" width="60" align="center">
         <template #default="{ row }">
           <span class="probability">{{ getItemProbability(row) }}</span>
         </template>
@@ -114,17 +114,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
-    <div class="pagination-wrapper" v-if="total > pageSize">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="prev, pager, next"
-        size="small"
-        @current-change="loadItems"
-      />
-    </div>
+    <!-- 分页 - 已移除，直接显示所有数据 -->
 
     <!-- 品级方案管理弹窗 -->
     <el-dialog v-model="gradesDialogVisible" title="品级方案管理" width="700px">
@@ -299,7 +289,7 @@ const loading = ref(false)
 const items = ref([])
 const total = ref(0)
 const currentPage = ref(1)
-const pageSize = ref(100)
+const pageSize = ref(500)
 const filterGrade = ref('')
 const searchKeyword = ref('')
 
