@@ -383,29 +383,11 @@
         </el-form-item>
       </el-form>
 
-      <!-- 预览区域 -->
-      <div v-if="aiGeneratedImage" class="ai-preview">
-        <div class="preview-header">
-          <span>生成结果预览</span>
-          <el-tag type="success">生成成功</el-tag>
-        </div>
-        <el-image :src="'data:image/png;base64,' + aiGeneratedImage" fit="contain" class="preview-image" />
-      </div>
-
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="aiDialogVisible = false">取消</el-button>
-          <el-button v-if="!aiGeneratedImage && !aiGenerating" type="info" @click="generateInBackground">
-            后台生成
-          </el-button>
-          <el-button v-if="aiGeneratedImage" type="warning" @click="regenerateImage" :loading="aiGenerating">
-            重新生成
-          </el-button>
-          <el-button v-if="!aiGeneratedImage" type="primary" @click="generateImage" :loading="aiGenerating">
+          <el-button type="primary" @click="generateInBackground" :loading="aiGenerating">
             {{ aiGenerating ? '生成中...' : '开始生成' }}
-          </el-button>
-          <el-button v-if="aiGeneratedImage" type="success" @click="saveAiImage" :loading="aiSaving">
-            确认保存
           </el-button>
         </div>
       </template>
