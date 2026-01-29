@@ -1,88 +1,69 @@
 <template>
   <div class="prompt-template-editor">
-    <!-- 编辑区 -->
-    <div class="editor-section">
-      <div class="section-header">
-        <span class="section-title">Prompt 模板</span>
-        <el-button size="small" @click="copyPrompt">复制</el-button>
-      </div>
-      <el-input
-        ref="textareaRef"
-        v-model="localTemplate"
-        type="textarea"
-        :rows="12"
-        placeholder="输入 Prompt 模板，点击下方变量按钮插入步骤参数...&#10;&#10;示例：Generate a portrait of a {{gender}} person wearing {{clothing}}, background is {{background}}"
-      />
-    </div>
-
-    <!-- 变量按钮（带 Tooltip 显示选项的 prompt_text） -->
-    <div class="variable-section">
-      <span class="section-label">插入变量:</span>
-      <div class="variable-buttons" v-if="sceneSteps.length > 0">
-        <el-tooltip
-          v-for="step in sceneSteps"
-          :key="step.step_key"
-          placement="top"
-          :show-after="200"
-          :disabled="!step.options || step.options.length === 0"
-        >
-          <template #content>
-            <div class="options-tooltip" v-if="step.options && step.options.length > 0">
-              <div class="tooltip-title">{{ step.title }} 的选项:</div>
-              <div v-for="opt in step.options.slice(0, 6)" :key="opt.id || opt.option_key" class="tooltip-item">
-                <span class="opt-label">{{ opt.label }}:</span>
-                <span class="opt-prompt">{{ opt.prompt_text || '(未设置)' }}</span>
-              </div>
-              <div v-if="step.options.length > 6" class="tooltip-more">
-                ...还有 {{ step.options.length - 6 }} 个选项
-              </div>
-            </div>
-          </template>
-          <el-button size="small" class="var-btn" @click="insertVariable(step.step_key)">
-            <span class="var-name">{{ getVarDisplay(step.step_key) }}</span>
-            <span class="step-name">{{ step.title || step.step_key }}</span>
-          </el-button>
-        </el-tooltip>
-      </div>
-      <div v-else class="no-steps-tip">
-        <el-icon><InfoFilled /></el-icon>
-        <span>请先在「步骤配置」中添加步骤，然后可在此插入对应变量</span>
-      </div>
-    </div>
-
-    <!-- 实时预览 -->
-    <div class="preview-section">
-      <div class="section-header">
-        <span class="section-title">实时预览</span>
-        <span class="preview-tip">选择选项查看替换效果</span>
-      </div>
-
-      <!-- 选项选择器 -->
-      <div class="preview-selectors" v-if="stepsWithOptions.length > 0">
-        <div v-for="step in stepsWithOptions" :key="step.step_key" class="selector-item">
-          <span class="selector-label">{{ step.title }}:</span>
-          <el-select
-            v-model="previewSelections[step.step_key]"
-            size="small"
-            placeholder="选择"
-            clearable
-            style="width: 140px"
-          >
-            <el-option
-              v-for="opt in step.options"
-              :key="opt.id || opt.option_key"
-              :label="opt.label"
-              :value="opt.prompt_text || opt.label"
-            />
-          </el-select>
+    <div class="editor-layout">
+      <!-- 左侧：Prompt 模板编辑 -->
+      <div class="editor-left">
+        <div class="section-header">
+          <span class="section-title">Prompt 模板</span>
+          <el-button size="small" @click="copyPrompt">复制</el-button>
+        </div>
+        <el-input
+          ref="textareaRef"
+          v-model="localTemplate"
+          type="textarea"
+          :rows="16"
+          placeholder="输入 Prompt 模板，点击下方变量按钮插入步骤参数..."
+        />
+        <!-- 变量按钮 -->
+        <div class="variable-section">
+          <span class="section-label">插入变量:</span>
+          <div class="variable-buttons" v-if="sceneSteps.length > 0">
+            <el-button
+              v-for="step in sceneSteps"
+              :key="step.step_key"
+              size="small"
+              class="var-btn"
+              @click="insertVariable(step.step_key)"
+            >
+              {{ '{{' + step.step_key + '}}' }}
+            </el-button>
+          </div>
         </div>
       </div>
 
-      <!-- 预览结果 -->
-      <div class="preview-result">
-        <template v-for="(part, idx) in previewParts" :key="idx">
-          <span :class="getPartClass(part)">{{ part.text }}</span>
-        </template>
+      <!-- 右侧：参数选择 + 实时预览 -->
+      <div class="editor-right">
+        <div class="section-header">
+          <span class="section-title">实时预览</span>
+        </div>
+
+        <!-- 参数选择器 -->
+        <div class="preview-selectors" v-if="stepsWithOptions.length > 0">
+          <div v-for="step in stepsWithOptions" :key="step.step_key" class="selector-item">
+            <span class="selector-label">{{ step.title }}:</span>
+            <el-select
+              v-model="previewSelections[step.step_key]"
+              size="small"
+              placeholder="选择"
+              clearable
+              style="width: 120px"
+            >
+              <el-option
+                v-for="opt in step.options"
+                :key="opt.id || opt.option_key"
+                :label="opt.label"
+                :value="opt.prompt_text || opt.label"
+              />
+            </el-select>
+          </div>
+        </div>
+
+        <!-- 预览结果 -->
+        <div class="preview-result">
+          <template v-for="(part, idx) in previewParts" :key="idx">
+            <span :class="getPartClass(part)">{{ part.text }}</span>
+          </template>
+        </div>
       </div>
     </div>
   </div>
@@ -91,7 +72,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
   modelValue: {
@@ -124,7 +104,7 @@ const stepsWithOptions = computed(() => {
 // 预览结果（高亮变量和替换部分）
 const previewParts = computed(() => {
   if (!localTemplate.value) {
-    return [{ text: '(暂无内容，请在上方输入 Prompt 模板)', type: 'empty' }]
+    return [{ text: '(暂无内容，请在左侧输入 Prompt 模板)', type: 'empty' }]
   }
 
   const parts = []
@@ -173,11 +153,6 @@ const previewParts = computed(() => {
 
   return parts.length > 0 ? parts : [{ text: '(暂无内容)', type: 'empty' }]
 })
-
-// 获取变量显示文本
-function getVarDisplay(key) {
-  return '{{' + key + '}}'
-}
 
 // 获取部分的样式类
 function getPartClass(part) {
@@ -267,18 +242,31 @@ onMounted(() => {
 
 <style scoped>
 .prompt-template-editor {
-  padding: 10px 0;
+  padding: 5px 0;
 }
 
-.editor-section {
-  margin-bottom: 16px;
+.editor-layout {
+  display: flex;
+  gap: 16px;
+}
+
+.editor-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .section-title {
@@ -287,40 +275,31 @@ onMounted(() => {
   color: #303133;
 }
 
-.preview-tip {
-  font-size: 12px;
-  color: #909399;
-}
-
 /* 变量按钮区域 */
 .variable-section {
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #fafafa;
-  border-radius: 6px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 
 .section-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #606266;
-  margin-right: 12px;
 }
 
 .variable-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .var-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 14px;
-  height: auto;
-  border: 1px solid #dcdfe6;
-  transition: all 0.2s;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #E8B686;
+  padding: 4px 10px;
 }
 
 .var-btn:hover {
@@ -328,91 +307,22 @@ onMounted(() => {
   background: #fff9f0;
 }
 
-.var-name {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
-  color: #E8B686;
-  font-weight: 500;
-}
-
-.step-name {
-  font-size: 11px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-.no-steps-tip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #909399;
-  margin-top: 8px;
-}
-
-/* Tooltip 样式 */
-.options-tooltip {
-  max-width: 350px;
-}
-
-.tooltip-title {
-  font-weight: 600;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-}
-
-.tooltip-item {
-  margin: 6px 0;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.opt-label {
-  color: rgba(255,255,255,0.9);
-  font-weight: 500;
-}
-
-.opt-prompt {
-  color: #ffd591;
-  margin-left: 6px;
-  word-break: break-word;
-}
-
-.tooltip-more {
-  margin-top: 8px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-}
-
-/* 预览区域 */
-.preview-section {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.preview-section .section-header {
-  padding: 10px 14px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
-  margin-bottom: 0;
-}
-
+/* 参数选择器 */
 .preview-selectors {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 10px;
   background: #fafafa;
-  border-bottom: 1px solid #ebeef5;
+  border: 1px solid #ebeef5;
+  border-radius: 4px 4px 0 0;
+  border-bottom: none;
 }
 
 .selector-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .selector-label {
@@ -421,15 +331,29 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+/* 预览结果 */
 .preview-result {
-  padding: 14px;
+  flex: 1;
+  padding: 12px;
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
-  line-height: 1.8;
+  font-size: 12px;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
-  min-height: 100px;
   background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 0 0 4px 4px;
+  min-height: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.preview-selectors + .preview-result {
+  border-radius: 0 0 4px 4px;
+}
+
+.preview-selectors:empty + .preview-result {
+  border-radius: 4px;
 }
 
 .part-text {
@@ -439,16 +363,16 @@ onMounted(() => {
 .part-variable {
   background: #fff3e0;
   color: #E8B686;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   font-weight: 500;
 }
 
 .part-replaced {
   background: #e8f5e9;
   color: #4caf50;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   font-weight: 500;
 }
 
