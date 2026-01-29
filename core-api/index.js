@@ -541,6 +541,15 @@ app.post('/api/assets/upload', assetUpload.single('file'), async (req, res) => {
       case 'ui-icon':
         key = `icon/${file.originalname}`;
         break;
+      case 'logo':
+        key = `logo/${name || 'logo'}${ext}`;
+        break;
+      case 'about':
+        key = `about/${timestamp}${ext}`;
+        break;
+      case 'general':
+        key = `general/${timestamp}${ext}`;
+        break;
       default:
         key = `misc/${timestamp}${ext}`;
     }

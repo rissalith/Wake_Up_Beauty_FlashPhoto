@@ -295,6 +295,92 @@
         </div>
       </el-tab-pane>
 
+      <!-- Logo/关于 -->
+      <el-tab-pane label="Logo/关于" name="logo">
+        <div class="asset-section">
+          <div class="section-header">
+            <span class="section-title">Logo与关于页面图片</span>
+            <span class="section-tip">用于"关于我们"页面和其他需要Logo的地方</span>
+          </div>
+
+          <!-- Logo图片 -->
+          <div class="logo-section">
+            <h4>应用Logo</h4>
+            <div class="logo-list">
+              <div class="logo-item" v-for="item in logoItems" :key="item.key">
+                <div class="logo-label">{{ item.label }}</div>
+                <div class="logo-upload-area">
+                  <el-upload
+                    class="logo-uploader"
+                    :action="uploadUrl"
+                    :headers="uploadHeaders"
+                    :data="{ category: 'logo', name: item.key }"
+                    :show-file-list="false"
+                    :on-success="(res) => handleLogoUpload(res, item.key)"
+                    :before-upload="beforeImageUpload"
+                    accept="image/*"
+                  >
+                    <el-image
+                      v-if="logoImages[item.key]"
+                      :src="logoImages[item.key]"
+                      fit="contain"
+                      class="logo-preview"
+                    />
+                    <div v-else class="upload-placeholder small">
+                      <el-icon><Plus /></el-icon>
+                      <span>上传</span>
+                    </div>
+                  </el-upload>
+                  <el-button v-if="logoImages[item.key]" type="primary" link size="small" @click="copyUrl(logoImages[item.key])">
+                    复制URL
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 关于页面图片 -->
+          <div class="about-section">
+            <h4>关于页面图片</h4>
+            <div class="about-images-grid">
+              <el-upload
+                class="scene-asset-upload"
+                :action="uploadUrl"
+                :headers="uploadHeaders"
+                :data="{ category: 'about' }"
+                :show-file-list="false"
+                :on-success="handleAboutImageUpload"
+                :before-upload="beforeImageUpload"
+                accept="image/*"
+              >
+                <div class="upload-placeholder">
+                  <el-icon><Plus /></el-icon>
+                  <span>上传图片</span>
+                </div>
+              </el-upload>
+              <!-- AI生成 -->
+              <div class="scene-asset-upload ai-generate-btn" @click="showAiGenerateDialog('logo', 'about')">
+                <div class="upload-placeholder">
+                  <el-icon><MagicStick /></el-icon>
+                  <span>AI生成</span>
+                </div>
+              </div>
+              <!-- 图片列表 -->
+              <div class="scene-asset-item" v-for="img in aboutImages" :key="img.key">
+                <img :src="img.url" :alt="img.fileName" />
+                <div class="asset-info">
+                  <span class="asset-name">{{ img.fileName }}</span>
+                </div>
+                <div class="asset-overlay">
+                  <el-button type="primary" size="small" @click.stop="copyUrl(img.url)">复制URL</el-button>
+                  <el-button type="danger" size="small" @click.stop="deleteAsset(img.key)">删除</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
       <!-- 一般素材 -->
       <el-tab-pane label="一般素材" name="general">
         <div class="asset-section">
@@ -490,6 +576,21 @@ const loadingSceneAssets = ref(false)
 // 一般素材
 const generalAssets = ref([])
 
+// Logo/关于相关
+const logoItems = [
+  { key: 'logo-main', label: '主Logo' },
+  { key: 'logo-white', label: '白色Logo' },
+  { key: 'logo-icon', label: '图标Logo' },
+  { key: 'logo-text', label: '文字Logo' }
+]
+const logoImages = reactive({
+  'logo-main': '',
+  'logo-white': '',
+  'logo-icon': '',
+  'logo-text': ''
+})
+const aboutImages = ref([])
+
 // AI生成相关
 const aiDialogVisible = ref(false)
 const aiPrompt = ref('')
@@ -548,12 +649,22 @@ async function loadAssets() {
 
       // 解析UI图标
       uiIcons.value = data.uiIcons || []
-      
+
       // 解析场景素材（sceneIcons）
       sceneAssets.value = data.sceneIcons || []
 
       // 解析一般素材
       generalAssets.value = data.generalAssets || []
+
+      // 解析Logo图片
+      if (data.logos) {
+        Object.keys(data.logos).forEach(key => {
+          logoImages[key] = data.logos[key] ? data.logos[key] + '?t=' + Date.now() : ''
+        })
+      }
+
+      // 解析关于页面图片
+      aboutImages.value = data.aboutImages || []
     }
   } catch (error) {
     console.error('加载素材失败:', error)
@@ -708,6 +819,30 @@ function handleGeneralAssetUpload(response) {
   }
 }
 
+// Logo上传
+function handleLogoUpload(response, key) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
+    logoImages[key] = response.data.url + '?t=' + Date.now()
+    ElMessage.success('Logo上传成功')
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+// 关于页面图片上传
+function handleAboutImageUpload(response) {
+  if ((response.code === 200 || response.code === 0) && response.data?.url) {
+    aboutImages.value.push({
+      key: response.data.key,
+      url: response.data.url,
+      fileName: response.data.fileName
+    })
+    ElMessage.success('上传成功')
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
 // 复制图标URL
 function copyIconUrl(icon) {
   navigator.clipboard.writeText(icon.url)
@@ -721,6 +856,7 @@ const defaultPrompts = {
   feature: '生成一张特色功能展示图，展示AI智能修图功能，扁平化设计风格，明亮的配色，包含相机和魔法棒图标元素，高清画质',
   title: '生成一个APP导航栏标题图片，文字"醒美闪图"，艺术字体设计，渐变金色效果，透明背景，高清PNG格式',
   'scene-icon': '生成一个场景图标，圆角方形设计，扁平化风格，明亮的配色，简洁的图形元素，512×512像素，高清画质',
+  logo: '生成一个APP Logo图片，"醒美闪图"品牌标识，现代简约设计，渐变金色或橙色，透明背景，高清PNG格式',
   general: '生成一张高质量素材图片，写实风格，4K画质，背景简洁，主体突出'
 }
 
@@ -1561,5 +1697,76 @@ onMounted(() => {
 .generating-animation .el-icon {
   font-size: 40px;
   color: #e6a23c;
+}
+
+/* Logo/关于页面样式 */
+.logo-section, .about-section {
+  margin-bottom: 30px;
+}
+
+.logo-section h4, .about-section h4 {
+  margin: 0 0 15px 0;
+  color: #303133;
+  font-size: 14px;
+  border-left: 3px solid #e6a23c;
+  padding-left: 10px;
+}
+
+.logo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.logo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-label {
+  font-size: 12px;
+  color: #606266;
+}
+
+.logo-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.logo-uploader {
+  width: 120px;
+  height: 120px;
+}
+
+.logo-uploader :deep(.el-upload) {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+}
+
+.logo-uploader :deep(.el-upload:hover) {
+  border-color: #e6a23c;
+}
+
+.logo-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.about-images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 </style>

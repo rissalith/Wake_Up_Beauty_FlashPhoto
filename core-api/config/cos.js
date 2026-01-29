@@ -687,6 +687,31 @@ async function getAllAssets() {
     else if (key.startsWith('icon/') && fileName && (fileName.endsWith('.svg') || fileName.endsWith('.png'))) {
       result.uiIcons.push({ key, url, fileName });
     }
+
+    // Logo图片
+    else if (key.startsWith('logo/') && fileName) {
+      const logoKey = fileName.replace(/\.[^.]+$/, ''); // 去掉扩展名
+      if (!result.logos) result.logos = {};
+      result.logos[logoKey] = url;
+    }
+
+    // 关于页面图片
+    else if (key.startsWith('about/') && fileName) {
+      if (!result.aboutImages) result.aboutImages = [];
+      result.aboutImages.push({ key, url, fileName });
+    }
+
+    // 一般素材
+    else if (key.startsWith('general/') && fileName) {
+      if (!result.generalAssets) result.generalAssets = [];
+      result.generalAssets.push({ key, url, fileName });
+    }
+
+    // AI生成的图片
+    else if (key.startsWith('ai-generated/') && fileName) {
+      if (!result.generalAssets) result.generalAssets = [];
+      result.generalAssets.push({ key, url, fileName, source: 'ai-generated' });
+    }
   });
 
   // 按文件名排序Banner
