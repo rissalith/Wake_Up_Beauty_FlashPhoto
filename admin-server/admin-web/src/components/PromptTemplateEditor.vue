@@ -42,8 +42,21 @@
           <div v-for="step in sceneSteps" :key="step.step_key" class="selector-item">
             <span class="selector-label">{{ step.title || step.step_key }}:</span>
 
-            <!-- upload 类型：只显示占位符 -->
-            <el-tag v-if="step.step_key === 'upload'" size="small" type="info">用户照片</el-tag>
+            <!-- upload/image_upload 类型：只显示占位符 -->
+            <el-tag v-if="isUploadType(step)" size="small" type="info">用户照片</el-tag>
+
+            <!-- 性别选择：内置选项 -->
+            <el-select
+              v-else-if="step.component_type === 'gender_select'"
+              v-model="previewSelections[step.step_key]"
+              size="small"
+              placeholder="选择"
+              clearable
+              style="width: 120px"
+            >
+              <el-option label="男士" value="male" />
+              <el-option label="女士" value="female" />
+            </el-select>
 
             <!-- 有固定选项的步骤用下拉框 -->
             <el-select
@@ -52,7 +65,7 @@
               size="small"
               placeholder="选择"
               clearable
-              style="width: 140px"
+              style="width: 160px"
             >
               <el-option
                 v-for="opt in step.options"
@@ -64,7 +77,7 @@
 
             <!-- 摇骰子类型：从词条池加载选项 -->
             <el-select
-              v-else-if="step.component_type === 'dice' && drawPoolOptions[step.step_key]"
+              v-else-if="isDiceType(step) && drawPoolOptions[step.step_key]"
               v-model="previewSelections[step.step_key]"
               size="small"
               placeholder="选择"
@@ -86,7 +99,7 @@
               v-model="previewSelections[step.step_key]"
               size="small"
               :placeholder="getPlaceholder(step)"
-              style="width: 140px"
+              style="width: 160px"
             />
           </div>
         </div>
@@ -135,15 +148,20 @@ const localTemplate = ref('')
 const previewSelections = ref({})
 const drawPoolOptions = ref({})
 
+// 判断是否是摇骰子类型
+function isDiceType(step) {
+  return step.component_type === 'dice' || step.component_type === 'random_dice'
+}
+
 // 加载摇骰子步骤的词条池数据
 async function loadDrawPoolOptions() {
   if (!props.sceneId) return
 
   for (const step of props.sceneSteps) {
-    if (step.component_type === 'dice' && step.step_key) {
+    if (isDiceType(step) && step.step_key) {
       try {
         const res = await request.get(`/admin/scenes/${props.sceneId}/draw-pool/${step.step_key}`, {
-          params: { pageSize: 100 }
+          params: { pageSize: 200 }
         })
         if (res.code === 0) {
           drawPoolOptions.value[step.step_key] = res.data.list || []
@@ -221,6 +239,11 @@ const previewParts = computed(() => {
 // 获取变量显示文本
 function getVarDisplay(key) {
   return '{{' + key + '}}'
+}
+
+// 判断是否是上传类型
+function isUploadType(step) {
+  return step.step_key === 'upload' || step.component_type === 'image_upload'
 }
 
 // 获取输入框占位符
