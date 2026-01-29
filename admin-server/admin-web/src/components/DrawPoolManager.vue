@@ -30,8 +30,29 @@
       </span>
     </div>
 
+    <!-- 批量操作栏 -->
+    <div class="batch-bar" v-if="selectedItems.length > 0">
+      <span class="selected-count">已选 {{ selectedItems.length }} 项</span>
+      <el-select v-model="batchRarity" placeholder="选择品级" size="small" style="width: 100px">
+        <el-option v-for="g in grades" :key="g.id" :label="g.name" :value="g.name" />
+      </el-select>
+      <el-button type="primary" size="small" @click="batchSetRarity" :disabled="!batchRarity">批量设置</el-button>
+      <el-button size="small" @click="clearSelection">取消选择</el-button>
+    </div>
+
     <!-- 列表 -->
-    <el-table :data="items" v-loading="loading" stripe size="small" max-height="350">
+    <el-table
+      ref="tableRef"
+      :data="items"
+      v-loading="loading"
+      stripe
+      size="small"
+      max-height="350"
+      @selection-change="handleSelectionChange"
+    >
+      <!-- 多选列 -->
+      <el-table-column type="selection" width="40" />
+
       <!-- 图片列（可选） -->
       <el-table-column v-if="showImage" prop="image" label="图" width="50" align="center">
         <template #default="{ row }">
@@ -265,6 +286,11 @@ const pageSize = ref(100)
 const filterGrade = ref('')
 const searchKeyword = ref('')
 
+// 批量选择
+const tableRef = ref(null)
+const selectedItems = ref([])
+const batchRarity = ref('')
+
 // 对话框
 const dialogVisible = ref(false)
 const batchDialogVisible = ref(false)
@@ -399,6 +425,41 @@ const deleteItem = async (row) => {
   }
 }
 
+// 批量选择相关
+const handleSelectionChange = (selection) => {
+  selectedItems.value = selection
+}
+
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+  selectedItems.value = []
+  batchRarity.value = ''
+}
+
+// 批量设置品级
+const batchSetRarity = async () => {
+  if (!selectedItems.value.length || !batchRarity.value) return
+
+  try {
+    const ids = selectedItems.value.map(item => item.id)
+    const grade = grades.value.find(g => g.name === batchRarity.value)
+    const weight = grade?.weight || 100
+
+    await request.put(`/admin/scenes/${props.sceneId}/${apiPath.value}/batch-rarity`, {
+      ids,
+      rarity: batchRarity.value,
+      weight
+    })
+
+    ElMessage.success(`已更新 ${ids.length} 个词条的品级`)
+    clearSelection()
+    loadItems()
+  } catch (error) {
+    console.error('批量设置品级失败:', error)
+    ElMessage.error('批量设置品级失败')
+  }
+}
+
 // 批量导入
 const showBatchDialog = () => {
   batchText.value = ''
@@ -477,6 +538,23 @@ defineExpose({ reload: () => { loadGrades(); loadItems() } })
 <style scoped>
 .draw-pool-manager {
   padding: 5px 0;
+}
+
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.selected-count {
+  font-size: 13px;
+  color: #1890ff;
+  font-weight: 500;
 }
 
 .action-btns {

@@ -612,6 +612,34 @@ router.delete('/:sceneId/draw-pool/:stepKey/:id', (req, res) => {
   }
 });
 
+// 批量更新品级
+router.put('/:sceneId/draw-pool/:stepKey/batch-rarity', (req, res) => {
+  try {
+    const db = getDb();
+    const { sceneId, stepKey } = req.params;
+    const { ids, rarity, weight } = req.body;
+
+    if (!ids || !ids.length) {
+      return res.status(400).json({ code: -1, msg: '请选择要更新的项目' });
+    }
+    if (!rarity) {
+      return res.status(400).json({ code: -1, msg: '请选择品级' });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const sql = `UPDATE draw_pool SET rarity = ?, weight = ? WHERE id IN (${placeholders}) AND scene_id = ? AND step_key = ?`;
+    const params = [rarity, weight || 100, ...ids, sceneId, stepKey];
+
+    dbRun(db, sql, params);
+    saveDatabase();
+
+    res.json({ code: 0, msg: 'success', data: { updated: ids.length } });
+  } catch (error) {
+    console.error('批量更新品级错误:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
 // ==================== 品级定义 API ====================
 
 // 确保品级表存在
