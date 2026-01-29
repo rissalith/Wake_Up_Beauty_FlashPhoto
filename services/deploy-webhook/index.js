@@ -148,8 +148,11 @@ function runDeploy(branch, changedFiles, callback) {
     deployCommands.push(`cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d --build core-api ai-service pay-service`);
   }
 
-  // 5. 健康检查
-  deployCommands.push(`sleep 10 && curl -sf http://localhost/api/health || echo "健康检查失败"`);
+  // 5. 等待服务启动并 reload nginx（解决 upstream DNS 缓存问题）
+  deployCommands.push(`sleep 10 && docker exec flashphoto-nginx nginx -s reload`);
+
+  // 6. 健康检查
+  deployCommands.push(`sleep 3 && curl -sf http://localhost/api/health || echo "健康检查失败"`);
 
   const fullCommand = `nsenter -t 1 -m -u -n -i bash -c '${deployCommands.join(' && ')}'`;
 
