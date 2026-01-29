@@ -1337,10 +1337,10 @@ async function editScene(row) {
     if (prompts.length > 0) {
       Object.assign(promptForm, prompts[0])
       promptForm.is_active = prompts[0].is_active === 1
-      // 同步到 promptFormData
+      // 同步到 promptFormData，优先使用 template_content
       promptFormData.value = {
         name: prompts[0].name || '',
-        template: prompts[0].template || prompts[0].template_content || '',
+        template: prompts[0].template_content || prompts[0].template || '',
         negative_prompt: prompts[0].negative_prompt || '',
         segments: prompts[0].segments || null,
         model_config: prompts[0].model_config || null
