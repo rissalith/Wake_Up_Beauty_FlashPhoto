@@ -85,7 +85,7 @@
       <!-- 品级 -->
       <el-table-column prop="rarity" label="品级" width="100" align="center">
         <template #default="{ row }">
-          <el-tag size="small" :color="getGradeColor(row.rarity)" style="color: #fff; border: none;">{{ row.rarity || '-' }}</el-tag>
+          <el-tag size="small" :color="getGradeColor(row.rarity)" style="color: #fff; border: none;">{{ getGradeName(row.rarity) }}</el-tag>
         </template>
       </el-table-column>
 
@@ -246,9 +246,15 @@ const loadGrades = async () => {
 }
 
 // 获取品级颜色
-const getGradeColor = (rarityName) => {
-  const grade = grades.value.find(g => g.name === rarityName)
+const getGradeColor = (rarityKey) => {
+  const grade = grades.value.find(g => g.grade_key === rarityKey || g.name === rarityKey)
   return grade?.color || '#909399'
+}
+
+// 获取品级中文名称
+const getGradeName = (gradeKey) => {
+  const grade = grades.value.find(g => g.grade_key === gradeKey || g.name === gradeKey)
+  return grade?.name || gradeKey || '-'
 }
 
 // 获取品级词条数量
@@ -265,7 +271,7 @@ const getItemProbability = (item) => {
   if (totalWeight === 0) return '-'
 
   // 找到该词条所属品级
-  const grade = grades.value.find(g => g.name === item.rarity)
+  const grade = grades.value.find(g => g.grade_key === item.rarity || g.name === item.rarity)
   if (!grade) return '-'
 
   // 该品级的词条数量
