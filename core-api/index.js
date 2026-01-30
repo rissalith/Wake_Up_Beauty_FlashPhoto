@@ -461,8 +461,15 @@ app.get('/api/config/admin/scenes', (req, res) => {
   try {
     const db = getDb();
     const scenes = db.prepare('SELECT * FROM scenes ORDER BY sort_order').all();
+    console.log('[get-scenes] 返回场景数量:', scenes.length);
+    // 打印第一个场景的部分信息用于调试
+    if (scenes.length > 0) {
+      const first = scenes[0];
+      console.log('[get-scenes] 第一个场景:', first.scene_key, first.name, first.description?.substring(0, 50));
+    }
     res.json({ code: 0, data: scenes });
   } catch (error) {
+    console.error('[get-scenes] 错误:', error);
     res.status(500).json({ code: -1, msg: '服务器错误' });
   }
 });
@@ -963,6 +970,8 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
     const { steps, prompt } = req.body;
 
     console.log('[batch-save] 开始保存场景配置, sceneId:', sceneId);
+    console.log('[batch-save] 步骤数:', steps?.length || 0);
+    console.log('[batch-save] Prompt模板长度:', prompt?.template?.length || 0);
 
     // 使用事务
     const transaction = db.transaction(() => {
