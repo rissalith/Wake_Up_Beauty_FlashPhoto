@@ -1549,6 +1549,7 @@ onMounted(() => {
   height: 50px;
   padding: 5px 8px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .scene-asset-item:hover {
