@@ -23,7 +23,7 @@
     <view class="video-container {{isWatching ? 'watching' : ''}}" bindtap="{{isWatching || remainCount <= 0 ? '' : 'startWatching'}}">
       <!-- 视频占位 -->
       <view class="video-placeholder">
-        <view class="play-icon {{remainCount <= 0 ? 'disabled' : ''}}" wx:if="{{!isWatching}}">▶</view>
+        <view class="play-icon {{remainCount <= 0 ? 'disabled' : ''}}" wx:if="{{!isWatching}}"><view class="play-triangle"></view></view>
         <view class="watching-animation" wx:else>
           <view class="wave wave1"></view>
           <view class="wave wave2"></view>

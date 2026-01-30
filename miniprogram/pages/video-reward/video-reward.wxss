@@ -99,7 +99,10 @@
 
 .play-icon.disabled {
   background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.5);
+}
+
+.play-icon.disabled .play-triangle {
+  border-color: transparent transparent transparent rgba(255, 255, 255, 0.5);
 }
 
 /* 次数用完提示 */
@@ -127,8 +130,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 40rpx;
-  color: #fff;
+}
+
+.play-triangle {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 18rpx 0 18rpx 30rpx;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 8rpx;
 }
 
 /* 观看动画 */
