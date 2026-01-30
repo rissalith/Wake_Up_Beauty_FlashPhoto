@@ -10,7 +10,7 @@
     </view>
 
     <view class="feedback-list" wx:if="{{feedbackList.length > 0}}">
-      <view class="feedback-item" wx:for="{{feedbackList}}" wx:key="feedback_id">
+      <view class="feedback-item" wx:for="{{feedbackList}}" wx:key="id">
         <view class="feedback-header">
           <text class="feedback-time">{{item.created_at}}</text>
           <view class="header-right">
@@ -21,7 +21,7 @@
             <text class="feedback-status {{item.status}}">{{item.status === 'pending' ? (i18n.fb_pending || '处理中') : (i18n.fb_replied || '已回复')}}</text>
             <view class="action-btns" wx:if="{{item.status === 'pending'}}">
               <text class="action-btn edit" bindtap="editFeedback" data-item="{{item}}">{{i18n.fb_edit || '编辑'}}</text>
-              <text class="action-btn delete" bindtap="deleteFeedback" data-id="{{item.feedback_id}}">{{i18n.fb_delete || '删除'}}</text>
+              <text class="action-btn delete" bindtap="deleteFeedback" data-id="{{item.id}}">{{i18n.fb_delete || '删除'}}</text>
             </view>
           </view>
         </view>

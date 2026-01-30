@@ -24,7 +24,7 @@ Page({
       eventChannel.on('acceptDataFromOpenerPage', (data) => {
         this.setData({
           isEdit: true,
-          feedbackId: data.feedback_id,
+          feedbackId: data.id,
           content: data.content,
           images: data.images || [],
           imageUrls: data.images || [],  // 编辑模式下，已有的图片是COS URL

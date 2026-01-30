@@ -9,7 +9,7 @@
       </template>
 
       <el-table :data="list" v-loading="loading" style="width: 100%">
-        <el-table-column prop="feedback_id" label="反馈ID" width="180" show-overflow-tooltip />
+        <el-table-column prop="id" label="反馈ID" width="180" show-overflow-tooltip />
         <el-table-column label="用户" width="180">
           <template #default="{ row }">
             <div class="user-cell">
@@ -267,7 +267,7 @@ const submitReply = async () => {
   replyLoading.value = true
   try {
     const res = await api.post('/feedback/admin/reply', {
-      feedbackId: currentRow.value.feedback_id,
+      feedbackId: currentRow.value.id,
       replyContent: replyText.value
     })
     if (res.code === 200 || res.code === 0) {
@@ -319,7 +319,7 @@ const submitReward = async () => {
   rewardLoading.value = true
   try {
     const res = await api.post('/feedback/admin/reward', {
-      feedbackId: rewardRow.value.feedback_id,
+      feedbackId: rewardRow.value.id,
       amount: rewardAmount.value
     })
     if (res.code === 200 || res.code === 0) {

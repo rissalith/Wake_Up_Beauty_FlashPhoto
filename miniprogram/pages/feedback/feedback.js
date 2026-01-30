@@ -57,7 +57,7 @@ I18nPage({
   editFeedback(e) {
     const item = e.currentTarget.dataset.item;
     wx.navigateTo({
-      url: '/pages/feedback-submit/feedback-submit?id=' + item.feedback_id,
+      url: '/pages/feedback-submit/feedback-submit?id=' + item.id,
       success: (res) => {
         res.eventChannel.emit('acceptDataFromOpenerPage', item);
       }
