@@ -78,19 +78,43 @@ router.post('/roll', async (req, res) => {
       result = weightedRandom(phrases, 'weight');
 
     } else if (drawType === 'horse') {
-      // 抽取马品级
-      const grades = db.prepare(`
-        SELECT * FROM horse_grades
-        WHERE scene_id = ? AND is_active = 1
-        ORDER BY sort_order
+      // 抽取马品级 - 优先从 draw_pool 表读取（后台管理使用此表）
+      // 先尝试从 draw_pool 表获取坐骑数据（step_key 为 'horse' 或 'mount'）
+      let items = db.prepare(`
+        SELECT * FROM draw_pool
+        WHERE scene_id = ? AND (step_key = 'horse' OR step_key = 'mount') AND is_active = 1
+        ORDER BY weight DESC
       `).all(sceneId);
 
-      if (grades.length === 0) {
-        return res.status(404).json({ code: -1, msg: '该场景没有配置马品级' });
-      }
+      if (items.length > 0) {
+        // 使用 draw_pool 表的数据
+        result = weightedRandom(items, 'weight');
+        // 转换字段名以匹配前端期望的格式
+        result = {
+          id: result.id,
+          grade_key: result.rarity || 'common',
+          name: result.name,
+          name_en: result.name_en,
+          description: result.description || '',
+          image: result.image,
+          probability: result.weight / 100,
+          prompt_text: result.prompt_text
+        };
+      } else {
+        // 回退到 horse_grades 表
+        const grades = db.prepare(`
+          SELECT * FROM horse_grades
+          WHERE scene_id = ? AND is_active = 1
+          ORDER BY sort_order
+        `).all(sceneId);
 
-      // 根据概率随机抽取
-      result = probabilityRandom(grades, 'probability');
+        if (grades.length === 0) {
+          return res.status(404).json({ code: -1, msg: '该场景没有配置马品级' });
+        }
+
+        // 根据概率随机抽取
+        result = probabilityRandom(grades, 'probability');
+      }
     }
 
     // 扣除醒币（如果不是免费）

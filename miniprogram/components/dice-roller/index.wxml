@@ -13,7 +13,11 @@
         <!-- 马品级结果 -->
         <view class="horse-card {{result.grade_key}}" wx:else>
           <image class="horse-img" src="{{result.image}}" mode="aspectFit" wx:if="{{result.image}}"/>
-          <text class="horse-name {{result.image ? '' : 'no-image'}}">{{result.name}}</text>
+          <!-- 没有图片时显示马匹图标 -->
+          <view class="horse-icon-wrapper {{result.grade_key}}" wx:else>
+            <text class="horse-icon">🐴</text>
+          </view>
+          <text class="horse-name">{{result.name}}</text>
         </view>
       </block>
       <!-- 未抽取时的占位 -->
