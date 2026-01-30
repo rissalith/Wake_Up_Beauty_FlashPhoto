@@ -244,7 +244,8 @@ const fetchList = async () => {
   try {
     const res = await api.get('/feedback/admin/list')
     if (res.code === 200 || res.code === 0) {
-      list.value = res.data
+      // 兼容两种返回格式：直接数组或 { list, total } 对象
+      list.value = Array.isArray(res.data) ? res.data : (res.data.list || [])
     }
   } catch (error) {
     console.error('加载反馈列表失败:', error)
