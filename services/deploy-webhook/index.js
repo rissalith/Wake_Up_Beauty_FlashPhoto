@@ -148,6 +148,9 @@ function runDeploy(branch, changedFiles, callback) {
     deployCommands.push(`cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d --build core-api ai-service pay-service`);
   }
 
+  // 4.5 确保所有后端服务都在运行（修复容器宕机后无法自动恢复的问题）
+  deployCommands.push(`cd ${DEPLOY_PATH} && docker compose -f docker-compose.optimized.yml up -d core-api ai-service pay-service`);
+
   // 5. 等待服务启动并 reload nginx（解决 upstream DNS 缓存问题）
   // 先等待 core-api 健康，再 reload nginx
   deployCommands.push(`sleep 15 && until docker exec flashphoto-core-api wget -q --spider http://localhost:3001/api/health 2>/dev/null || curl -sf http://core-api:3001/api/health >/dev/null 2>&1; do echo "等待 core-api 启动..."; sleep 3; done && docker exec flashphoto-nginx nginx -s reload`);
