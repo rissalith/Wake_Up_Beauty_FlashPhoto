@@ -75,27 +75,42 @@ jobs:
 
           SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/^.* //')
 
-          # 发送请求
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://${{ env.DOMAIN }}/webhook/deploy" \
-            -H "Content-Type: application/json" \
-            -H "X-Webhook-Signature: sha256=$SIGNATURE" \
-            -d "$PAYLOAD" \
-            --max-time 30)
+          # 重试逻辑：如果部署正在进行中（409），等待后重试
+          MAX_RETRIES=10
+          RETRY_INTERVAL=30
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "尝试触发部署 ($attempt/$MAX_RETRIES)..."
 
-          echo "HTTP 状态码: $HTTP_CODE"
-          echo "响应: $BODY"
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://${{ env.DOMAIN }}/webhook/deploy" \
+              -H "Content-Type: application/json" \
+              -H "X-Webhook-Signature: sha256=$SIGNATURE" \
+              -d "$PAYLOAD" \
+              --max-time 30)
 
-          if [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "200" ]; then
-            echo "Webhook 触发成功"
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "Webhook 触发失败"
-            echo "status=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+
+            echo "HTTP 状态码: $HTTP_CODE"
+            echo "响应: $BODY"
+
+            if [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "200" ]; then
+              echo "Webhook 触发成功"
+              echo "status=success" >> $GITHUB_OUTPUT
+              exit 0
+            elif [ "$HTTP_CODE" = "409" ]; then
+              echo "部署正在进行中，等待 ${RETRY_INTERVAL} 秒后重试..."
+              sleep $RETRY_INTERVAL
+            else
+              echo "Webhook 触发失败，状态码: $HTTP_CODE"
+              echo "status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          done
+
+          echo "达到最大重试次数，部署失败"
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
 
       - name: Wait for Deployment
         run: |
