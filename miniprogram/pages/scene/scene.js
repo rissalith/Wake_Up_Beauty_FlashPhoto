@@ -586,7 +586,8 @@ I18nPage({
           result: null,
           isRolling: false,
           freeCount: step.config?.freeCount || 1,
-          confirmed: false
+          confirmed: false,
+          poolItems: []
         };
       }
     });
@@ -700,6 +701,33 @@ I18nPage({
     // 可以在这里显示充值弹窗
     if (this.data.showRecharge) {
       this.setData({ showPayModal: true });
+    }
+  },
+
+  // 加载骰子选项池数据
+  async onLoadDicePool(e) {
+    const { stepKey, drawType, sceneId } = e.detail;
+    console.log('[Scene] Load dice pool:', stepKey, drawType, sceneId);
+
+    // 如果已经加载过，不重复加载
+    if (this.data.diceSteps[stepKey]?.poolItems?.length > 0) {
+      return;
+    }
+
+    try {
+      const { request } = require('../../config/api');
+      const res = await request({
+        url: `/draw/pool/${sceneId}/${drawType}`,
+        method: 'GET'
+      });
+
+      if (res.code === 0) {
+        this.setData({
+          [`diceSteps.${stepKey}.poolItems`]: res.data.items || []
+        });
+      }
+    } catch (error) {
+      console.error('[Scene] Load dice pool error:', error);
     }
   },
 

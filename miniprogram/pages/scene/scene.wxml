@@ -205,9 +205,11 @@
             title="{{item.config.title || item.title}}"
             subtitle="{{item.config.subtitle || ''}}"
             user-points="{{userPoints}}"
+            pool-items="{{diceSteps[item.step_key].poolItems}}"
             bind:roll="onDiceRoll"
             bind:confirm="onDiceConfirm"
             bind:insufficientPoints="onDiceInsufficientPoints"
+            bind:loadPool="onLoadDicePool"
           />
         </view>
       </block>

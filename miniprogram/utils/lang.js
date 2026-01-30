@@ -883,7 +883,15 @@ const languages = {
     dice_confirmTitle: '确认消耗醒币',
     dice_confirmDesc: '本次摇骰子将消耗',
     dice_currentBalance: '当前余额',
-    dice_insufficientPoints: '醒币不足'
+    dice_insufficientPoints: '醒币不足',
+    dice_rulesTitle: '抽取规则',
+    dice_freeRule: '免费次数',
+    dice_freeRuleDesc: '每天每个场景可免费抽取1次',
+    dice_costRule: '付费抽取',
+    dice_perTime: '次',
+    dice_disclaimer: '抽取结果完全随机，概率仅供参考',
+    dice_poolTitle: '可抽取内容',
+    dice_loadingPool: '加载中...'
   },
 
   'en': {
@@ -1748,7 +1756,15 @@ const languages = {
     dice_confirmTitle: 'Confirm Points Usage',
     dice_confirmDesc: 'This roll will cost',
     dice_currentBalance: 'Current balance',
-    dice_insufficientPoints: 'Insufficient points'
+    dice_insufficientPoints: 'Insufficient points',
+    dice_rulesTitle: 'Draw Rules',
+    dice_freeRule: 'Free Draws',
+    dice_freeRuleDesc: '1 free draw per scene per day',
+    dice_costRule: 'Paid Draw',
+    dice_perTime: 'time',
+    dice_disclaimer: 'Results are random, probabilities are for reference only',
+    dice_poolTitle: 'Available Items',
+    dice_loadingPool: 'Loading...'
   }
 };
 

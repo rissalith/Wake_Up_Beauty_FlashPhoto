@@ -406,3 +406,235 @@
   color: #fff;
   box-shadow: 0 4rpx 15rpx rgba(193, 127, 78, 0.3);
 }
+
+/* ========== 问号图标 ========== */
+.help-icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 32rpx;
+  height: 32rpx;
+  margin-left: 12rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2rpx solid rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+  font-size: 20rpx;
+  font-weight: bold;
+  color: #ffd700;
+  vertical-align: middle;
+}
+
+.help-icon:active {
+  background: rgba(255, 215, 0, 0.3);
+}
+
+/* ========== 规则说明弹窗 ========== */
+.rules-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rules-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.rules-content {
+  position: relative;
+  width: 620rpx;
+  max-height: 80vh;
+  background: linear-gradient(180deg, #fff9e6 0%, #fff 20%);
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.2);
+}
+
+.rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+  border-bottom: 4rpx solid #ffd700;
+}
+
+.rules-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #ffd700;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+.rules-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40rpx;
+  color: #ffd700;
+  opacity: 0.8;
+}
+
+.rules-close:active {
+  opacity: 1;
+}
+
+/* 规则说明区域 */
+.rules-section {
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f0e6d0;
+}
+
+.rules-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.rules-label {
+  font-size: 28rpx;
+  color: #8b4513;
+  font-weight: 500;
+}
+
+.rules-value {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 声明区域 */
+.rules-disclaimer {
+  padding: 16rpx 32rpx;
+  background: #fff5e6;
+  border-bottom: 1rpx solid #f0e6d0;
+}
+
+.disclaimer-text {
+  font-size: 22rpx;
+  color: #999;
+  text-align: center;
+  display: block;
+}
+
+/* 选项池区域 */
+.pool-section {
+  padding: 20rpx 32rpx 32rpx;
+}
+
+.pool-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #8b4513;
+  margin-bottom: 16rpx;
+}
+
+.pool-list {
+  max-height: 400rpx;
+}
+
+.pool-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f0e8;
+}
+
+.pool-item:last-child {
+  border-bottom: none;
+}
+
+.pool-item-img {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 8rpx;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.pool-item-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 8rpx;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff5d6 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.pool-item-info {
+  flex: 1;
+  margin-left: 16rpx;
+  min-width: 0;
+}
+
+.pool-item-name {
+  font-size: 28rpx;
+  color: #333;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pool-item-rarity {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  margin-top: 4rpx;
+  display: inline-block;
+}
+
+.pool-item-rarity.legendary {
+  background: linear-gradient(135deg, #ff9800, #e65100);
+  color: #fff;
+}
+
+.pool-item-rarity.epic {
+  background: linear-gradient(135deg, #9c27b0, #6a1b9a);
+  color: #fff;
+}
+
+.pool-item-rarity.rare {
+  background: linear-gradient(135deg, #2196f3, #1565c0);
+  color: #fff;
+}
+
+.pool-item-rarity.uncommon {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+}
+
+.pool-item-rarity.common {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.pool-item-prob {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #c41e3a;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.pool-empty {
+  padding: 40rpx;
+  text-align: center;
+  color: #999;
+  font-size: 26rpx;
+}

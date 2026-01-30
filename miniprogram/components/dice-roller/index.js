@@ -50,11 +50,17 @@ Component({
     userPoints: {
       type: Number,
       value: 0
+    },
+    // 选项池数据（用于显示规则）
+    poolItems: {
+      type: Array,
+      value: []
     }
   },
 
   data: {
     showPayConfirm: false,
+    showRulesModal: false,
     currentDiceFace: 1
   },
 
@@ -76,7 +82,16 @@ Component({
           currentBalance: langData.dice_currentBalance || '当前余额',
           cancel: langData.cancel || '取消',
           confirm: langData.confirm || '确认',
-          insufficientPoints: langData.dice_insufficientPoints || '醒币不足'
+          insufficientPoints: langData.dice_insufficientPoints || '醒币不足',
+          // 规则弹窗相关
+          rulesTitle: langData.dice_rulesTitle || '抽取规则',
+          freeRule: langData.dice_freeRule || '免费次数',
+          freeRuleDesc: langData.dice_freeRuleDesc || '每天每个场景可免费抽取1次',
+          costRule: langData.dice_costRule || '付费抽取',
+          perTime: langData.dice_perTime || '次',
+          disclaimer: langData.dice_disclaimer || '抽取结果完全随机，概率仅供参考',
+          poolTitle: langData.dice_poolTitle || '可抽取内容',
+          loadingPool: langData.dice_loadingPool || '加载中...'
         }
       });
     }
@@ -131,6 +146,24 @@ Component({
         sceneId: this.properties.sceneId,
         needPay: this.properties.freeCount <= 0
       });
+    },
+
+    // 显示规则弹窗
+    onShowRules() {
+      this.setData({ showRulesModal: true });
+      // 触发事件让父组件加载选项池数据（如果还没有）
+      if (!this.properties.poolItems || this.properties.poolItems.length === 0) {
+        this.triggerEvent('loadPool', {
+          stepKey: this.properties.stepKey,
+          drawType: this.properties.drawType,
+          sceneId: this.properties.sceneId
+        });
+      }
+    },
+
+    // 关闭规则弹窗
+    onCloseRules() {
+      this.setData({ showRulesModal: false });
     },
 
     // 预览图片

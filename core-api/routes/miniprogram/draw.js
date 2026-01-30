@@ -236,6 +236,101 @@ router.get('/free-count/:userId/:sceneId/:drawType', (req, res) => {
 });
 
 /**
+ * GET /api/draw/pool/:sceneId/:drawType - 获取抽奖池选项列表（用于显示规则）
+ */
+router.get('/pool/:sceneId/:drawType', (req, res) => {
+  try {
+    const { sceneId, drawType } = req.params;
+
+    if (!['phrase', 'horse'].includes(drawType)) {
+      return res.status(400).json({ code: -1, msg: '无效的抽取类型' });
+    }
+
+    const db = getDb();
+    let items = [];
+    let totalWeight = 0;
+
+    if (drawType === 'phrase') {
+      // 获取成语池
+      items = db.prepare(`
+        SELECT id, phrase, phrase_en, rarity, weight
+        FROM random_phrase_pool
+        WHERE scene_id = ? AND is_active = 1
+        ORDER BY weight DESC
+      `).all(sceneId);
+
+      totalWeight = items.reduce((sum, item) => sum + (item.weight || 100), 0);
+
+      // 计算概率百分比
+      items = items.map(item => ({
+        id: item.id,
+        name: item.phrase,
+        name_en: item.phrase_en,
+        rarity: item.rarity,
+        rarity_name: RARITY_NAME_MAP[item.rarity] || item.rarity || '普通',
+        weight: item.weight || 100,
+        probability: ((item.weight || 100) / totalWeight * 100).toFixed(2) + '%'
+      }));
+
+    } else if (drawType === 'horse') {
+      // 优先从 draw_pool 表获取
+      items = db.prepare(`
+        SELECT id, name, name_en, rarity, weight, image
+        FROM draw_pool
+        WHERE scene_id = ? AND (step_key = 'horse' OR step_key = 'mount') AND is_active = 1
+        ORDER BY weight DESC
+      `).all(sceneId);
+
+      if (items.length > 0) {
+        totalWeight = items.reduce((sum, item) => sum + (item.weight || 100), 0);
+        items = items.map(item => ({
+          id: item.id,
+          name: item.name,
+          name_en: item.name_en,
+          rarity: item.rarity,
+          image: item.image,
+          weight: item.weight || 100,
+          probability: ((item.weight || 100) / totalWeight * 100).toFixed(2) + '%'
+        }));
+      } else {
+        // 回退到 horse_grades 表
+        items = db.prepare(`
+          SELECT id, grade_key, name, name_en, probability, image
+          FROM horse_grades
+          WHERE scene_id = ? AND is_active = 1
+          ORDER BY sort_order
+        `).all(sceneId);
+
+        items = items.map(item => ({
+          id: item.id,
+          name: item.name,
+          name_en: item.name_en,
+          rarity: item.grade_key,
+          image: item.image,
+          probability: (item.probability * 100).toFixed(2) + '%'
+        }));
+      }
+    }
+
+    res.json({
+      code: 0,
+      data: {
+        drawType,
+        items,
+        rules: {
+          freePerDay: 1,
+          costPerRoll: 10
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('[Draw] Get pool error:', error);
+    res.status(500).json({ code: -1, msg: '服务器错误' });
+  }
+});
+
+/**
  * GET /api/draw/records/:userId - 获取用户抽奖记录
  */
 router.get('/records/:userId', (req, res) => {
