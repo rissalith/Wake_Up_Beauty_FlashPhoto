@@ -635,7 +635,8 @@ I18nPage({
 
     const userId = wx.getStorageSync('userId');
     if (!userId) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
+      // 弹出登录窗口
+      this.setData({ showLoginModal: true });
       return;
     }
 
