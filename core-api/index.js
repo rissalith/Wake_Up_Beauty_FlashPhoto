@@ -1195,6 +1195,8 @@ app.post('/api/config/admin/scene', (req, res) => {
     const db = getDb();
     const data = req.body;
 
+    console.log('[save-scene] 收到保存请求:', JSON.stringify(data, null, 2));
+
     const sceneKey = data.scene_key || data.id;
     if (!sceneKey) {
       return res.status(400).json({ code: -1, msg: '场景ID不能为空' });
@@ -1256,9 +1258,10 @@ app.post('/api/config/admin/scene', (req, res) => {
     }
 
     saveDatabase();
+    console.log('[save-scene] 保存成功, sceneKey:', sceneKey);
     res.json({ code: 200, message: '保存成功' });
   } catch (error) {
-    console.error('保存场景失败:', error);
+    console.error('[save-scene] 保存场景失败:', error);
     res.status(500).json({ code: -1, msg: '服务器错误: ' + error.message });
   }
 });
