@@ -77,7 +77,12 @@ I18nPage({
   onUnload() {
     // 页面卸载时确保启用TabBar
     this.notifyTabBarDisabled(false);
-    
+
+    // 如果没有待处理的生成任务，清理临时图片存储
+    if (!this._pendingGenerate && !this._pendingAction) {
+      wx.removeStorageSync('_pendingUploadedImages');
+    }
+
     // 内存清理
     this._cleanupMemory();
   },
@@ -161,14 +166,22 @@ I18nPage({
   // 登录弹窗关闭（用户点击稍后再说）
   onLoginModalClose() {
     this.setData({ showLoginModal: false });
-    // 清除待生成标记
+    // 清除待处理标记
     this._pendingGenerate = false;
+    this._pendingAction = null;
   },
 
   // 登录成功
   async onLoginSuccess(e) {
     const userData = e?.detail || {};
     this.setData({ showLoginModal: false });
+
+    // 恢复登录前保存的图片
+    const pendingImages = wx.getStorageSync('_pendingUploadedImages');
+    if (pendingImages && pendingImages.length > 0 && this.data.uploadedImages.length === 0) {
+      this.setData({ uploadedImages: pendingImages });
+    }
+    wx.removeStorageSync('_pendingUploadedImages');
 
     // 先刷新用户积分
     await this.loadUserPoints();
@@ -191,6 +204,9 @@ I18nPage({
       this._pendingGenerate = false;
       // 直接显示支付弹窗（积分已在上面刷新）
       this.setData({ showPayModal: true });
+    } else if (this._pendingAction === 'chooseImage') {
+      this._pendingAction = null;
+      this.chooseImage();
     }
   },
 
@@ -791,8 +807,20 @@ I18nPage({
     const prompt = this.buildPrompt();
   },
 
-  // 选择图片（登录检查移到生成时触发）
+  // 选择图片
   chooseImage() {
+    // 登录检查
+    const userId = wx.getStorageSync('userId');
+    if (!userId) {
+      // 保存当前上传的图片到临时存储，防止登录流程中丢失
+      if (this.data.uploadedImages.length > 0) {
+        wx.setStorageSync('_pendingUploadedImages', this.data.uploadedImages);
+      }
+      this._pendingAction = 'chooseImage';
+      this.setData({ showLoginModal: true });
+      return;
+    }
+
     const remainCount = 3 - this.data.uploadedImages.length;
     wx.chooseMedia({
       count: remainCount,
@@ -989,6 +1017,30 @@ I18nPage({
     });
   },
 
+  // 检查所有必填的摇骰子步骤是否已完成抽取
+  checkRequiredDiceSteps() {
+    const { sceneConfig, diceSteps } = this.data;
+    const steps = sceneConfig.steps || [];
+
+    for (const step of steps) {
+      // 检查是否是必填的摇骰子步骤
+      if (step.component_type === 'random_dice' &&
+          step.is_required &&
+          step.is_visible !== false) {
+        const diceState = diceSteps[step.step_key];
+        // 检查是否已完成抽取
+        if (!diceState || diceState.result === null) {
+          return {
+            valid: false,
+            missingStep: step.title || step.step_key
+          };
+        }
+      }
+    }
+
+    return { valid: true, missingStep: null };
+  },
+
   // 显示支付弹窗
   showPaymentModal() {
     if (this.data.uploadedImages.length === 0) {
@@ -996,8 +1048,23 @@ I18nPage({
       return;
     }
 
+    // 检查必填的摇骰子步骤是否已完成
+    const diceCheck = this.checkRequiredDiceSteps();
+    if (!diceCheck.valid) {
+      wx.showToast({
+        title: `请先完成"${diceCheck.missingStep}"的抽取`,
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
     const userId = wx.getStorageSync('userId');
     if (!userId) {
+      // 保存当前上传的图片到临时存储，防止登录流程中丢失
+      if (this.data.uploadedImages.length > 0) {
+        wx.setStorageSync('_pendingUploadedImages', this.data.uploadedImages);
+      }
       // 标记：登录成功后继续生成流程
       this._pendingGenerate = true;
       this.setData({ showLoginModal: true });
