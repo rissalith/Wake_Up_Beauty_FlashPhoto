@@ -426,9 +426,9 @@
             <!-- 素材列表 -->
             <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key" @click="showAssetDetail(asset)">
               <img :src="asset.url" :alt="asset.fileName" />
+              <el-tag v-if="asset.source === 'ai-generated'" class="asset-badge" size="small" type="warning">AI</el-tag>
               <div class="asset-info">
                 <span class="asset-name">{{ formatAssetName(asset) }}</span>
-                <el-tag v-if="asset.source === 'ai-generated'" size="small" type="warning">AI</el-tag>
               </div>
               <div class="asset-overlay">
                 <el-button type="primary" size="small" @click.stop="copyUrl(asset.url)">复制</el-button>
@@ -1568,6 +1568,21 @@ onMounted(() => {
   padding: 5px 8px;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scene-asset-item .asset-name {
+  font-size: 11px;
+  color: #606266;
+}
+
+.scene-asset-item .asset-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
 }
 
 .scene-asset-item:hover {
