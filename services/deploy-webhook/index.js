@@ -132,8 +132,8 @@ function runDeploy(branch, changedFiles, callback) {
 
   // 2. 根据变化的服务决定重建哪些
   if (services.includes('frontend')) {
-    // 前端变化：构建前端
-    deployCommands.push(`cd ${DEPLOY_PATH}/admin-server/admin-web && npm run build && rm -rf ${DEPLOY_PATH}/core-api/public/admin/* && cp -r dist/* ${DEPLOY_PATH}/core-api/public/admin/`);
+    // 前端变化：安装依赖并构建前端
+    deployCommands.push(`cd ${DEPLOY_PATH}/admin-server/admin-web && npm install --silent && NODE_OPTIONS='--max-old-space-size=2048' npm run build && rm -rf ${DEPLOY_PATH}/core-api/public/admin/* && cp -r dist/* ${DEPLOY_PATH}/core-api/public/admin/`);
   }
 
   // 3. 重建后端服务（只重建有变化的）
