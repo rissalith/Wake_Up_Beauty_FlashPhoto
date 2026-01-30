@@ -36,13 +36,43 @@ jobs:
     needs: notify-start
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed
+        run: |
+          # 获取变化的文件列表
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          echo "Changed files: $CHANGED_FILES"
+          # 转换为 JSON 数组
+          FILES_JSON=$(echo "$CHANGED_FILES" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "files=$FILES_JSON" >> $GITHUB_OUTPUT
+
       - name: Trigger Deploy via Webhook
         id: deploy
         run: |
           echo "触发部署 Webhook..."
 
-          # 生成签名
-          PAYLOAD='{"branch":"${{ github.ref_name }}","commit":"${{ github.sha }}","actor":"${{ github.actor }}"}'
+          # 生成包含文件变化的 payload
+          PAYLOAD=$(cat <<EOF
+          {
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "actor": "${{ github.actor }}",
+            "commits": [{
+              "added": [],
+              "modified": ${{ steps.changed.outputs.files }},
+              "removed": []
+            }]
+          }
+          EOF
+          )
+
+          echo "Payload: $PAYLOAD"
+
           SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | sed 's/^.* //')
 
           # 发送请求
