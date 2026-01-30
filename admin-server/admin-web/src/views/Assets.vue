@@ -427,12 +427,11 @@
             <div class="scene-asset-item" v-for="asset in generalAssets" :key="asset.key" @click="showAssetDetail(asset)">
               <img :src="asset.url" :alt="asset.fileName" />
               <div class="asset-info">
-                <span class="asset-name">{{ asset.displayName || asset.fileName }}</span>
+                <span class="asset-name">{{ formatAssetName(asset) }}</span>
                 <el-tag v-if="asset.source === 'ai-generated'" size="small" type="warning">AI</el-tag>
               </div>
               <div class="asset-overlay">
-                <el-button type="primary" size="small" @click.stop="copyUrl(asset.url)">复制URL</el-button>
-                <el-button type="info" size="small" @click.stop="showAssetDetail(asset)">详情</el-button>
+                <el-button type="primary" size="small" @click.stop="copyUrl(asset.url)">复制</el-button>
                 <el-button type="danger" size="small" @click.stop="deleteAsset(asset.key)">删除</el-button>
               </div>
             </div>
@@ -1116,7 +1115,26 @@ function handleSceneAssetUpload(response) {
 // 复制素材URL
 function copyAssetUrl(asset) {
   navigator.clipboard.writeText(asset.url)
-  ElMessage.success('已复制素材URL: ' + asset.fileName)
+  ElMessage.success('已复制素材URL')
+}
+
+// 复制URL
+function copyUrl(url) {
+  navigator.clipboard.writeText(url)
+  ElMessage.success('已复制URL')
+}
+
+// 格式化素材名称 - 只显示时间戳
+function formatAssetName(asset) {
+  if (asset.displayName && !asset.displayName.includes('_')) {
+    return asset.displayName
+  }
+  // 从文件名提取时间戳
+  const match = asset.fileName?.match(/(\d{13})/)
+  if (match) {
+    return match[1]
+  }
+  return asset.fileName?.replace(/\.[^.]+$/, '') || '未命名'
 }
 
 // 删除场景素材
@@ -1699,18 +1717,25 @@ onMounted(() => {
   background: linear-gradient(135deg, #fdf6ec 0%, #fef0e6 100%);
 }
 
-.generating-animation {
+.generating-placeholder .generating-animation {
   width: 100%;
-  height: 120px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(230, 162, 60, 0.1);
 }
 
-.generating-animation .el-icon {
-  font-size: 40px;
+.generating-placeholder .generating-animation .el-icon {
+  font-size: 32px;
   color: #e6a23c;
+}
+
+.generating-placeholder .asset-info {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Logo/关于页面样式 */
