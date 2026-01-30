@@ -831,7 +831,12 @@ app.get('/api/config/admin/prompts/:sceneId', (req, res) => {
   try {
     const db = getDb();
     const { sceneId } = req.params;
+    console.log('[Prompt读取] 请求的sceneId:', sceneId);
     const prompts = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ?').all(sceneId);
+    console.log('[Prompt读取] 查询结果数量:', prompts.length);
+    if (prompts.length > 0) {
+      console.log('[Prompt读取] 第一条记录 - id:', prompts[0].id, ', template长度:', prompts[0].template?.length, ', updated_at:', prompts[0].updated_at);
+    }
     res.json({ code: 0, data: prompts });
   } catch (error) {
     console.error('获取场景Prompt模板错误:', error);
@@ -1167,21 +1172,27 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
       }
 
       // 4. 保存Prompt模板
+      console.log('[batch-save] Prompt保存 - sceneId:', sceneId, ', prompt存在:', !!prompt, ', template存在:', !!prompt?.template);
       if (prompt && prompt.template) {
         const templateContent = prompt.template;
         const templateName = prompt.name || prompt.template_name || '';
         const negativePrompt = prompt.negative_prompt || '';
         const segments = prompt.segments || null;
         const modelConfig = prompt.model_config || null;
+        console.log('[batch-save] Prompt保存 - template长度:', templateContent.length, ', name:', templateName);
         const existing = db.prepare(`SELECT id FROM prompt_templates WHERE scene_id = ?`).get(sceneId);
+        console.log('[batch-save] Prompt保存 - 已存在记录:', existing ? `id=${existing.id}` : '无');
         if (existing) {
           db.prepare(`UPDATE prompt_templates SET template = ?, name = ?, negative_prompt = ?, segments = ?, model_config = ?, updated_at = datetime('now') WHERE scene_id = ?`).run(
             templateContent, templateName, negativePrompt, segments, modelConfig, sceneId
           );
+          console.log('[batch-save] Prompt保存 - UPDATE 完成');
         } else {
           db.prepare(`INSERT INTO prompt_templates (scene_id, name, template, negative_prompt, segments, model_config) VALUES (?, ?, ?, ?, ?, ?)`).run(
             sceneId, templateName, templateContent, negativePrompt, segments, modelConfig
           );
+          console.log('[batch-save] Prompt保存 - INSERT 完成');
+        }
         }
       }
     });
