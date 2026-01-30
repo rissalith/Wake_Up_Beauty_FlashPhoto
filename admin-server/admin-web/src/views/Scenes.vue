@@ -1201,10 +1201,10 @@ async function loadScenes() {
   loading.value = true
   try {
     const res = await request.get('/config/admin/scenes')
-    // 映射字段名：数据库用price，前端显示用points_cost
+    // 映射字段名：数据库用points_cost，前端也用points_cost
     scenes.value = (res.data || []).map(s => ({
       ...s,
-      points_cost: s.price || 50
+      points_cost: s.points_cost || s.price || 50
     }))
     // 初始化拖动排序
     initSortable()
