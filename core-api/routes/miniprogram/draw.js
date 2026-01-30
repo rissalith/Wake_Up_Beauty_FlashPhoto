@@ -6,6 +6,21 @@ const express = require('express');
 const router = express.Router();
 const { getDb, dbRun } = require('../../config/database');
 
+// 品级名称映射（用于成语抽奖显示）
+const RARITY_NAME_MAP = {
+  'legendary': '传说',
+  'epic': '史诗',
+  'rare': '稀有',
+  'uncommon': '优秀',
+  'common': '普通',
+  // 兼容其他可能的品级key
+  '传说': '传说',
+  '史诗': '史诗',
+  '稀有': '稀有',
+  '优秀': '优秀',
+  '普通': '普通'
+};
+
 /**
  * POST /api/draw/roll - 摇骰子抽取
  * @body {string} sceneId - 场景ID
@@ -155,6 +170,7 @@ router.post('/roll', async (req, res) => {
           phrase: result.phrase,
           phrase_en: result.phrase_en,
           rarity: result.rarity,
+          rarity_name: RARITY_NAME_MAP[result.rarity] || result.rarity || '普通',
           prompt_text: result.prompt_text
         } : {
           id: result.id,
