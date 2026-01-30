@@ -93,8 +93,6 @@
         <view class="card-title">{{i18n.watchVideo || '看视频得醒币'}}</view>
         <view class="card-desc">{{i18n.watchVideoDesc || '看视频得20醒币'}}</view>
       </view>
-      <!-- 播放装饰 -->
-      <view class="video-play-decoration">▶</view>
       <!-- 光影效果 -->
       <view class="card-shimmer"></view>
       <view class="card-glow"></view>
