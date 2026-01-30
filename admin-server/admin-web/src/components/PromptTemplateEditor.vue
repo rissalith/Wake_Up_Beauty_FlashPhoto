@@ -68,7 +68,7 @@
               style="width: 160px"
             >
               <el-option
-                v-for="opt in step.options"
+                v-for="opt in getFilteredOptions(step)"
                 :key="opt.id || opt.option_key"
                 :label="opt.label"
                 :value="opt.prompt_text || opt.label"
@@ -257,6 +257,38 @@ function getPlaceholder(step) {
   return placeholders[step.step_key] || '输入测试值'
 }
 
+// 获取过滤后的选项（根据性别过滤）
+function getFilteredOptions(step) {
+  if (!step.options || step.options.length === 0) {
+    return []
+  }
+
+  // 如果步骤启用了性别分类，根据当前选择的性别过滤选项
+  if (step.gender_based) {
+    // 查找性别选择步骤的当前值
+    const genderStep = props.sceneSteps.find(s => s.component_type === 'gender_select')
+    const selectedGender = genderStep ? previewSelections.value[genderStep.step_key] : null
+
+    if (selectedGender) {
+      // 将选择的性别值映射到选项的 gender 字段
+      const genderMap = {
+        '男士': 'male',
+        '女士': 'female',
+        'male': 'male',
+        'female': 'female'
+      }
+      const genderValue = genderMap[selectedGender]
+
+      if (genderValue) {
+        return step.options.filter(opt => opt.gender === genderValue)
+      }
+    }
+  }
+
+  // 没有启用性别分类或没有选择性别，返回所有选项
+  return step.options
+}
+
 // 获取部分的样式类
 function getPartClass(part) {
   return {
@@ -299,11 +331,8 @@ function copyPrompt() {
 // 同步数据到父组件
 function syncToParent() {
   emit('update:modelValue', {
-    name: '',
-    template: localTemplate.value,
-    negative_prompt: '',
-    segments: null,
-    model_config: null
+    ...props.modelValue,  // 保留原有的其他字段值
+    template: localTemplate.value
   })
 }
 
@@ -337,6 +366,21 @@ watch(() => props.modelValue, (newVal, oldVal) => {
     }, 0)
   }
 }, { deep: true })
+
+// 监听性别选择变化，清空依赖于性别的步骤的选择值
+watch(() => {
+  const genderStep = props.sceneSteps.find(s => s.component_type === 'gender_select')
+  return genderStep ? previewSelections.value[genderStep.step_key] : null
+}, (newGender, oldGender) => {
+  if (newGender !== oldGender) {
+    // 清空所有启用了 gender_based 的步骤的选择值
+    props.sceneSteps.forEach(step => {
+      if (step.gender_based && step.step_key) {
+        previewSelections.value[step.step_key] = ''
+      }
+    })
+  }
+})
 
 onMounted(() => {
   syncFromParent()
