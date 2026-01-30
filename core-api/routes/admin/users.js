@@ -407,7 +407,7 @@ router.get('/:userId/activities', (req, res) => {
 
         SELECT
           id, 'photo' as activity_type, status as sub_type,
-          NULL as amount, NULL as balance_after, NULL as description, scene, spec, bg_color,
+          NULL as amount, NULL as balance_after, NULL as description, NULL as scene, spec, bg_color,
           NULL as points_amount, NULL as bonus_points, NULL as invitee_nickname,
           NULL as reward_points, created_at
         FROM photo_history
