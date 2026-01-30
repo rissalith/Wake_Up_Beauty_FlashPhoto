@@ -1531,7 +1531,7 @@ onMounted(() => {
 
 .scene-asset-item {
   width: 150px;
-  height: 180px;
+  height: 150px;
   border: 1px solid #eee;
   border-radius: 8px;
   overflow: hidden;
@@ -1541,8 +1541,14 @@ onMounted(() => {
 
 .scene-asset-item img {
   width: 100%;
-  height: 120px;
+  height: 100px;
   object-fit: cover;
+}
+
+.scene-asset-item .asset-info {
+  height: 50px;
+  padding: 5px 8px;
+  box-sizing: border-box;
 }
 
 .scene-asset-item:hover {
