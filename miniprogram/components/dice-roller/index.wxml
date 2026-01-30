@@ -58,11 +58,10 @@
         <text class="status-text" wx:elif="{{result}}">{{i18n.rollAgain || '再摇一次'}}</text>
         <text class="status-text" wx:else>{{i18n.clickRoll || '点击抽取'}}</text>
       </view>
-      <!-- 费用提示 + 问号图标 -->
+      <!-- 费用提示 -->
       <view class="cost-hint">
         <text wx:if="{{freeCount > 0}}" class="free-tag">{{i18n.free || '免费'}}</text>
         <text wx:else class="cost-tag">{{costPerRoll}}{{i18n.points || '醒币'}}</text>
-        <view class="help-icon" bindtap="onShowRules">?</view>
       </view>
     </view>
   </view>
@@ -77,56 +76,6 @@
       <view class="confirm-btns">
         <view class="confirm-btn cancel" bindtap="onCancelPay">{{i18n.cancel || '取消'}}</view>
         <view class="confirm-btn ok" bindtap="onConfirmPay">{{i18n.confirm || '确认'}}</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 规则说明弹窗 -->
-  <view class="rules-modal" wx:if="{{showRulesModal}}">
-    <view class="rules-mask" bindtap="onCloseRules"></view>
-    <view class="rules-content">
-      <view class="rules-header">
-        <text class="rules-title">{{i18n.rulesTitle || '抽取规则'}}</text>
-        <view class="rules-close" bindtap="onCloseRules">×</view>
-      </view>
-
-      <!-- 规则说明 -->
-      <view class="rules-section">
-        <view class="rules-item">
-          <text class="rules-label">{{i18n.freeRule || '免费次数'}}</text>
-          <text class="rules-value">{{i18n.freeRuleDesc || '每天每个场景可免费抽取1次'}}</text>
-        </view>
-        <view class="rules-item">
-          <text class="rules-label">{{i18n.costRule || '付费抽取'}}</text>
-          <text class="rules-value">{{costPerRoll}} {{i18n.points || '醒币'}} / {{i18n.perTime || '次'}}</text>
-        </view>
-      </view>
-
-      <!-- 声明 -->
-      <view class="rules-disclaimer">
-        <text class="disclaimer-text">{{i18n.disclaimer || '抽取结果完全随机，概率仅供参考'}}</text>
-      </view>
-
-      <!-- 选项清单 -->
-      <view class="pool-section">
-        <view class="pool-title">{{i18n.poolTitle || '可抽取内容'}}</view>
-        <scroll-view class="pool-list" scroll-y>
-          <view class="pool-item" wx:for="{{poolItems}}" wx:key="id">
-            <image class="pool-item-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
-            <view class="pool-item-icon" wx:else>
-              <text wx:if="{{drawType === 'horse'}}">🐴</text>
-              <text wx:else>📜</text>
-            </view>
-            <view class="pool-item-info">
-              <text class="pool-item-name">{{item.name}}</text>
-              <text class="pool-item-rarity {{item.rarity}}" wx:if="{{item.rarity_name}}">{{item.rarity_name}}</text>
-            </view>
-            <text class="pool-item-prob">{{item.probability}}</text>
-          </view>
-          <view class="pool-empty" wx:if="{{!poolItems || poolItems.length === 0}}">
-            <text>{{i18n.loadingPool || '加载中...'}}</text>
-          </view>
-        </scroll-view>
       </view>
     </view>
   </view>

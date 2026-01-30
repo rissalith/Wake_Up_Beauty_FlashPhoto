@@ -42,6 +42,10 @@ I18nPage({
     showPayModal: false,
     showPrivacyModal: false,
     showLoginModal: false,
+    showDiceRulesModal: false,
+    currentDicePoolItems: [],
+    currentDiceDrawType: 'phrase',
+    currentDiceStepKey: '',
     // 历史
     historyList: [],
     showTopNotice: false,
@@ -743,6 +747,43 @@ I18nPage({
   },
 
   // ========== 摇骰子相关方法结束 ==========
+
+  // 显示骰子规则弹窗（从标题问号点击）
+  async onShowDiceRules(e) {
+    const { stepKey, drawType } = e.currentTarget.dataset;
+    console.log('[Scene] Show dice rules:', stepKey, drawType);
+
+    this.setData({
+      showDiceRulesModal: true,
+      currentDiceDrawType: drawType,
+      currentDiceStepKey: stepKey,
+      currentDicePoolItems: []
+    });
+
+    // 加载选项池数据
+    try {
+      const { request } = require('../../config/api');
+      const res = await request({
+        url: `/draw/pool/${this.data.sceneId}/${drawType}`,
+        method: 'GET'
+      });
+
+      if (res.code === 0) {
+        this.setData({
+          currentDicePoolItems: res.data.items || []
+        });
+      }
+    } catch (error) {
+      console.error('[Scene] Load dice pool error:', error);
+    }
+  },
+
+  // 关闭骰子规则弹窗
+  onCloseDiceRules() {
+    this.setData({
+      showDiceRulesModal: false
+    });
+  },
 
   // 输出当前完整 Prompt（调试用）
   logCurrentPrompt() {

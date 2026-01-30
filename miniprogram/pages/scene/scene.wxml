@@ -53,6 +53,8 @@
           <view class="section-title">
             <image class="step-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
             <text>{{item.title}}</text>
+            <!-- 骰子步骤显示问号图标 -->
+            <view class="title-help-icon" wx:if="{{item.component_type === 'random_dice'}}" catchtap="onShowDiceRules" data-step-key="{{item.step_key}}" data-draw-type="{{item.config.poolType || 'phrase'}}">?</view>
           </view>
 
           <!-- 性别选择 (gender_select) -->
@@ -340,4 +342,54 @@
     bind:close="onPrivacyModalClose"
     bind:agree="onPrivacyAgree"
   />
+
+  <!-- 骰子规则说明弹窗 -->
+  <view class="dice-rules-modal" wx:if="{{showDiceRulesModal}}">
+    <view class="dice-rules-mask" catchtap="onCloseDiceRules"></view>
+    <view class="dice-rules-content">
+      <view class="dice-rules-header">
+        <text class="dice-rules-title">{{lang.dice_rulesTitle || '抽取规则'}}</text>
+        <view class="dice-rules-close" catchtap="onCloseDiceRules">×</view>
+      </view>
+
+      <!-- 规则说明 -->
+      <view class="dice-rules-section">
+        <view class="dice-rules-item">
+          <text class="dice-rules-label">{{lang.dice_freeRule || '免费次数'}}</text>
+          <text class="dice-rules-value">{{lang.dice_freeRuleDesc || '每天每个场景可免费抽取1次'}}</text>
+        </view>
+        <view class="dice-rules-item">
+          <text class="dice-rules-label">{{lang.dice_costRule || '付费抽取'}}</text>
+          <text class="dice-rules-value">10 {{lang.pointsUnit || '醒币'}} / {{lang.dice_perTime || '次'}}</text>
+        </view>
+      </view>
+
+      <!-- 声明 -->
+      <view class="dice-rules-disclaimer">
+        <text class="dice-disclaimer-text">{{lang.dice_disclaimer || '抽取结果完全随机，概率仅供参考'}}</text>
+      </view>
+
+      <!-- 选项清单 -->
+      <view class="dice-pool-section">
+        <view class="dice-pool-title">{{lang.dice_poolTitle || '可抽取内容'}}</view>
+        <scroll-view class="dice-pool-list" scroll-y>
+          <view class="dice-pool-item" wx:for="{{currentDicePoolItems}}" wx:key="id">
+            <image class="dice-pool-item-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+            <view class="dice-pool-item-icon" wx:else>
+              <text wx:if="{{currentDiceDrawType === 'horse'}}">🐴</text>
+              <text wx:else>📜</text>
+            </view>
+            <view class="dice-pool-item-info">
+              <text class="dice-pool-item-name">{{item.name}}</text>
+              <text class="dice-pool-item-rarity {{item.rarity}}" wx:if="{{item.rarity_name}}">{{item.rarity_name}}</text>
+            </view>
+            <text class="dice-pool-item-prob">{{item.probability}}</text>
+          </view>
+          <view class="dice-pool-empty" wx:if="{{!currentDicePoolItems || currentDicePoolItems.length === 0}}">
+            <text>{{lang.dice_loadingPool || '加载中...'}}</text>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+  </view>
 </view>
