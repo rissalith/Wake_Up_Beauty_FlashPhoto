@@ -449,8 +449,13 @@ app.get('/api/feedback/admin/list', (req, res) => {
     sql += ' ORDER BY f.created_at DESC';
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
     const list = db.prepare(sql + ' LIMIT ? OFFSET ?').all(...params, parseInt(pageSize), offset);
+    // 解析 images JSON 字符串
+    const parsedList = list.map(item => ({
+      ...item,
+      images: item.images ? JSON.parse(item.images) : []
+    }));
     const total = db.prepare(sql.replace(/SELECT f\.\*, u\.nickname, u\.openid/i, 'SELECT COUNT(*) as count')).get(...params).count;
-    res.json({ code: 0, data: { list, total, page: parseInt(page), pageSize: parseInt(pageSize) } });
+    res.json({ code: 0, data: { list: parsedList, total, page: parseInt(page), pageSize: parseInt(pageSize) } });
   } catch (error) {
     res.status(500).json({ code: -1, msg: '服务器错误' });
   }
