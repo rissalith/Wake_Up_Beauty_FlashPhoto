@@ -428,7 +428,7 @@
                         </div>
                         <div class="image-tag-field">
                           <label>&nbsp;</label>
-                          <el-checkbox :model-value="opt.is_default === 1" @change="setDefaultOption(opt)" size="small" :disabled="opt.is_default === 1">默认</el-checkbox>
+                          <el-checkbox :model-value="opt.is_default === 1" @change="setDefaultOption(opt)" size="small" :disabled="isDefaultDisabled(opt)">默认</el-checkbox>
                         </div>
                         <div class="image-tag-field">
                           <label>&nbsp;</label>
@@ -1282,20 +1282,61 @@ async function editScene(row) {
           height: metadata.height || null
         }
       })
-      // 确保每个步骤只有一个默认选项
-      let hasDefault = false
-      options.forEach(opt => {
-        if (opt.is_default === 1) {
-          if (hasDefault) {
-            opt.is_default = 0  // 已有默认项，取消这个
-          } else {
-            hasDefault = true
+      // 确保默认选项正确设置
+      // 如果启用性别分类，则男女各需要一个默认选项
+      // 否则整个步骤只有一个默认选项
+      const genderBased = s.gender_based === 1 || s.gender_based === true || config.gender_based || false
+      if (genderBased) {
+        // 性别分类模式：男女各需要一个默认选项
+        let hasMaleDefault = false
+        let hasFemaleDefault = false
+        const maleOptions = options.filter(o => o.gender === 'male')
+        const femaleOptions = options.filter(o => o.gender === 'female')
+
+        // 检查现有默认选项
+        maleOptions.forEach(opt => {
+          if (opt.is_default === 1) {
+            if (hasMaleDefault) {
+              opt.is_default = 0  // 已有男性默认项，取消这个
+            } else {
+              hasMaleDefault = true
+            }
           }
+        })
+        femaleOptions.forEach(opt => {
+          if (opt.is_default === 1) {
+            if (hasFemaleDefault) {
+              opt.is_default = 0  // 已有女性默认项，取消这个
+            } else {
+              hasFemaleDefault = true
+            }
+          }
+        })
+
+        // 如果没有男性默认选项，设置第一个男性选项为默认
+        if (!hasMaleDefault && maleOptions.length > 0) {
+          maleOptions[0].is_default = 1
         }
-      })
-      // 如果没有默认选项，设置第一个为默认
-      if (!hasDefault && options.length > 0) {
-        options[0].is_default = 1
+        // 如果没有女性默认选项，设置第一个女性选项为默认
+        if (!hasFemaleDefault && femaleOptions.length > 0) {
+          femaleOptions[0].is_default = 1
+        }
+      } else {
+        // 普通模式：只需要一个默认选项
+        let hasDefault = false
+        options.forEach(opt => {
+          if (opt.is_default === 1) {
+            if (hasDefault) {
+              opt.is_default = 0  // 已有默认项，取消这个
+            } else {
+              hasDefault = true
+            }
+          }
+        })
+        // 如果没有默认选项，设置第一个为默认
+        if (!hasDefault && options.length > 0) {
+          options[0].is_default = 1
+        }
       }
       return {
         ...s,
@@ -1608,11 +1649,25 @@ function addOption() {
 
 function deleteOption(index) {
   const options = currentStep.value.options
-  const deletingDefault = options[index].is_default === 1
+  const deletingOpt = options[index]
+  const deletingDefault = deletingOpt.is_default === 1
+  const deletingGender = deletingOpt.gender
   options.splice(index, 1)
-  // 如果删除的是默认项且还有其他选项，将第一个设为默认
-  if (deletingDefault && options.length > 0 && !options.some(o => o.is_default === 1)) {
-    options[0].is_default = 1
+
+  // 如果删除的是默认项，需要重新设置默认
+  if (deletingDefault && options.length > 0) {
+    if (currentStep.value.gender_based && deletingGender) {
+      // 性别分类模式：检查同性别选项是否还有默认
+      const sameGenderOptions = options.filter(o => o.gender === deletingGender)
+      if (sameGenderOptions.length > 0 && !sameGenderOptions.some(o => o.is_default === 1)) {
+        sameGenderOptions[0].is_default = 1
+      }
+    } else {
+      // 普通模式：检查是否还有默认选项
+      if (!options.some(o => o.is_default === 1)) {
+        options[0].is_default = 1
+      }
+    }
   }
 }
 
@@ -1624,15 +1679,46 @@ function deleteOptionByOpt(opt) {
   }
 }
 
-// 设置默认选项（单选模式，必须有一个默认）
+// 设置默认选项
+// 如果启用性别分类，则男女各有一个默认选项
+// 否则整个步骤只有一个默认选项
 function setDefaultOption(opt) {
   if (!currentStep.value) return
-  // 取消所有其他选项的默认状态
-  currentStep.value.options.forEach(o => {
-    o.is_default = 0
-  })
+
+  if (currentStep.value.gender_based && opt.gender) {
+    // 性别分类模式：只取消同性别选项的默认状态
+    currentStep.value.options.forEach(o => {
+      if (o.gender === opt.gender) {
+        o.is_default = 0
+      }
+    })
+  } else {
+    // 普通模式：取消所有其他选项的默认状态
+    currentStep.value.options.forEach(o => {
+      o.is_default = 0
+    })
+  }
   // 设置当前选项为默认
   opt.is_default = 1
+}
+
+// 判断默认选项复选框是否应该禁用
+// 如果启用性别分类，只有当该选项是同性别中唯一的默认选项时才禁用
+// 否则只有当该选项是唯一的默认选项时才禁用
+function isDefaultDisabled(opt) {
+  if (!currentStep.value) return false
+  if (opt.is_default !== 1) return false  // 非默认选项不禁用
+
+  if (currentStep.value.gender_based && opt.gender) {
+    // 性别分类模式：检查同性别选项中是否只有这一个默认
+    const sameGenderOptions = currentStep.value.options.filter(o => o.gender === opt.gender)
+    const sameGenderDefaults = sameGenderOptions.filter(o => o.is_default === 1)
+    return sameGenderDefaults.length <= 1
+  } else {
+    // 普通模式：检查是否只有这一个默认选项
+    const defaults = currentStep.value.options.filter(o => o.is_default === 1)
+    return defaults.length <= 1
+  }
 }
 
 function onStepReorder() {
