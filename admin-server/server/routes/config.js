@@ -457,7 +457,12 @@ router.post('/admin/prompt', (req, res) => {
 router.get('/admin/prompts/:sceneId', (req, res) => {
   try {
     const sceneId = req.params.sceneId;
+    console.log('[Prompt读取调试] 请求的sceneId:', sceneId, ', 类型:', typeof sceneId);
     const prompts = getAll(`SELECT * FROM prompt_templates WHERE scene_id = '${sceneId}'`);
+    console.log('[Prompt读取调试] 查询结果数量:', prompts.length);
+    if (prompts.length > 0) {
+      console.log('[Prompt读取调试] 第一条记录 id:', prompts[0].id, ', template长度:', prompts[0].template?.length, ', updated_at:', prompts[0].updated_at);
+    }
     res.json({ code: 200, data: prompts });
   } catch (error) {
     console.error('获取Prompt失败:', error);
