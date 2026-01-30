@@ -34,7 +34,7 @@ I18nPage({
     this.setData({ loading: true });
     try {
       const res = await api.getUserFeedbacks(userId);
-      if (res.code === 200) {
+      if (res.code === 200 || res.code === 0) {
         this.setData({
           feedbackList: res.data
         });

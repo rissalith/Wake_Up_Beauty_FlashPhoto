@@ -171,7 +171,7 @@ Page({
         res = await api.submitFeedback(payload);
       }
 
-      if (res.code === 200) {
+      if (res.code === 200 || res.code === 0) {
         const successMsg = this.data.isEdit
           ? (i18n.feedbackSubmit_editSuccess || '修改成功')
           : (i18n.feedbackSubmit_submitSuccess || '提交成功');
