@@ -872,7 +872,18 @@ const languages = {
     videoReward_success: '恭喜获得',
     videoReward_continue: '继续观看',
     watchVideo: '看视频得醒币',
-    watchVideoDesc: '看视频得10醒币'
+    watchVideoDesc: '看视频得10醒币',
+
+    // 摇骰子组件
+    dice_clickToRoll: '点击骰子抽取',
+    dice_rolling: '抽取中...',
+    dice_rollAgain: '再摇一次',
+    dice_clickRoll: '点击抽取',
+    dice_free: '免费',
+    dice_confirmTitle: '确认消耗醒币',
+    dice_confirmDesc: '本次摇骰子将消耗',
+    dice_currentBalance: '当前余额',
+    dice_insufficientPoints: '醒币不足'
   },
 
   'en': {
@@ -1726,7 +1737,18 @@ const languages = {
     earnTip3: 'Top up ¥1=10 pts',
 
     // Scene page - Generation complete message
-    photosGenerateComplete: '{count} photos generated'
+    photosGenerateComplete: '{count} photos generated',
+
+    // Dice roller component
+    dice_clickToRoll: 'Tap dice to roll',
+    dice_rolling: 'Rolling...',
+    dice_rollAgain: 'Roll again',
+    dice_clickRoll: 'Tap to roll',
+    dice_free: 'Free',
+    dice_confirmTitle: 'Confirm Points Usage',
+    dice_confirmDesc: 'This roll will cost',
+    dice_currentBalance: 'Current balance',
+    dice_insufficientPoints: 'Insufficient points'
   }
 };
 

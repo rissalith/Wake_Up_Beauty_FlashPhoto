@@ -41,18 +41,17 @@
   font-style: italic;
 }
 
-/* 马品级卡片 */
+/* 马品级卡片 - 左图右字横向布局 */
 .horse-card {
-  padding: 24rpx;
+  padding: 16rpx 20rpx;
   background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
   border-radius: 16rpx;
   border: 2rpx solid #e8e8e8;
-  text-align: center;
   min-height: 120rpx;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
+  gap: 20rpx;
 }
 
 /* 马品级颜色 */
@@ -93,16 +92,19 @@
 }
 
 .horse-img {
-  width: 100rpx;
-  height: 100rpx;
+  width: 140rpx;
+  height: 140rpx;
   border-radius: 12rpx;
+  flex-shrink: 0;
+  background: #f5f5f5;
 }
 
 /* 马匹图标占位符 */
 .horse-icon-wrapper {
-  width: 100rpx;
-  height: 100rpx;
+  width: 140rpx;
+  height: 140rpx;
   border-radius: 12rpx;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -130,16 +132,32 @@
 }
 
 .horse-icon {
-  font-size: 56rpx;
+  font-size: 72rpx;
   filter: drop-shadow(0 2rpx 4rpx rgba(0,0,0,0.15));
 }
 
+/* 马匹信息区域 */
+.horse-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
 .horse-name {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #333;
-  margin-top: 12rpx;
   display: block;
+}
+
+.horse-name-en {
+  font-size: 22rpx;
+  color: #888;
+  margin-top: 6rpx;
+  display: block;
+  font-style: italic;
 }
 
 /* 空占位 */

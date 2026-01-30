@@ -58,6 +58,30 @@ Component({
     currentDiceFace: 1
   },
 
+  lifetimes: {
+    attached() {
+      // 获取国际化文本
+      const { t, getLangData } = require('../../utils/lang');
+      const langData = getLangData();
+      this.setData({
+        i18n: {
+          clickToRoll: langData.dice_clickToRoll || '点击骰子抽取',
+          rolling: langData.dice_rolling || '抽取中...',
+          rollAgain: langData.dice_rollAgain || '再摇一次',
+          clickRoll: langData.dice_clickRoll || '点击抽取',
+          free: langData.dice_free || '免费',
+          points: langData.points || '醒币',
+          confirmTitle: langData.dice_confirmTitle || '确认消耗醒币',
+          confirmDesc: langData.dice_confirmDesc || '本次摇骰子将消耗',
+          currentBalance: langData.dice_currentBalance || '当前余额',
+          cancel: langData.cancel || '取消',
+          confirm: langData.confirm || '确认',
+          insufficientPoints: langData.dice_insufficientPoints || '醒币不足'
+        }
+      });
+    }
+  },
+
   methods: {
     // 点击骰子
     onDiceTap() {
@@ -70,7 +94,7 @@ Component({
         // 检查醒币余额
         if (this.properties.userPoints < this.properties.costPerRoll) {
           wx.showToast({
-            title: '醒币不足',
+            title: this.data.i18n?.insufficientPoints || '醒币不足',
             icon: 'none'
           });
           this.triggerEvent('insufficientPoints', {
@@ -107,6 +131,17 @@ Component({
         sceneId: this.properties.sceneId,
         needPay: this.properties.freeCount <= 0
       });
+    },
+
+    // 预览图片
+    onPreviewImage(e) {
+      const url = e.currentTarget.dataset.url;
+      if (url) {
+        wx.previewImage({
+          urls: [url],
+          current: url
+        });
+      }
     }
   }
 });

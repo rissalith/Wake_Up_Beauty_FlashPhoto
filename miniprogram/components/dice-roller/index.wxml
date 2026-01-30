@@ -10,19 +10,29 @@
           <text class="phrase-text">{{result.phrase}}</text>
           <text class="phrase-en" wx:if="{{result.phrase_en}}">{{result.phrase_en}}</text>
         </view>
-        <!-- 马品级结果 -->
+        <!-- 马品级结果 - 左图右字布局 -->
         <view class="horse-card {{result.grade_key}}" wx:else>
-          <image class="horse-img" src="{{result.image}}" mode="aspectFit" wx:if="{{result.image}}"/>
+          <image
+            class="horse-img"
+            src="{{result.image}}"
+            mode="aspectFit"
+            wx:if="{{result.image}}"
+            bindtap="onPreviewImage"
+            data-url="{{result.image}}"
+          />
           <!-- 没有图片时显示马匹图标 -->
           <view class="horse-icon-wrapper {{result.grade_key}}" wx:else>
             <text class="horse-icon">🐴</text>
           </view>
-          <text class="horse-name">{{result.name}}</text>
+          <view class="horse-info">
+            <text class="horse-name">{{result.name}}</text>
+            <text class="horse-name-en" wx:if="{{result.name_en}}">{{result.name_en}}</text>
+          </view>
         </view>
       </block>
       <!-- 未抽取时的占位 -->
       <view class="empty-placeholder" wx:else>
-        <text class="empty-text">点击骰子抽取</text>
+        <text class="empty-text">{{i18n.clickToRoll || '点击骰子抽取'}}</text>
       </view>
     </view>
 
@@ -44,14 +54,14 @@
       </view>
       <!-- 状态提示 -->
       <view class="dice-status">
-        <text class="status-text rolling" wx:if="{{isRolling}}">抽取中...</text>
-        <text class="status-text" wx:elif="{{result}}">再摇一次</text>
-        <text class="status-text" wx:else>点击抽取</text>
+        <text class="status-text rolling" wx:if="{{isRolling}}">{{i18n.rolling || '抽取中...'}}</text>
+        <text class="status-text" wx:elif="{{result}}">{{i18n.rollAgain || '再摇一次'}}</text>
+        <text class="status-text" wx:else>{{i18n.clickRoll || '点击抽取'}}</text>
       </view>
       <!-- 费用提示 -->
       <view class="cost-hint">
-        <text wx:if="{{freeCount > 0}}" class="free-tag">免费</text>
-        <text wx:else class="cost-tag">{{costPerRoll}}醒币</text>
+        <text wx:if="{{freeCount > 0}}" class="free-tag">{{i18n.free || '免费'}}</text>
+        <text wx:else class="cost-tag">{{costPerRoll}}{{i18n.points || '醒币'}}</text>
       </view>
     </view>
   </view>
@@ -60,12 +70,12 @@
   <view class="confirm-modal" wx:if="{{showPayConfirm}}">
     <view class="confirm-mask" bindtap="onCancelPay"></view>
     <view class="confirm-content">
-      <view class="confirm-title">确认消耗醒币</view>
-      <view class="confirm-desc">本次摇骰子将消耗 {{costPerRoll}} 醒币</view>
-      <view class="confirm-balance">当前余额: {{userPoints}} 醒币</view>
+      <view class="confirm-title">{{i18n.confirmTitle || '确认消耗醒币'}}</view>
+      <view class="confirm-desc">{{i18n.confirmDesc || '本次摇骰子将消耗'}} {{costPerRoll}} {{i18n.points || '醒币'}}</view>
+      <view class="confirm-balance">{{i18n.currentBalance || '当前余额'}}: {{userPoints}} {{i18n.points || '醒币'}}</view>
       <view class="confirm-btns">
-        <view class="confirm-btn cancel" bindtap="onCancelPay">取消</view>
-        <view class="confirm-btn ok" bindtap="onConfirmPay">确认</view>
+        <view class="confirm-btn cancel" bindtap="onCancelPay">{{i18n.cancel || '取消'}}</view>
+        <view class="confirm-btn ok" bindtap="onConfirmPay">{{i18n.confirm || '确认'}}</view>
       </view>
     </view>
   </view>
