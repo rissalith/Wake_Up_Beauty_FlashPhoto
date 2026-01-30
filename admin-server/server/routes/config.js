@@ -729,16 +729,22 @@ router.post('/admin/scene/:sceneId/batch-save', (req, res) => {
     }
 
     // 3. 保存Prompt模板
+    console.log('[Prompt保存调试] 收到的prompt:', prompt ? JSON.stringify(prompt).substring(0, 300) : 'null');
     if (prompt && prompt.template) {
       const templateContent = prompt.template.replace(/'/g, "''");
       const templateName = (prompt.name || prompt.template_name || '').replace(/'/g, "''");
       const negativePrompt = (prompt.negative_prompt || '').replace(/'/g, "''");
+      console.log('[Prompt保存调试] 准备保存 - sceneId:', sceneId, ', template长度:', templateContent.length);
       const existing = getOne(`SELECT id FROM prompt_templates WHERE scene_id = '${sceneId}'`);
       if (existing) {
+        console.log('[Prompt保存调试] 更新已有记录, id:', existing.id);
         runBatch(`UPDATE prompt_templates SET template = '${templateContent}', name = '${templateName}', negative_prompt = '${negativePrompt}', updated_at = datetime('now') WHERE scene_id = '${sceneId}'`);
       } else {
+        console.log('[Prompt保存调试] 插入新记录');
         runBatch(`INSERT INTO prompt_templates (scene_id, name, template, negative_prompt) VALUES ('${sceneId}', '${templateName}', '${templateContent}', '${negativePrompt}')`);
       }
+    } else {
+      console.log('[Prompt保存调试] prompt为空或template为空，跳过保存');
     }
 
     // 4. 一次性提交所有更改

@@ -1511,6 +1511,9 @@ async function saveAll() {
       const payloadStr = JSON.stringify(payload)
       console.log('[保存调试] 总体积:', (payloadStr.length / 1024).toFixed(2), 'KB')
       console.log('[保存调试] 步骤数:', stepsData.length)
+      console.log('[保存调试] promptFormData:', JSON.stringify(promptFormData.value))
+      console.log('[保存调试] promptForm.template:', promptForm.template)
+      console.log('[保存调试] promptData:', promptData ? JSON.stringify(promptData).substring(0, 200) : 'null')
       stepsData.forEach((step, i) => {
         console.log(`[保存调试] 步骤${i + 1} "${step.title}": icon="${step.icon}", gender_based=${step.gender_based}`)
       })
