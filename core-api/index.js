@@ -1193,7 +1193,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
           );
           console.log('[batch-save] Prompt保存 - INSERT 完成');
         }
-        }
       }
     });
 
