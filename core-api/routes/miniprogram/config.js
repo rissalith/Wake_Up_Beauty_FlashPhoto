@@ -161,11 +161,12 @@ router.get('/scene/:sceneId', (req, res) => {
     const promptRow = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ? LIMIT 1').get(scene.id);
 
     // 转换字段名以匹配前端期望的格式
+    // 注意：数据库中有两套字段，优先使用 template/name，其次使用 template_content/template_name
     const prompt = promptRow ? {
       id: promptRow.id,
       scene_id: promptRow.scene_id,
-      name: promptRow.template_name,
-      template: promptRow.template_content,  // 前端期望 prompt.template
+      name: promptRow.name || promptRow.template_name,
+      template: promptRow.template || promptRow.template_content,  // 前端期望 prompt.template
       negative_prompt: promptRow.negative_prompt,
       variables: promptRow.variables,
       is_active: promptRow.is_active
