@@ -1102,7 +1102,7 @@ I18nPage({
 
   // 添加历史记录
   addHistoryItem(status = 'generating', image = '', progress = 0, savedPrompt = '') {
-    const { sceneConfig, selections, uploadedImages, stepOptions, steps } = this.data;
+    const { sceneConfig, selections, uploadedImages, stepOptions, steps, diceSteps } = this.data;
     const now = Date.now();
 
     // 构建包含多语言label的完整配置（从后台配置获取，不硬编码）
@@ -1121,6 +1121,22 @@ I18nPage({
       const rawStep = this._rawSteps?.find(s => s.step_key === key);
       // 从原始步骤配置的options中查找，这里包含后台返回的多语言字段
       const originalOptions = rawStep?.options || originalStep?.options || [];
+
+      // 检查是否是摇骰子类型的步骤，如果是则从 diceSteps 获取结果名称
+      const diceResult = diceSteps?.[key]?.result;
+      if (diceResult) {
+        // 摇骰子步骤：使用 result.name 作为显示名称，而不是 prompt_text
+        configWithLabels[key] = {
+          id: value,
+          label: diceResult.name || value,
+          label_cn: diceResult.name || value,
+          label_en: diceResult.name_en || diceResult.nameEn || '',
+          stepTitle: rawStep?.title || originalStep?.title || key,
+          stepTitle_cn: rawStep?.title || originalStep?.title || key,
+          stepTitle_en: rawStep?.title_en || rawStep?.titleEn || originalStep?.title_en || originalStep?.titleEn || ''
+        };
+        continue;
+      }
 
       // 匹配选项：可能是 id 或 option_key
       const selectedOption = options.find(opt =>
