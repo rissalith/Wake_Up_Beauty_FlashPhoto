@@ -25,7 +25,7 @@ router.post('/claim', async (req, res) => {
     const db = getDb();
 
     // 检查用户是否存在
-    const user = db.prepare('SELECT * FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
@@ -103,7 +103,7 @@ router.get('/status/:userId', (req, res) => {
     const db = getDb();
 
     // 获取真实用户ID
-    const user = db.prepare('SELECT id, points FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    const user = db.prepare('SELECT id, points FROM users WHERE id = ?').get(userId);
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
@@ -158,7 +158,7 @@ router.get('/records/:userId', (req, res) => {
     const db = getDb();
 
     // 获取真实用户ID
-    const user = db.prepare('SELECT id FROM users WHERE id = ? OR user_id = ?').get(userId, userId);
+    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
