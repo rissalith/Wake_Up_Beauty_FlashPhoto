@@ -19,24 +19,10 @@ router.post('/submit', (req, res) => {
     const feedbackId = uuidv4();
     const imagesJson = images ? JSON.stringify(images) : null;
 
-    // 兼容旧表结构：旧表有 feedback_id 列，新表用 id 作为 UUID
-    // 检查表结构来决定使用哪种插入方式
-    const tableInfo = db.prepare("PRAGMA table_info(feedbacks)").all();
-    const hasFeedbackIdColumn = tableInfo.some(col => col.name === 'feedback_id');
-
-    if (hasFeedbackIdColumn) {
-      // 旧表结构：id 是自增整数，feedback_id 存 UUID
-      dbRun(db, `
-        INSERT INTO feedbacks (feedback_id, user_id, content, images, contact, status)
-        VALUES (?, ?, ?, ?, ?, 'pending')
-      `, [feedbackId, userId, content, imagesJson, contact || null]);
-    } else {
-      // 新表结构：id 是 UUID
-      dbRun(db, `
-        INSERT INTO feedbacks (id, user_id, content, images, contact, status)
-        VALUES (?, ?, ?, ?, ?, 'pending')
-      `, [feedbackId, userId, content, imagesJson, contact || null]);
-    }
+    dbRun(db, `
+      INSERT INTO feedbacks (id, user_id, content, images, contact, status)
+      VALUES (?, ?, ?, ?, ?, 'pending')
+    `, [feedbackId, userId, content, imagesJson, contact || null]);
 
     saveDatabase();
 
