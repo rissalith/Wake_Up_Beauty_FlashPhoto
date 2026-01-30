@@ -59,10 +59,8 @@
       </view>
       <view class="points-right">
         <view class="detail-btn" bindtap="goToPointsRecord">{{i18n.pointsDetail || '明细'}}</view>
-        <!-- Android/开发者工具显示充值按钮 -->
+        <!-- Android/开发者工具显示充值按钮，iOS不显示 -->
         <view class="recharge-btn" bindtap="goToRecharge" wx:if="{{showRecharge}}">{{i18n.recharge || '充值'}}</view>
-        <!-- iOS 显示免费获取提示 -->
-        <view class="free-ways-btn" bindtap="goToInvite" wx:else>{{i18n.freeGet || '免费获取'}}</view>
       </view>
     </view>
   </view>
