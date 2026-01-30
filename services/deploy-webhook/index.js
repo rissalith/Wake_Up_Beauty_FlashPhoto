@@ -149,7 +149,8 @@ function runDeploy(branch, changedFiles, callback) {
   }
 
   // 5. 等待服务启动并 reload nginx（解决 upstream DNS 缓存问题）
-  deployCommands.push(`sleep 10 && docker exec flashphoto-nginx nginx -s reload`);
+  // 先等待 core-api 健康，再 reload nginx
+  deployCommands.push(`sleep 15 && until docker exec flashphoto-core-api wget -q --spider http://localhost:3001/api/health 2>/dev/null || curl -sf http://core-api:3001/api/health >/dev/null 2>&1; do echo "等待 core-api 启动..."; sleep 3; done && docker exec flashphoto-nginx nginx -s reload`);
 
   // 6. 健康检查
   deployCommands.push(`sleep 3 && curl -sf http://localhost/api/health || echo "健康检查失败"`);
