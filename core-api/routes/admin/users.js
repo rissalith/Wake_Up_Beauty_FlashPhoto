@@ -433,7 +433,7 @@ router.get('/:userId/activities', (req, res) => {
         FROM invites i
         LEFT JOIN users u ON i.invitee_id = u.id
         WHERE i.inviter_id = ?
-      )
+      ) AS activities
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `).all(userId, userId, userId, userId, limit, offset);
