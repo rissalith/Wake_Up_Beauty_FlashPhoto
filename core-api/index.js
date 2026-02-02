@@ -72,6 +72,11 @@ const miniprogramBehaviorRoutes = require('./routes/miniprogram/behavior');
 const miniprogramDrawRoutes = require('./routes/miniprogram/draw');
 const miniprogramVideoRewardRoutes = require('./routes/miniprogram/video-reward');
 
+// 创作者中心路由
+const miniprogramMarketRoutes = require('./routes/miniprogram/market');
+const miniprogramCreatorRoutes = require('./routes/miniprogram/creator');
+const miniprogramTemplateRoutes = require('./routes/miniprogram/template');
+
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
 const adminUsersRoutes = require('./routes/admin/users');
@@ -104,6 +109,11 @@ app.use('/api/security', miniprogramSecurityRoutes);
 app.use('/api/behavior', miniprogramBehaviorRoutes);
 app.use('/api/draw', miniprogramDrawRoutes);
 app.use('/api/video-reward', miniprogramVideoRewardRoutes);
+
+// 创作者中心路由
+app.use('/api/market', miniprogramMarketRoutes);
+app.use('/api/creator', miniprogramCreatorRoutes);
+app.use('/api/template', miniprogramTemplateRoutes);
 
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);

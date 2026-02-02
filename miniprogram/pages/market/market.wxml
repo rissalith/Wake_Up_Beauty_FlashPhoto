@@ -1,0 +1,154 @@
+<!-- 模板市场首页 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-search" bindtap="goToSearch">
+        <image class="search-icon" src="/images/icon-search.png" mode="aspectFit"></image>
+        <text class="search-placeholder">搜索模板</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类 Tab -->
+  <view class="category-tabs" style="top: {{navBarHeight}}px;">
+    <scroll-view class="tabs-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="tabs-container">
+        <view
+          class="tab-item {{currentCategory === item.id ? 'active' : ''}}"
+          wx:for="{{categories}}"
+          wx:key="id"
+          bindtap="switchCategory"
+          data-id="{{item.id}}"
+        >
+          <text class="tab-text">{{item.name}}</text>
+          <view class="tab-indicator" wx:if="{{currentCategory === item.id}}"></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 模板瀑布流 -->
+  <scroll-view
+    class="template-list"
+    style="top: {{navBarHeight + 44}}px;"
+    scroll-y="{{true}}"
+    enhanced="{{true}}"
+    show-scrollbar="{{false}}"
+    bindscrolltolower="loadMore"
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- 瀑布流容器 -->
+    <view class="waterfall-container">
+      <!-- 左列 -->
+      <view class="waterfall-column left">
+        <view
+          class="template-card"
+          wx:for="{{leftColumn}}"
+          wx:key="id"
+          bindtap="goToTemplate"
+          data-id="{{item.id}}"
+        >
+          <view class="card-image-wrap">
+            <image
+              class="card-image"
+              src="{{item.cover_image}}"
+              mode="widthFix"
+              lazy-load="{{true}}"
+            ></image>
+            <!-- 官方标签 -->
+            <view class="official-tag" wx:if="{{item.is_official}}">官方</view>
+            <!-- 精选标签 -->
+            <view class="featured-tag" wx:if="{{item.is_featured && !item.is_official}}">精选</view>
+          </view>
+          <view class="card-info">
+            <text class="card-title">{{item.name}}</text>
+            <view class="card-meta">
+              <view class="card-creator" wx:if="{{item.creator}}">
+                <image class="creator-avatar" src="{{item.creator.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+                <text class="creator-name">{{item.creator.name}}</text>
+              </view>
+              <view class="card-stats">
+                <text class="stat-item">{{item.use_count || 0}}次使用</text>
+              </view>
+            </view>
+            <view class="card-action">
+              <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
+                <text class="action-text">+ 做同款</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 右列 -->
+      <view class="waterfall-column right">
+        <view
+          class="template-card"
+          wx:for="{{rightColumn}}"
+          wx:key="id"
+          bindtap="goToTemplate"
+          data-id="{{item.id}}"
+        >
+          <view class="card-image-wrap">
+            <image
+              class="card-image"
+              src="{{item.cover_image}}"
+              mode="widthFix"
+              lazy-load="{{true}}"
+            ></image>
+            <view class="official-tag" wx:if="{{item.is_official}}">官方</view>
+            <view class="featured-tag" wx:if="{{item.is_featured && !item.is_official}}">精选</view>
+          </view>
+          <view class="card-info">
+            <text class="card-title">{{item.name}}</text>
+            <view class="card-meta">
+              <view class="card-creator" wx:if="{{item.creator}}">
+                <image class="creator-avatar" src="{{item.creator.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+                <text class="creator-name">{{item.creator.name}}</text>
+              </view>
+              <view class="card-stats">
+                <text class="stat-item">{{item.use_count || 0}}次使用</text>
+              </view>
+            </view>
+            <view class="card-action">
+              <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
+                <text class="action-text">+ 做同款</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-more" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!hasMore && templates.length > 0}}">
+      <text class="no-more-text">— 没有更多了 —</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && templates.length === 0}}">
+      <image class="empty-icon" src="/images/empty-template.png" mode="aspectFit"></image>
+      <text class="empty-text">暂无模板</text>
+      <text class="empty-hint">创作者们正在努力创作中...</text>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+</view>
+
+<!-- 登录弹窗 -->
+<login-modal
+  show="{{showLoginModal}}"
+  bind:close="onLoginModalClose"
+  bind:loginsuccess="onLoginSuccess"
+/>

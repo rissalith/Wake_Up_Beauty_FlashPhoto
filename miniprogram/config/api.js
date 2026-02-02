@@ -496,6 +496,215 @@ const api = {
     return request({
       url: '/config/system'
     });
+  },
+
+  // ========== 模板市场相关 ==========
+  // 获取模板分类列表
+  getTemplateCategories() {
+    return request({
+      url: '/market/categories'
+    });
+  },
+
+  // 获取模板列表
+  getTemplates(params = {}) {
+    const { category_id, keyword, sort = 'use_count', gender, page = 1, pageSize = 20 } = params;
+    let url = `/market/templates?page=${page}&pageSize=${pageSize}&sort=${sort}`;
+    if (category_id) url += `&category_id=${category_id}`;
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+    if (gender) url += `&gender=${gender}`;
+    return request({ url });
+  },
+
+  // 获取模板详情
+  getTemplateDetail(templateId, userId) {
+    let url = `/market/templates/${templateId}`;
+    if (userId) url += `?user_id=${userId}`;
+    return request({ url });
+  },
+
+  // 获取精选模板
+  getFeaturedTemplates(limit = 10) {
+    return request({
+      url: `/market/featured?limit=${limit}`
+    });
+  },
+
+  // 获取热门模板
+  getHotTemplates(limit = 20) {
+    return request({
+      url: `/market/hot?limit=${limit}`
+    });
+  },
+
+  // 搜索模板
+  searchTemplates(keyword, page = 1, pageSize = 20) {
+    return request({
+      url: `/market/search?keyword=${encodeURIComponent(keyword)}&page=${page}&pageSize=${pageSize}`
+    });
+  },
+
+  // 获取热门标签
+  getHotTags(limit = 20) {
+    return request({
+      url: `/market/hot-tags?limit=${limit}`
+    });
+  },
+
+  // ========== 创作者相关 ==========
+  // 获取创作者信息
+  getCreatorProfile(userId) {
+    return request({
+      url: `/creator/profile?user_id=${userId}`
+    });
+  },
+
+  // 更新创作者信息
+  updateCreatorProfile(data) {
+    return request({
+      url: '/creator/profile',
+      method: 'PUT',
+      data
+    });
+  },
+
+  // 获取创作者统计
+  getCreatorStats(userId) {
+    return request({
+      url: `/creator/stats?user_id=${userId}`
+    });
+  },
+
+  // 获取创作者收益记录
+  getCreatorEarnings(userId, page = 1, pageSize = 20) {
+    return request({
+      url: `/creator/earnings?user_id=${userId}&page=${page}&pageSize=${pageSize}`
+    });
+  },
+
+  // 获取创作者的模板列表
+  getCreatorTemplates(userId, status, page = 1, pageSize = 20) {
+    let url = `/creator/templates?user_id=${userId}&page=${page}&pageSize=${pageSize}`;
+    if (status) url += `&status=${status}`;
+    return request({ url });
+  },
+
+  // 获取创作者等级信息
+  getCreatorLevel(userId) {
+    return request({
+      url: `/creator/level?user_id=${userId}`
+    });
+  },
+
+  // 查看其他创作者主页
+  getCreatorPage(creatorId) {
+    return request({
+      url: `/creator/${creatorId}`
+    });
+  },
+
+  // ========== 模板管理相关 ==========
+  // 创建模板
+  createTemplate(data) {
+    return request({
+      url: '/template',
+      method: 'POST',
+      data
+    });
+  },
+
+  // 获取模板详情（创作者视角）
+  getMyTemplateDetail(templateId, userId) {
+    return request({
+      url: `/template/${templateId}?user_id=${userId}`
+    });
+  },
+
+  // 更新模板
+  updateTemplate(templateId, data) {
+    return request({
+      url: `/template/${templateId}`,
+      method: 'PUT',
+      data
+    });
+  },
+
+  // 删除模板
+  deleteTemplate(templateId, userId) {
+    return request({
+      url: `/template/${templateId}?user_id=${userId}`,
+      method: 'DELETE'
+    });
+  },
+
+  // 配置模板步骤
+  configTemplateSteps(templateId, data) {
+    return request({
+      url: `/template/${templateId}/steps`,
+      method: 'POST',
+      data
+    });
+  },
+
+  // 配置模板 Prompt
+  configTemplatePrompt(templateId, data) {
+    return request({
+      url: `/template/${templateId}/prompt`,
+      method: 'PUT',
+      data
+    });
+  },
+
+  // 提交模板审核
+  submitTemplateReview(templateId, userId) {
+    return request({
+      url: `/template/${templateId}/submit`,
+      method: 'POST',
+      data: { user_id: userId }
+    });
+  },
+
+  // 下架模板
+  offlineTemplate(templateId, userId) {
+    return request({
+      url: `/template/${templateId}/offline`,
+      method: 'POST',
+      data: { user_id: userId }
+    });
+  },
+
+  // 点赞/取消点赞模板
+  likeTemplate(templateId, userId) {
+    return request({
+      url: `/template/${templateId}/like`,
+      method: 'POST',
+      data: { user_id: userId }
+    });
+  },
+
+  // 收藏/取消收藏模板
+  favoriteTemplate(templateId, userId) {
+    return request({
+      url: `/template/${templateId}/favorite`,
+      method: 'POST',
+      data: { user_id: userId }
+    });
+  },
+
+  // 使用模板（记录使用）
+  useTemplate(templateId, userId, resultImage) {
+    return request({
+      url: `/template/${templateId}/use`,
+      method: 'POST',
+      data: { user_id: userId, result_image: resultImage }
+    });
+  },
+
+  // 获取用户收藏列表
+  getUserFavorites(userId, page = 1, pageSize = 20) {
+    return request({
+      url: `/template/user/favorites?user_id=${userId}&page=${page}&pageSize=${pageSize}`
+    });
   }
 };
 

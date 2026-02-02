@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "模板市场",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "login-modal": "/components/login-modal/login-modal"
+  }
+}

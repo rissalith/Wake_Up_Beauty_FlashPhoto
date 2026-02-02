@@ -542,6 +542,245 @@ function createTables() {
     )
   `);
 
+  // ==================== 创作者中心相关表 ====================
+
+  // 创作者表（所有用户自动成为创作者）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS creators (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      creator_name TEXT NOT NULL,
+      creator_avatar TEXT,
+      bio TEXT,
+      level INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'active',
+      total_templates INTEGER DEFAULT 0,
+      total_uses INTEGER DEFAULT 0,
+      total_likes INTEGER DEFAULT 0,
+      total_earnings INTEGER DEFAULT 0,
+      balance INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  // 模板分类表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      icon TEXT,
+      cover_image TEXT,
+      sort_order INTEGER DEFAULT 0,
+      is_visible INTEGER DEFAULT 1,
+      template_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 用户模板表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_templates (
+      id TEXT PRIMARY KEY,
+      creator_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      description TEXT,
+      description_en TEXT,
+      cover_image TEXT NOT NULL,
+      reference_image TEXT NOT NULL,
+      category_id INTEGER,
+      tags TEXT,
+      gender TEXT DEFAULT 'all',
+      points_cost INTEGER DEFAULT 50,
+      status TEXT DEFAULT 'draft',
+      reject_reason TEXT,
+      is_featured INTEGER DEFAULT 0,
+      is_official INTEGER DEFAULT 0,
+      view_count INTEGER DEFAULT 0,
+      use_count INTEGER DEFAULT 0,
+      like_count INTEGER DEFAULT 0,
+      favorite_count INTEGER DEFAULT 0,
+      share_count INTEGER DEFAULT 0,
+      published_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (creator_id) REFERENCES creators(id),
+      FOREIGN KEY (category_id) REFERENCES template_categories(id)
+    )
+  `);
+
+  // 模板步骤配置表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_steps (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id TEXT NOT NULL,
+      step_order INTEGER NOT NULL,
+      step_key TEXT NOT NULL,
+      title TEXT NOT NULL,
+      title_en TEXT,
+      subtitle TEXT,
+      component_type TEXT NOT NULL,
+      is_required INTEGER DEFAULT 1,
+      is_visible INTEGER DEFAULT 1,
+      config TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板步骤选项表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_step_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      step_id INTEGER NOT NULL,
+      option_key TEXT NOT NULL,
+      label TEXT NOT NULL,
+      label_en TEXT,
+      icon TEXT,
+      image TEXT,
+      prompt_text TEXT,
+      extra_points INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 0,
+      is_default INTEGER DEFAULT 0,
+      is_visible INTEGER DEFAULT 1,
+      metadata TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (step_id) REFERENCES template_steps(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板 Prompt 配置表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_prompts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id TEXT NOT NULL,
+      name TEXT,
+      template TEXT NOT NULL,
+      negative_prompt TEXT,
+      reference_weight REAL DEFAULT 0.8,
+      face_swap_mode TEXT DEFAULT 'replace',
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板收藏表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      template_id TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, template_id),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板点赞表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      template_id TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, template_id),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板使用记录表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_usage_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      template_id TEXT NOT NULL,
+      creator_id TEXT NOT NULL,
+      points_cost INTEGER NOT NULL,
+      creator_earning INTEGER DEFAULT 0,
+      result_image TEXT,
+      status TEXT DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (template_id) REFERENCES user_templates(id),
+      FOREIGN KEY (creator_id) REFERENCES creators(id)
+    )
+  `);
+
+  // 创作者收益记录表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS creator_earnings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      creator_id TEXT NOT NULL,
+      template_id TEXT,
+      usage_record_id INTEGER,
+      type TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      balance_after INTEGER NOT NULL,
+      description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (creator_id) REFERENCES creators(id),
+      FOREIGN KEY (template_id) REFERENCES user_templates(id),
+      FOREIGN KEY (usage_record_id) REFERENCES template_usage_records(id)
+    )
+  `);
+
+  // 模板审核记录表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id TEXT NOT NULL,
+      reviewer_id TEXT,
+      action TEXT NOT NULL,
+      reason TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES user_templates(id)
+    )
+  `);
+
+  // 创作者等级配置表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS creator_levels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      level INTEGER NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      min_templates INTEGER DEFAULT 0,
+      min_uses INTEGER DEFAULT 0,
+      min_likes INTEGER DEFAULT 0,
+      revenue_share INTEGER DEFAULT 10,
+      max_templates INTEGER DEFAULT 10,
+      badge_icon TEXT,
+      privileges TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 为 users 表添加创作者相关字段
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN is_creator INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN creator_id TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+
+  // 为 photo_history 表添加模板相关字段
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN template_id TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN reference_image TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN generation_mode TEXT DEFAULT "prompt"');
+  } catch (e) { /* 字段可能已存在 */ }
+
   // 创建索引
   createIndexes();
   
@@ -622,7 +861,34 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_grade_schemes_category ON grade_schemes(category)',
     'CREATE INDEX IF NOT EXISTS idx_grade_definitions_scheme ON grade_definitions(scheme_id)',
     'CREATE INDEX IF NOT EXISTS idx_grade_definitions_key ON grade_definitions(grade_key)',
-    'CREATE INDEX IF NOT EXISTS idx_step_scheme_mappings_scene_step ON step_scheme_mappings(scene_id, step_key)'
+    'CREATE INDEX IF NOT EXISTS idx_step_scheme_mappings_scene_step ON step_scheme_mappings(scene_id, step_key)',
+    // 创作者中心索引
+    'CREATE INDEX IF NOT EXISTS idx_creators_user ON creators(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_creators_status ON creators(status)',
+    'CREATE INDEX IF NOT EXISTS idx_creators_level ON creators(level)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_creator ON user_templates(creator_id)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_status ON user_templates(status)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_category ON user_templates(category_id)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_featured ON user_templates(is_featured)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_official ON user_templates(is_official)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_use_count ON user_templates(use_count DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_like_count ON user_templates(like_count DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_user_templates_published ON user_templates(published_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_template_steps_template ON template_steps(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_step_options_step ON template_step_options(step_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_prompts_template ON template_prompts(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_favorites_user ON template_favorites(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_favorites_template ON template_favorites(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_likes_user ON template_likes(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_likes_template ON template_likes(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_usage_user ON template_usage_records(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_usage_template ON template_usage_records(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_usage_creator ON template_usage_records(creator_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_usage_created ON template_usage_records(created_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_creator_earnings_creator ON creator_earnings(creator_id)',
+    'CREATE INDEX IF NOT EXISTS idx_creator_earnings_template ON creator_earnings(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_reviews_template ON template_reviews(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_categories_visible ON template_categories(is_visible)'
   ];
   
   indexes.forEach(sql => {
@@ -707,6 +973,39 @@ async function initDefaultData() {
     const stmt = db.prepare('INSERT INTO recharge_packages (name, points, price, bonus_points, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
     packages.forEach(p => stmt.run(...p));
     console.log('[Database] 已初始化默认充值套餐');
+  }
+
+  // 初始化创作者等级配置
+  const levelCount = db.prepare("SELECT COUNT(*) as count FROM creator_levels").get().count;
+  if (levelCount === 0) {
+    const levels = [
+      [1, '新手创作者', 'Novice Creator', 0, 0, 0, 10, 5, null, null],
+      [2, '进阶创作者', 'Advanced Creator', 3, 100, 50, 15, 10, null, null],
+      [3, '专业创作者', 'Professional Creator', 10, 500, 200, 20, 20, null, null],
+      [4, '大师创作者', 'Master Creator', 30, 2000, 1000, 25, 50, null, null],
+      [5, '传奇创作者', 'Legendary Creator', 100, 10000, 5000, 30, -1, null, null]
+    ];
+    const stmt = db.prepare('INSERT INTO creator_levels (level, name, name_en, min_templates, min_uses, min_likes, revenue_share, max_templates, badge_icon, privileges) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    levels.forEach(l => stmt.run(...l));
+    console.log('[Database] 已初始化创作者等级配置');
+  }
+
+  // 初始化模板分类
+  const categoryCount = db.prepare("SELECT COUNT(*) as count FROM template_categories").get().count;
+  if (categoryCount === 0) {
+    const categories = [
+      ['推荐', 'Featured', null, null, 0, 1],
+      ['春节', 'Spring Festival', null, null, 1, 1],
+      ['写真', 'Portrait', null, null, 2, 1],
+      ['证件照', 'ID Photo', null, null, 3, 1],
+      ['萌宠', 'Cute Pets', null, null, 4, 1],
+      ['艺术', 'Art', null, null, 5, 1],
+      ['趣味', 'Fun', null, null, 6, 1],
+      ['节日', 'Festival', null, null, 7, 1]
+    ];
+    const stmt = db.prepare('INSERT INTO template_categories (name, name_en, icon, cover_image, sort_order, is_visible) VALUES (?, ?, ?, ?, ?, ?)');
+    categories.forEach(c => stmt.run(...c));
+    console.log('[Database] 已初始化模板分类');
   }
 }
 

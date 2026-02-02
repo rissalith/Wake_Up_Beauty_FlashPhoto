@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/market/market",
     "pages/history/history",
     "pages/mine/mine",
     "pages/scene/scene",
