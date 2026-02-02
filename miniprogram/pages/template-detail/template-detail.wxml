@@ -1,0 +1,126 @@
+<!--模板详情页-->
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content" style="height: 44px;">
+      <view class="nav-back" bindtap="goBack">
+        <image src="/images/icons/back.png" mode="aspectFit" class="back-icon"></image>
+      </view>
+      <view class="nav-title">模板详情</view>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 占位 -->
+  <view style="height: {{navBarHeight}}px;"></view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 内容区域 -->
+  <view wx:else class="content">
+    <!-- 参考图 -->
+    <view class="cover-section">
+      <image
+        src="{{template.reference_image || template.cover_image}}"
+        mode="widthFix"
+        class="cover-image"
+        bindtap="previewImage"
+      ></image>
+      <view class="cover-tip">点击查看大图</view>
+    </view>
+
+    <!-- 模板信息 -->
+    <view class="info-section">
+      <view class="template-name">{{template.name}}</view>
+      <view class="template-desc" wx:if="{{template.description}}">{{template.description}}</view>
+
+      <!-- 标签 -->
+      <view class="tags-row" wx:if="{{template.tags && template.tags.length > 0}}">
+        <view class="tag" wx:for="{{template.tags}}" wx:key="*this">{{item}}</view>
+      </view>
+
+      <!-- 统计数据 -->
+      <view class="stats-row">
+        <view class="stat-item">
+          <text class="stat-value">{{template.use_count || 0}}</text>
+          <text class="stat-label">使用</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{template.like_count || 0}}</text>
+          <text class="stat-label">点赞</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{template.favorite_count || 0}}</text>
+          <text class="stat-label">收藏</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{template.view_count || 0}}</text>
+          <text class="stat-label">浏览</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 创作者信息 -->
+    <view class="creator-section" wx:if="{{template.creator}}" bindtap="goToCreatorPage">
+      <image
+        src="{{template.creator.avatar || '/images/default-avatar.png'}}"
+        class="creator-avatar"
+      ></image>
+      <view class="creator-info">
+        <view class="creator-name">{{template.creator.name}}</view>
+        <view class="creator-level" wx:if="{{template.creator.level}}">
+          Lv.{{template.creator.level}}
+        </view>
+      </view>
+      <view class="creator-arrow">
+        <image src="/images/icons/arrow-right.png" mode="aspectFit" class="arrow-icon"></image>
+      </view>
+    </view>
+
+    <!-- 价格信息 -->
+    <view class="price-section">
+      <view class="price-label">消耗醒币</view>
+      <view class="price-value">
+        <image src="/images/icons/coin.png" mode="aspectFit" class="coin-icon"></image>
+        <text>{{template.points_cost || 50}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{!loading && template}}">
+    <view class="action-buttons">
+      <view class="action-btn {{isLiked ? 'active' : ''}}" bindtap="toggleLike">
+        <image
+          src="{{isLiked ? '/images/icons/like-active.png' : '/images/icons/like.png'}}"
+          mode="aspectFit"
+          class="action-icon"
+        ></image>
+        <text>{{isLiked ? '已赞' : '点赞'}}</text>
+      </view>
+      <view class="action-btn {{isFavorited ? 'active' : ''}}" bindtap="toggleFavorite">
+        <image
+          src="{{isFavorited ? '/images/icons/star-active.png' : '/images/icons/star.png'}}"
+          mode="aspectFit"
+          class="action-icon"
+        ></image>
+        <text>{{isFavorited ? '已藏' : '收藏'}}</text>
+      </view>
+    </view>
+    <view class="do-same-btn" bindtap="doSame">
+      <text>做同款</text>
+    </view>
+  </view>
+
+  <!-- 登录弹窗 -->
+  <login-modal
+    wx:if="{{showLoginModal}}"
+    show="{{showLoginModal}}"
+    bind:close="onLoginModalClose"
+    bind:success="onLoginSuccess"
+  ></login-modal>
+</view>

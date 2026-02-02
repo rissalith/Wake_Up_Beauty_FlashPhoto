@@ -85,6 +85,7 @@ const adminConfigRoutes = require('./routes/admin/config');
 const adminScenesRoutes = require('./routes/admin/scenes');
 const adminMonitorRoutes = require('./routes/admin/monitor');
 const adminGradeSchemesRoutes = require('./routes/admin/grade-schemes');
+const adminTemplateReviewRoutes = require('./routes/admin/template-review');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -123,6 +124,7 @@ app.use('/api/admin/config', adminConfigRoutes);
 app.use('/api/admin/scenes', adminScenesRoutes);
 app.use('/api/admin/monitor', adminMonitorRoutes);
 app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
+app.use('/api/admin/templates', adminTemplateReviewRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);
@@ -134,6 +136,137 @@ app.use('/api/monitor', adminMonitorRoutes); // 服务监控
 // 注册额外路由（如果存在）
 if (adminTranslateRoutes) app.use('/api/translate', adminTranslateRoutes);
 if (adminPhotosRoutes) app.use('/api/photos', adminPhotosRoutes);
+
+// ==================== AI 服务转发路由 ====================
+
+// AI 图片生成（转发到 ai-service）
+app.post('/api/ai/generate-image', async (req, res) => {
+  try {
+    const http = require('http');
+    const { prompt, imageBase64, mimeType } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ code: 400, message: '缺少 prompt 参数' });
+    }
+
+    console.log('[Core API] 转发 AI 生成请求, prompt长度:', prompt.length);
+
+    const postData = JSON.stringify({ prompt, imageBase64, mimeType });
+    const options = {
+      hostname: process.env.AI_SERVICE_HOST || 'flashphoto-ai-service',
+      port: 3002,
+      path: '/api/ai/generate-image',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const aiResponse = await new Promise((resolve, reject) => {
+      const aiReq = http.request(options, (aiRes) => {
+        let data = '';
+        aiRes.on('data', chunk => data += chunk);
+        aiRes.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error('AI服务响应解析失败'));
+          }
+        });
+      });
+      aiReq.on('error', reject);
+      aiReq.setTimeout(120000, () => {
+        aiReq.destroy();
+        reject(new Error('AI服务请求超时'));
+      });
+      aiReq.write(postData);
+      aiReq.end();
+    });
+
+    res.json(aiResponse);
+  } catch (error) {
+    console.error('[Core API] AI生成转发失败:', error);
+    res.status(500).json({ code: 500, message: 'AI服务请求失败: ' + error.message });
+  }
+});
+
+// AI 参考图替换模式（转发到 ai-service）
+app.post('/api/ai/generate-with-reference', async (req, res) => {
+  try {
+    const http = require('http');
+    const {
+      prompt,
+      referenceImageBase64,
+      userImageBase64,
+      referenceMimeType,
+      userMimeType,
+      referenceWeight,
+      faceSwapMode
+    } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ code: 400, message: '缺少 prompt 参数' });
+    }
+
+    if (!referenceImageBase64) {
+      return res.status(400).json({ code: 400, message: '缺少参考图' });
+    }
+
+    if (!userImageBase64) {
+      return res.status(400).json({ code: 400, message: '缺少用户照片' });
+    }
+
+    console.log('[Core API] 转发参考图替换请求');
+
+    const postData = JSON.stringify({
+      prompt,
+      referenceImageBase64,
+      userImageBase64,
+      referenceMimeType,
+      userMimeType,
+      referenceWeight,
+      faceSwapMode
+    });
+
+    const options = {
+      hostname: process.env.AI_SERVICE_HOST || 'flashphoto-ai-service',
+      port: 3002,
+      path: '/api/ai/generate-with-reference',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const aiResponse = await new Promise((resolve, reject) => {
+      const aiReq = http.request(options, (aiRes) => {
+        let data = '';
+        aiRes.on('data', chunk => data += chunk);
+        aiRes.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error('AI服务响应解析失败'));
+          }
+        });
+      });
+      aiReq.on('error', reject);
+      aiReq.setTimeout(180000, () => { // 3分钟超时
+        aiReq.destroy();
+        reject(new Error('AI服务请求超时'));
+      });
+      aiReq.write(postData);
+      aiReq.end();
+    });
+
+    res.json(aiResponse);
+  } catch (error) {
+    console.error('[Core API] 参考图替换转发失败:', error);
+    res.status(500).json({ code: 500, message: 'AI服务请求失败: ' + error.message });
+  }
+});
 
 // ==================== 额外兼容路由 ====================
 

@@ -15,7 +15,12 @@
     "pages/feedback/feedback",
     "pages/feedback-submit/feedback-submit",
     "pages/webview/index",
-    "pages/video-reward/video-reward"
+    "pages/video-reward/video-reward",
+    "pages/creator/creator",
+    "pages/creator/create-template",
+    "pages/creator/my-templates",
+    "pages/creator/earnings",
+    "pages/template-detail/template-detail"
   ],
   "window": {
     "backgroundTextStyle": "light",

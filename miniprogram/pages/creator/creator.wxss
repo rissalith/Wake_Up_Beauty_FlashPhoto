@@ -1,0 +1,448 @@
+/* 创作者中心页面样式 */
+
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+}
+
+.nav-content {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-back {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.back-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 44px;
+}
+
+/* 页面滚动区域 */
+.page-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+
+/* 创作者信息卡片 */
+.creator-card {
+  margin: 12px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.creator-header {
+  display: flex;
+  align-items: center;
+}
+
+.creator-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.creator-info {
+  flex: 1;
+  margin-left: 16px;
+  min-width: 0;
+}
+
+.creator-name-row {
+  display: flex;
+  align-items: center;
+}
+
+.creator-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.level-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 10px;
+}
+
+.level-text {
+  font-size: 11px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.creator-bio {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #999;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.edit-btn {
+  padding: 6px 16px;
+  background: #f5f5f5;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.edit-text {
+  font-size: 13px;
+  color: #666;
+}
+
+/* 数据统计 */
+.stats-row {
+  display: flex;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.stat-value.highlight {
+  color: #C68B4D;
+}
+
+.stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* 等级进度 */
+.level-section {
+  margin: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.level-name {
+  font-size: 12px;
+  color: #C68B4D;
+}
+
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+}
+
+.progress-label {
+  width: 60px;
+  font-size: 12px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.progress-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #E8B686 0%, #C68B4D 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  width: 60px;
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.level-tip {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #FFF8F0;
+  border-radius: 8px;
+}
+
+.tip-text {
+  font-size: 12px;
+  color: #C68B4D;
+}
+
+/* 功能菜单 */
+.menu-section {
+  margin: 12px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-icon-wrap.create {
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+}
+
+.menu-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.menu-text {
+  flex: 1;
+  margin-left: 12px;
+  font-size: 15px;
+  color: #333;
+}
+
+.menu-badge {
+  padding: 2px 8px;
+  background: #FF6B6B;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #fff;
+  margin-right: 8px;
+}
+
+.menu-arrow {
+  width: 16px;
+  height: 16px;
+  opacity: 0.3;
+}
+
+/* 模板列表 */
+.templates-section {
+  margin: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.view-all {
+  display: flex;
+  align-items: center;
+}
+
+.view-all-text {
+  font-size: 13px;
+  color: #999;
+}
+
+.view-all-arrow {
+  width: 14px;
+  height: 14px;
+  opacity: 0.3;
+  margin-left: 4px;
+}
+
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-item {
+  display: flex;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.template-cover {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.template-info {
+  flex: 1;
+  margin-left: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.template-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.template-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.template-stat {
+  font-size: 12px;
+  color: #999;
+}
+
+.template-status {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.template-status.draft {
+  background: #f0f0f0;
+  color: #999;
+}
+
+.template-status.pending {
+  background: #FFF3E0;
+  color: #FF9800;
+}
+
+.template-status.active {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+
+.template-status.rejected {
+  background: #FFEBEE;
+  color: #F44336;
+}
+
+.template-status.offline {
+  background: #f0f0f0;
+  color: #999;
+}
+
+.status-text {
+  font-size: 11px;
+}
+
+/* 空状态 */
+.empty-templates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  width: 100px;
+  height: 100px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #999;
+}
+
+.empty-btn {
+  margin-top: 20px;
+  padding: 10px 32px;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 20px;
+}
+
+.empty-btn-text {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* 底部安全区 */
+.safe-bottom {
+  height: calc(env(safe-area-inset-bottom) + 20px);
+}

@@ -50,12 +50,21 @@ I18nPage({
     historyList: [],
     showTopNotice: false,
     topNoticeText: '',
-    pendingPayAfterRecharge: false
+    pendingPayAfterRecharge: false,
+    // 模板模式（参考图替换）
+    isTemplateMode: false,
+    templateId: '',
+    templateConfig: null,
+    referenceImage: '',
+    referenceWeight: 0.8,
+    faceSwapMode: 'replace'
   },
 
   async onLoad(options) {
     const sceneId = options.id;
-    if (!sceneId) {
+    const templateId = options.template_id; // 模板ID（如果是从模板市场进入）
+
+    if (!sceneId && !templateId) {
       wx.showToast({ title: t('missingSceneParam') || '缺少场景参数', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 1500);
       return;
@@ -63,13 +72,22 @@ I18nPage({
 
     // 初始化平台设置
     this.setData({
-      sceneId,
+      sceneId: sceneId || '',
+      templateId: templateId || '',
+      isTemplateMode: !!templateId,
       showRecharge: canShowRecharge(),
       isIOSPlatform: isIOS()
     });
 
-    // 直接加载场景配置，登录检查移到生成时触发
-    await this.loadSceneConfig(sceneId);
+    // 根据模式加载配置
+    if (templateId) {
+      // 模板模式：加载模板配置
+      await this.loadTemplateConfig(templateId);
+    } else {
+      // 场景模式：加载场景配置
+      await this.loadSceneConfig(sceneId);
+    }
+
     this.loadHistory();
     this.loadUserPoints();
   },
@@ -185,6 +203,11 @@ I18nPage({
 
     // 先刷新用户积分
     await this.loadUserPoints();
+
+    // 关键修复：登录后重新加载骰子免费次数
+    if (this._rawSteps && this._rawSteps.length > 0) {
+      await this.loadDiceFreeCount(this._rawSteps);
+    }
 
     // 优先使用登录返回的协议状态，其次使用本地存储
     const privacyAgreed = userData.privacyAgreed === true;
@@ -458,6 +481,94 @@ I18nPage({
     }
   },
 
+  // 加载模板配置（参考图替换模式）
+  async loadTemplateConfig(templateId) {
+    const { api } = require('../../config/api');
+
+    try {
+      this.setData({ configLoading: true });
+
+      const userId = wx.getStorageSync('userId');
+      const res = await api.getTemplateDetail(templateId, userId);
+
+      if (res.code !== 200 || !res.data) {
+        wx.showToast({ title: '模板不存在', icon: 'none' });
+        this.setData({ configLoading: false });
+        return;
+      }
+
+      const templateConfig = res.data;
+
+      // 设置导航栏标题
+      wx.setNavigationBarTitle({
+        title: templateConfig.name || '模板'
+      });
+
+      const steps = templateConfig.steps || [];
+      const pointsPerPhoto = templateConfig.points_cost || 50;
+
+      // 初始化选择项和选项数据
+      const selections = {};
+      const stepOptions = {};
+
+      // 处理步骤配置
+      const visibleSteps = steps.filter(step => step.is_visible !== false);
+
+      visibleSteps.forEach(step => {
+        const key = step.step_key;
+        const options = step.options || [];
+        const componentType = step.component_type;
+
+        if (componentType === 'image_upload') {
+          return;
+        }
+
+        if (componentType === 'gender_select') {
+          stepOptions[key] = [
+            { id: 'male', name: t('fp_male') || '男' },
+            { id: 'female', name: t('fp_female') || '女' }
+          ];
+          selections[key] = 'male';
+        } else if (componentType === 'slider') {
+          selections[key] = step.default_value || 50;
+        } else if (options.length > 0) {
+          stepOptions[key] = this._processOptions(options, {
+            includeImage: this._needsImage(componentType),
+            includeColor: this._needsColor(componentType)
+          });
+          selections[key] = this._getDefaultSelection(stepOptions[key]);
+        }
+      });
+
+      // 获取参考图和 Prompt 配置
+      const referenceImage = templateConfig.reference_image || '';
+      const promptConfig = templateConfig.prompt || {};
+
+      this.setData({
+        configLoading: false,
+        templateConfig,
+        sceneConfig: templateConfig, // 兼容现有逻辑
+        steps: visibleSteps,
+        pointsPerPhoto,
+        totalPoints: pointsPerPhoto * this.data.generateCount,
+        selections,
+        stepOptions,
+        referenceImage,
+        referenceWeight: promptConfig.reference_weight || 0.8,
+        faceSwapMode: promptConfig.face_swap_mode || 'replace',
+        isTemplateMode: true
+      });
+
+      // 初始化摇骰子步骤状态
+      this.initDiceSteps(visibleSteps);
+
+    } catch (error) {
+      console.error('[Scene] 加载模板配置失败:', error);
+      this.setData({ configLoading: false });
+      wx.showToast({ title: '模板加载失败', icon: 'none' });
+    }
+  },
+
   onShow() {
     // 加载历史和用户余额（登录检查移到生成时触发）
     this.loadHistory();
@@ -600,27 +711,44 @@ I18nPage({
   // 初始化摇骰子步骤状态
   initDiceSteps(steps) {
     const diceSteps = {};
+    const userId = wx.getStorageSync('userId');
+
     steps.forEach(step => {
       if (step.component_type === 'random_dice') {
         diceSteps[step.step_key] = {
           result: null,
           isRolling: false,
-          freeCount: step.config?.freeCount || 1,
+          // 关键修复：未登录时设为0，已登录时设为null表示待加载
+          freeCount: userId ? null : 0,
           confirmed: false,
-          poolItems: []
+          poolItems: [],
+          loading: !!userId  // 已登录时标记为加载中
         };
       }
     });
     this.setData({ diceSteps });
 
-    // 加载各步骤的免费次数
-    this.loadDiceFreeCount(steps);
+    // 加载各步骤的免费次数（仅已登录用户）
+    if (userId) {
+      this.loadDiceFreeCount(steps);
+    }
   },
 
   // 加载摇骰子免费次数
   async loadDiceFreeCount(steps) {
     const userId = wx.getStorageSync('userId');
-    if (!userId) return;
+    if (!userId) {
+      // 未登录用户，设置 freeCount 为 0，loading 为 false
+      steps.forEach(step => {
+        if (step.component_type === 'random_dice') {
+          this.setData({
+            [`diceSteps.${step.step_key}.freeCount`]: 0,
+            [`diceSteps.${step.step_key}.loading`]: false
+          });
+        }
+      });
+      return;
+    }
 
     const { request } = require('../../config/api');
 
@@ -634,14 +762,52 @@ I18nPage({
           });
           if (res.code === 0) {
             this.setData({
-              [`diceSteps.${step.step_key}.freeCount`]: res.data.freeCount
+              [`diceSteps.${step.step_key}.freeCount`]: res.data.freeCount,
+              [`diceSteps.${step.step_key}.loading`]: false
+            });
+          } else {
+            this.setData({
+              [`diceSteps.${step.step_key}.freeCount`]: 0,
+              [`diceSteps.${step.step_key}.loading`]: false
             });
           }
         } catch (error) {
           console.error('[Scene] Load dice free count error:', error);
+          this.setData({
+            [`diceSteps.${step.step_key}.freeCount`]: 0,
+            [`diceSteps.${step.step_key}.loading`]: false
+          });
         }
       }
     }
+  },
+
+  // 重置摇骰子步骤状态（生成完成后调用）
+  resetDiceSteps() {
+    const { diceSteps, selections } = this.data;
+    const newDiceSteps = {};
+    const newSelections = { ...selections };
+
+    // 遍历所有骰子步骤，重置状态
+    Object.keys(diceSteps).forEach(stepKey => {
+      newDiceSteps[stepKey] = {
+        result: null,
+        isRolling: false,
+        freeCount: diceSteps[stepKey].freeCount, // 保留当前免费次数
+        confirmed: false,
+        poolItems: diceSteps[stepKey].poolItems, // 保留选项池数据
+        loading: false
+      };
+      // 清空对应的选择值
+      delete newSelections[stepKey];
+    });
+
+    this.setData({
+      diceSteps: newDiceSteps,
+      selections: newSelections
+    });
+
+    console.log('[Scene] Dice steps reset after generation');
   },
 
   // 摇骰子请求（由 dice-roller 组件触发）
@@ -1506,6 +1672,10 @@ I18nPage({
     if (successCount > 0) {
       const completeMsg = (t('photosGenerateComplete') || '{count}张照片生成完成').replace('{count}', successCount);
       this.showNotice(completeMsg);
+
+      // 关键修复：生成完成后重置骰子状态，清空抽到的词条
+      this.resetDiceSteps();
+
       // 生成完成后自动跳转到历史页面，让用户查看结果
       setTimeout(() => {
         wx.switchTab({ url: '/pages/history/history' });
@@ -1517,12 +1687,18 @@ I18nPage({
 
   // 调用AI API
   async callAPI(prompt) {
-    const parts = [{ text: prompt }];
+    const { isTemplateMode, referenceImage, referenceWeight, faceSwapMode } = this.data;
+
+    // 获取用户上传的图片
     const imagesToUse = this.data.uploadedImages.slice(0, 3);
 
     if (imagesToUse.length === 0) {
       throw new Error(t('noAvailableImage') || '没有可用的图片');
     }
+
+    // 读取用户照片的 base64
+    let userImageBase64 = null;
+    let userMimeType = 'image/jpeg';
 
     for (const img of imagesToUse) {
       try {
@@ -1539,30 +1715,55 @@ I18nPage({
             });
           });
         }
-        parts.push({ inline_data: { mime_type: 'image/jpeg', data: base64Data } });
+        if (!userImageBase64) {
+          userImageBase64 = base64Data;
+        }
       } catch (err) {
         // 静默处理
       }
     }
 
-    if (parts.length < 2) {
+    if (!userImageBase64) {
       throw new Error(t('cannotReadImage') || '无法读取图片');
     }
 
-    const imagePartIndex = parts.findIndex(p => p.inline_data);
-    const imagePart = imagePartIndex >= 0 ? parts[imagePartIndex] : null;
-    const imageBase64 = imagePart ? imagePart.inline_data.data : null;
-    const mimeType = imagePart ? imagePart.inline_data.mime_type : 'image/jpeg';
+    // 模板模式：使用参考图替换
+    if (isTemplateMode && referenceImage) {
+      console.log('========== 参考图替换模式 ==========');
+      console.log('[AI请求] 参考图:', referenceImage.substring(0, 50) + '...');
+      console.log('[AI请求] 参考图权重:', referenceWeight);
+      console.log('[AI请求] 替换模式:', faceSwapMode);
+      console.log('[AI请求] 用户照片大小:', Math.round(userImageBase64.length / 1024) + 'KB');
+      console.log('[AI请求] Prompt:', prompt);
+      console.log('====================================');
 
-    // 调试日志：输出发送给AI的完整信息
+      // 下载参考图
+      let referenceImageBase64;
+      try {
+        referenceImageBase64 = await this.downloadImageAsBase64(referenceImage);
+      } catch (err) {
+        console.error('[AI请求] 下载参考图失败:', err);
+        throw new Error('参考图加载失败');
+      }
+
+      // 调用参考图替换 API
+      return aiService.generateWithReference(prompt, referenceImageBase64, userImageBase64, {
+        referenceMimeType: 'image/jpeg',
+        userMimeType: userMimeType,
+        referenceWeight: referenceWeight,
+        faceSwapMode: faceSwapMode
+      });
+    }
+
+    // 普通模式：使用原有的 Prompt 生成
     console.log('========== AI生图请求调试 ==========');
     console.log('[AI请求] 完整Prompt:');
     console.log(prompt);
-    console.log('[AI请求] 图片类型:', mimeType);
-    console.log('[AI请求] 图片大小:', imageBase64 ? Math.round(imageBase64.length / 1024) + 'KB' : '无图片');
+    console.log('[AI请求] 图片类型:', userMimeType);
+    console.log('[AI请求] 图片大小:', userImageBase64 ? Math.round(userImageBase64.length / 1024) + 'KB' : '无图片');
     console.log('====================================');
 
-    return aiService.generateImage(prompt, imageBase64, mimeType);
+    return aiService.generateImage(prompt, userImageBase64, userMimeType);
   },
 
   // 下载图片转base64

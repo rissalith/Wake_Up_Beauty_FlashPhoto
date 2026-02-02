@@ -1,0 +1,214 @@
+<!-- 创建模板页面 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-back-white.png" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">{{isEdit ? '编辑模板' : '创建模板'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 页面内容 -->
+  <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <!-- 步骤指示器 -->
+    <view class="step-indicator">
+      <view class="step-item {{currentStep >= 1 ? 'active' : ''}} {{currentStep > 1 ? 'done' : ''}}">
+        <view class="step-num">1</view>
+        <text class="step-text">基本信息</text>
+      </view>
+      <view class="step-line {{currentStep > 1 ? 'active' : ''}}"></view>
+      <view class="step-item {{currentStep >= 2 ? 'active' : ''}} {{currentStep > 2 ? 'done' : ''}}">
+        <view class="step-num">2</view>
+        <text class="step-text">上传图片</text>
+      </view>
+      <view class="step-line {{currentStep > 2 ? 'active' : ''}}"></view>
+      <view class="step-item {{currentStep >= 3 ? 'active' : ''}}">
+        <view class="step-num">3</view>
+        <text class="step-text">设置参数</text>
+      </view>
+    </view>
+
+    <!-- 步骤1：基本信息 -->
+    <view class="step-content" wx:if="{{currentStep === 1}}">
+      <view class="form-section">
+        <view class="form-item">
+          <text class="form-label required">模板名称</text>
+          <input
+            class="form-input"
+            placeholder="给模板起个名字"
+            value="{{formData.name}}"
+            bindinput="onInputChange"
+            data-field="name"
+            maxlength="20"
+          />
+          <text class="form-count">{{formData.name.length || 0}}/20</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">模板描述</text>
+          <textarea
+            class="form-textarea"
+            placeholder="描述一下这个模板的特点和适用场景"
+            value="{{formData.description}}"
+            bindinput="onInputChange"
+            data-field="description"
+            maxlength="100"
+          />
+          <text class="form-count">{{formData.description.length || 0}}/100</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">选择分类</text>
+          <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange">
+            <view class="form-picker">
+              <text class="picker-text {{categoryIndex >= 0 ? '' : 'placeholder'}}">
+                {{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择分类'}}
+              </text>
+              <image class="picker-arrow" src="/images/icon-arrow-down.png" mode="aspectFit"></image>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">标签</text>
+          <input
+            class="form-input"
+            placeholder="输入标签，用逗号分隔"
+            value="{{formData.tags}}"
+            bindinput="onInputChange"
+            data-field="tags"
+          />
+          <text class="form-hint">例如：春节,新年,喜庆</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">适用性别</text>
+          <view class="gender-options">
+            <view class="gender-option {{formData.gender === 'all' ? 'active' : ''}}" bindtap="selectGender" data-gender="all">
+              <text>不限</text>
+            </view>
+            <view class="gender-option {{formData.gender === 'male' ? 'active' : ''}}" bindtap="selectGender" data-gender="male">
+              <text>男</text>
+            </view>
+            <view class="gender-option {{formData.gender === 'female' ? 'active' : ''}}" bindtap="selectGender" data-gender="female">
+              <text>女</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label required">定价（醒币）</text>
+          <input
+            class="form-input"
+            type="number"
+            placeholder="设置使用价格"
+            value="{{formData.points_cost}}"
+            bindinput="onInputChange"
+            data-field="points_cost"
+          />
+          <text class="form-hint">建议定价 30-100 醒币</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 步骤2：上传图片 -->
+    <view class="step-content" wx:if="{{currentStep === 2}}">
+      <view class="upload-section">
+        <view class="upload-item">
+          <text class="upload-label required">封面图</text>
+          <text class="upload-hint">展示在市场列表中，建议尺寸 3:4</text>
+          <view class="upload-area" bindtap="chooseCoverImage">
+            <image wx:if="{{formData.cover_image}}" class="upload-preview" src="{{formData.cover_image}}" mode="aspectFill"></image>
+            <view wx:else class="upload-placeholder">
+              <image class="upload-icon" src="/images/icon-add-image.png" mode="aspectFit"></image>
+              <text class="upload-text">点击上传封面图</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="upload-item">
+          <text class="upload-label required">参考样式图</text>
+          <text class="upload-hint">AI 将基于此图生成，用户的脸会替换到这张图中</text>
+          <view class="upload-area" bindtap="chooseReferenceImage">
+            <image wx:if="{{formData.reference_image}}" class="upload-preview" src="{{formData.reference_image}}" mode="aspectFill"></image>
+            <view wx:else class="upload-placeholder">
+              <image class="upload-icon" src="/images/icon-add-image.png" mode="aspectFit"></image>
+              <text class="upload-text">点击上传参考图</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="tips-section">
+        <text class="tips-title">参考图要求</text>
+        <view class="tips-list">
+          <text class="tips-item">1. 图片中需要有清晰的人物面部</text>
+          <text class="tips-item">2. 建议使用高质量、高清晰度的图片</text>
+          <text class="tips-item">3. 避免使用版权图片或他人肖像</text>
+          <text class="tips-item">4. 不得包含违规内容</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 步骤3：设置参数 -->
+    <view class="step-content" wx:if="{{currentStep === 3}}">
+      <view class="prompt-section">
+        <view class="form-item">
+          <text class="form-label required">Prompt 模板</text>
+          <text class="form-hint">描述 AI 如何生成图片，可使用变量如 {{expression}}</text>
+          <textarea
+            class="form-textarea large"
+            placeholder="例如：基于参考图生成{{expression}}表情的照片，保持整体风格不变..."
+            value="{{formData.prompt_template}}"
+            bindinput="onInputChange"
+            data-field="prompt_template"
+            maxlength="500"
+          />
+          <text class="form-count">{{formData.prompt_template.length || 0}}/500</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">负面提示词</text>
+          <textarea
+            class="form-textarea"
+            placeholder="描述不希望出现的内容"
+            value="{{formData.negative_prompt}}"
+            bindinput="onInputChange"
+            data-field="negative_prompt"
+            maxlength="200"
+          />
+        </view>
+      </view>
+
+      <view class="preview-section">
+        <text class="preview-title">模板预览</text>
+        <view class="preview-card">
+          <image class="preview-cover" src="{{formData.cover_image || '/images/placeholder.png'}}" mode="aspectFill"></image>
+          <view class="preview-info">
+            <text class="preview-name">{{formData.name || '模板名称'}}</text>
+            <text class="preview-price">{{formData.points_cost || 50}} 醒币</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-bar" style="padding-bottom: env(safe-area-inset-bottom);">
+    <view class="btn-prev" wx:if="{{currentStep > 1}}" bindtap="prevStep">
+      <text class="btn-text">上一步</text>
+    </view>
+    <view class="btn-next {{canNext ? '' : 'disabled'}}" bindtap="nextStep">
+      <text class="btn-text">{{currentStep === 3 ? '提交审核' : '下一步'}}</text>
+    </view>
+    <view class="btn-draft" wx:if="{{currentStep === 3}}" bindtap="saveDraft">
+      <text class="btn-text">保存草稿</text>
+    </view>
+  </view>
+</view>
