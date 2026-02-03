@@ -49,6 +49,10 @@
           <el-icon><Files /></el-icon>
           <span>官方模板</span>
         </el-menu-item>
+        <el-menu-item index="/ai-agent">
+          <el-icon><MagicStick /></el-icon>
+          <span>AI 智能生成</span>
+        </el-menu-item>
         <el-menu-item index="/creator-scenes">
           <el-icon><Stamp /></el-icon>
           <span>创作者场景（旧）</span>

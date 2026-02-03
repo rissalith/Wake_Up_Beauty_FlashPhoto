@@ -89,6 +89,12 @@ const routes = [
         name: 'Monitor',
         component: () => import('../views/Monitor.vue'),
         meta: { title: '服务监控' }
+      },
+      {
+        path: 'ai-agent',
+        name: 'AiAgent',
+        component: () => import('../views/AiAgent.vue'),
+        meta: { title: 'AI 智能生成' }
       }
     ]
   }
