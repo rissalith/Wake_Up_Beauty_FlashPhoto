@@ -39,15 +39,19 @@
 
         <el-menu-item index="/scenes">
           <el-icon><Grid /></el-icon>
-          <span>场景管理</span>
+          <span>场景管理（旧）</span>
+        </el-menu-item>
+        <el-menu-item index="/template-management">
+          <el-icon><Document /></el-icon>
+          <span>模板管理</span>
         </el-menu-item>
         <el-menu-item index="/official-templates">
           <el-icon><Files /></el-icon>
-          <span>官方模板管理</span>
+          <span>官方模板</span>
         </el-menu-item>
         <el-menu-item index="/creator-scenes">
           <el-icon><Stamp /></el-icon>
-          <span>创作者场景审核</span>
+          <span>创作者场景（旧）</span>
         </el-menu-item>
         <el-menu-item index="/categories">
           <el-icon><Collection /></el-icon>

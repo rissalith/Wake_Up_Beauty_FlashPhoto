@@ -67,6 +67,12 @@ const routes = [
         meta: { title: '官方模板管理' }
       },
       {
+        path: 'template-management',
+        name: 'TemplateManagement',
+        component: () => import('../views/TemplateManagement.vue'),
+        meta: { title: '模板管理' }
+      },
+      {
         path: 'categories',
         name: 'Categories',
         component: () => import('../views/Categories.vue'),

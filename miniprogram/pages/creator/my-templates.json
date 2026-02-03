@@ -1,3 +1,6 @@
 {
-    "usingComponents": {}
+  "usingComponents": {},
+  "navigationBarTitleText": "我的模板",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

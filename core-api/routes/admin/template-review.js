@@ -49,7 +49,7 @@ router.get('/pending', (req, res) => {
   }
 });
 
-// 获取所有模板列表（支持筛选）
+// 获取所有模板列表（支持筛选，用于审核区域）
 router.get('/list', (req, res) => {
   try {
     const db = getDb();
@@ -62,8 +62,12 @@ router.get('/list', (req, res) => {
     const params = [];
 
     if (status) {
-      whereClause += ' AND t.status = ?';
-      params.push(status);
+      // 支持多状态筛选，用逗号分隔
+      const statuses = status.split(',').map(s => s.trim()).filter(Boolean);
+      if (statuses.length > 0) {
+        whereClause += ` AND t.status IN (${statuses.map(() => '?').join(',')})`;
+        params.push(...statuses);
+      }
     }
 
     if (keyword) {
@@ -85,9 +89,11 @@ router.get('/list', (req, res) => {
     const templates = db.prepare(`
       SELECT
         t.*,
-        c.creator_name, c.creator_avatar, c.user_id as creator_user_id
+        c.creator_name, c.creator_avatar, c.user_id as creator_user_id,
+        tc.name as category_name
       FROM user_templates t
       LEFT JOIN creators c ON t.creator_id = c.id
+      LEFT JOIN template_categories tc ON t.category_id = tc.id
       ${whereClause}
       ORDER BY t.updated_at DESC
       LIMIT ? OFFSET ?
@@ -98,7 +104,9 @@ router.get('/list', (req, res) => {
       data: {
         list: templates.map(t => ({
           ...t,
-          tags: t.tags ? t.tags.split(',') : []
+          tags: t.tags ? t.tags.split(',') : [],
+          is_featured: t.is_featured === 1,
+          is_official: t.is_official === 1
         })),
         total,
         page: parseInt(page),
@@ -179,7 +187,8 @@ router.post('/:id/approve', (req, res) => {
       return res.status(404).json({ code: 404, msg: '模板不存在' });
     }
 
-    if (template.status !== 'pending') {
+    // 支持 pending 和 reviewing 状态
+    if (!['pending', 'reviewing'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '模板状态不正确' });
     }
 
@@ -206,7 +215,7 @@ router.post('/:id/approve', (req, res) => {
     db.prepare(`
       INSERT INTO template_reviews (template_id, action, admin_id, reason)
       VALUES (?, 'approve', ?, ?)
-    `).run(id, admin_id || null, comment || '审核通过');
+    `).run(id, admin_id || null, comment || '人工审核通过');
 
     res.json({ code: 200, msg: '审核通过' });
   } catch (error) {
@@ -231,7 +240,8 @@ router.post('/:id/reject', (req, res) => {
       return res.status(404).json({ code: 404, msg: '模板不存在' });
     }
 
-    if (template.status !== 'pending') {
+    // 支持 pending 和 reviewing 状态
+    if (!['pending', 'reviewing'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '模板状态不正确' });
     }
 
@@ -1001,6 +1011,258 @@ router.post('/official/sync-from-scene', (req, res) => {
   } catch (error) {
     console.error('[Admin] 从场景同步失败:', error);
     res.status(500).json({ code: 500, msg: '同步失败' });
+  }
+});
+
+// ==================== 模板管理页面 API ====================
+
+// 获取所有模板（清单区域，支持多状态筛选）
+router.get('/all', (req, res) => {
+  try {
+    const db = getDb();
+    const { status, category_id, keyword, page = 1, pageSize = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    // 构建查询条件
+    let whereClause = "WHERE t.status NOT IN ('reviewing', 'pending')";
+    const params = [];
+
+    if (status) {
+      whereClause += ' AND t.status = ?';
+      params.push(status);
+    }
+
+    if (category_id) {
+      whereClause += ' AND t.category_id = ?';
+      params.push(category_id);
+    }
+
+    if (keyword) {
+      whereClause += ' AND (t.name LIKE ? OR t.description LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+
+    // 查询总数
+    const { total } = db.prepare(`
+      SELECT COUNT(*) as total FROM user_templates t ${whereClause}
+    `).get(...params);
+
+    // 查询列表
+    const templates = db.prepare(`
+      SELECT
+        t.*,
+        c.creator_name, c.creator_avatar, c.user_id as creator_user_id,
+        tc.name as category_name
+      FROM user_templates t
+      LEFT JOIN creators c ON t.creator_id = c.id
+      LEFT JOIN template_categories tc ON t.category_id = tc.id
+      ${whereClause}
+      ORDER BY t.is_official DESC, t.is_featured DESC, t.updated_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    res.json({
+      code: 200,
+      data: {
+        list: templates.map(t => ({
+          ...t,
+          tags: t.tags ? t.tags.split(',') : [],
+          is_featured: t.is_featured === 1,
+          is_official: t.is_official === 1
+        })),
+        total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 获取模板清单失败:', error);
+    res.status(500).json({ code: 500, msg: '获取模板清单失败' });
+  }
+});
+
+// 获取分类列表
+router.get('/categories', (req, res) => {
+  try {
+    const db = getDb();
+    const categories = db.prepare(`
+      SELECT * FROM template_categories ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({ code: 200, data: categories });
+  } catch (error) {
+    console.error('[Admin] 获取分类失败:', error);
+    res.status(500).json({ code: 500, msg: '获取分类失败' });
+  }
+});
+
+// 更新模板（后台编辑）
+router.put('/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const {
+      name, description, cover_image, reference_image,
+      category_id, tags, points_cost, is_featured
+    } = req.body;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    // 构建更新语句
+    const updates = [];
+    const params = [];
+
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+    if (cover_image !== undefined) { updates.push('cover_image = ?'); params.push(cover_image); }
+    if (reference_image !== undefined) { updates.push('reference_image = ?'); params.push(reference_image); }
+    if (category_id !== undefined) { updates.push('category_id = ?'); params.push(category_id); }
+    if (tags !== undefined) { updates.push('tags = ?'); params.push(tags); }
+    if (points_cost !== undefined) { updates.push('points_cost = ?'); params.push(points_cost); }
+    if (is_featured !== undefined) { updates.push('is_featured = ?'); params.push(is_featured); }
+
+    if (updates.length > 0) {
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(id);
+      db.prepare(`UPDATE user_templates SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+    }
+
+    res.json({ code: 200, msg: '更新成功' });
+  } catch (error) {
+    console.error('[Admin] 更新模板失败:', error);
+    res.status(500).json({ code: 500, msg: '更新模板失败' });
+  }
+});
+
+// 删除模板
+router.delete('/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    // 如果是已上架状态，先更新统计
+    if (template.status === 'active') {
+      db.prepare(`
+        UPDATE creators SET total_templates = total_templates - 1 WHERE id = ?
+      `).run(template.creator_id);
+
+      if (template.category_id) {
+        db.prepare(`
+          UPDATE template_categories SET template_count = template_count - 1 WHERE id = ?
+        `).run(template.category_id);
+      }
+    }
+
+    // 删除模板（级联删除步骤、选项、Prompt）
+    db.prepare('DELETE FROM user_templates WHERE id = ?').run(id);
+
+    // 记录日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, reason)
+      VALUES (?, 'delete', '后台删除')
+    `).run(id);
+
+    res.json({ code: 200, msg: '删除成功' });
+  } catch (error) {
+    console.error('[Admin] 删除模板失败:', error);
+    res.status(500).json({ code: 500, msg: '删除模板失败' });
+  }
+});
+
+// 下架模板
+router.post('/:id/offline', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    if (template.status !== 'active') {
+      return res.status(400).json({ code: 400, msg: '模板未上架' });
+    }
+
+    // 更新状态
+    db.prepare(`
+      UPDATE user_templates SET status = 'offline', updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).run(id);
+
+    // 更新统计
+    db.prepare(`
+      UPDATE creators SET total_templates = total_templates - 1 WHERE id = ?
+    `).run(template.creator_id);
+
+    if (template.category_id) {
+      db.prepare(`
+        UPDATE template_categories SET template_count = template_count - 1 WHERE id = ?
+      `).run(template.category_id);
+    }
+
+    // 记录日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, reason)
+      VALUES (?, 'offline', '后台下架')
+    `).run(id);
+
+    res.json({ code: 200, msg: '已下架' });
+  } catch (error) {
+    console.error('[Admin] 下架模板失败:', error);
+    res.status(500).json({ code: 500, msg: '下架失败' });
+  }
+});
+
+// 重新上架模板
+router.post('/:id/online', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    if (template.status !== 'offline') {
+      return res.status(400).json({ code: 400, msg: '只有已下架的模板可以重新上架' });
+    }
+
+    // 更新状态
+    db.prepare(`
+      UPDATE user_templates SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).run(id);
+
+    // 更新统计
+    db.prepare(`
+      UPDATE creators SET total_templates = total_templates + 1 WHERE id = ?
+    `).run(template.creator_id);
+
+    if (template.category_id) {
+      db.prepare(`
+        UPDATE template_categories SET template_count = template_count + 1 WHERE id = ?
+      `).run(template.category_id);
+    }
+
+    // 记录日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, reason)
+      VALUES (?, 'online', '后台重新上架')
+    `).run(id);
+
+    res.json({ code: 200, msg: '已上架' });
+  } catch (error) {
+    console.error('[Admin] 上架模板失败:', error);
+    res.status(500).json({ code: 500, msg: '上架失败' });
   }
 });
 

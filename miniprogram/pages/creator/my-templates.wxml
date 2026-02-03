@@ -1,2 +1,167 @@
 <!--pages/creator/my-templates.wxml-->
-<text>pages/creator/my-templates.wxml</text>
+<wxs module="utils">
+module.exports = {
+  getStatusText: function(status) {
+    var map = {
+      draft: '草稿',
+      reviewing: '审核中',
+      pending: '待审核',
+      active: '已上架',
+      rejected: '已拒绝',
+      offline: '已下架'
+    }
+    return map[status] || status
+  }
+}
+</wxs>
+
+<view class="my-templates">
+  <!-- 头部统计 -->
+  <view class="stats-header">
+    <view class="stats-item">
+      <text class="stats-value">{{stats.total}}</text>
+      <text class="stats-label">全部</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value active">{{stats.active}}</text>
+      <text class="stats-label">已上架</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value reviewing">{{stats.reviewing + stats.pending}}</text>
+      <text class="stats-label">审核中</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value rejected">{{stats.rejected}}</text>
+      <text class="stats-label">已拒绝</text>
+    </view>
+  </view>
+
+  <!-- Tab 筛选 -->
+  <view class="tabs">
+    <view class="tab {{currentTab === '' ? 'active' : ''}}" data-tab="" bindtap="onTabChange">
+      全部
+    </view>
+    <view class="tab {{currentTab === 'draft' ? 'active' : ''}}" data-tab="draft" bindtap="onTabChange">
+      草稿
+    </view>
+    <view class="tab {{currentTab === 'reviewing' ? 'active' : ''}}" data-tab="reviewing" bindtap="onTabChange">
+      审核中
+    </view>
+    <view class="tab {{currentTab === 'active' ? 'active' : ''}}" data-tab="active" bindtap="onTabChange">
+      已上架
+    </view>
+    <view class="tab {{currentTab === 'rejected' ? 'active' : ''}}" data-tab="rejected" bindtap="onTabChange">
+      已拒绝
+    </view>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="drag-tip" wx:if="{{templates.length > 1 && currentTab === ''}}">
+    <text class="tip-icon">💡</text>
+    <text>长按模板可拖拽排序</text>
+  </view>
+
+  <!-- 模板列表 -->
+  <view class="template-list">
+    <view
+      wx:for="{{templates}}"
+      wx:key="id"
+      class="template-card {{isDragging && dragIndex === index ? 'dragging' : ''}}"
+      style="{{isDragging && dragIndex === index ? 'transform: translateY(' + dragOffsetY + 'px);' : ''}}"
+      data-index="{{index}}"
+      bindlongpress="onDragStart"
+      bindtouchmove="onDragMove"
+      bindtouchend="onDragEnd"
+      bindtouchcancel="onDragEnd"
+    >
+      <!-- 拖拽手柄 -->
+      <view class="drag-handle" wx:if="{{currentTab === ''}}">
+        <text class="handle-icon">⋮⋮</text>
+      </view>
+
+      <!-- 模板信息 -->
+      <view class="template-content" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">
+        <image class="template-cover" src="{{item.cover_image}}" mode="aspectFill" />
+        <view class="template-info">
+          <view class="template-name">{{item.name}}</view>
+          <view class="template-desc">{{item.description || '暂无描述'}}</view>
+          <view class="template-meta">
+            <view class="status-tag {{item.status}}">{{utils.getStatusText(item.status)}}</view>
+            <text class="points">{{item.points_cost}} 醒币</text>
+            <text class="use-count" wx:if="{{item.status === 'active'}}">使用 {{item.use_count || 0}}</text>
+          </view>
+          <!-- 拒绝原因 -->
+          <view class="reject-reason" wx:if="{{item.status === 'rejected' && item.reject_reason}}">
+            <text class="reason-label">拒绝原因：</text>
+            <text class="reason-text">{{item.reject_reason}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="template-actions">
+        <!-- 草稿状态 -->
+        <block wx:if="{{item.status === 'draft'}}">
+          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">提交审核</view>
+          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+        </block>
+
+        <!-- 审核中状态 -->
+        <block wx:elif="{{item.status === 'reviewing' || item.status === 'pending'}}">
+          <view class="action-btn disabled">等待审核结果</view>
+        </block>
+
+        <!-- 已上架状态 -->
+        <block wx:elif="{{item.status === 'active'}}">
+          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+          <view class="action-btn offline" bindtap="offlineTemplate" data-id="{{item.id}}">下架</view>
+          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+        </block>
+
+        <!-- 已拒绝状态 -->
+        <block wx:elif="{{item.status === 'rejected'}}">
+          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">修改</view>
+          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新提交</view>
+          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+        </block>
+
+        <!-- 已下架状态 -->
+        <block wx:elif="{{item.status === 'offline'}}">
+          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新上架</view>
+          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && templates.length === 0}}">
+      <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit" />
+      <text class="empty-text">暂无模板</text>
+      <view class="empty-btn" bindtap="createTemplate">创建第一个模板</view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text>加载中...</text>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{!loading && templates.length > 0 && hasMore}}">
+      <text>上拉加载更多</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!loading && templates.length > 0 && !hasMore}}">
+      <text>没有更多了</text>
+    </view>
+  </view>
+
+  <!-- 创建按钮 -->
+  <view class="create-btn" bindtap="createTemplate">
+    <text class="create-icon">+</text>
+    <text>创建模板</text>
+  </view>
+</view>

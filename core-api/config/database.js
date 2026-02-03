@@ -620,6 +620,45 @@ function createTables() {
     // 索引可能已存在
   }
 
+  // 添加审核相关字段（如果不存在）
+  const templateColumns = db.prepare("PRAGMA table_info(user_templates)").all();
+  const columnNames = templateColumns.map(c => c.name);
+
+  // 审核得分
+  if (!columnNames.includes('review_score')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN review_score INTEGER DEFAULT 0');
+    } catch (e) {}
+  }
+
+  // 审核详情（JSON）
+  if (!columnNames.includes('review_details')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN review_details TEXT');
+    } catch (e) {}
+  }
+
+  // 审核时间
+  if (!columnNames.includes('reviewed_at')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN reviewed_at DATETIME');
+    } catch (e) {}
+  }
+
+  // 排序权重（用于创作者拖拽排序）
+  if (!columnNames.includes('sort_order')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN sort_order INTEGER DEFAULT 0');
+    } catch (e) {}
+  }
+
+  // 编辑版本号（用于追踪编辑次数）
+  if (!columnNames.includes('edit_version')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN edit_version INTEGER DEFAULT 1');
+    } catch (e) {}
+  }
+
   // 模板步骤配置表
   db.exec(`
     CREATE TABLE IF NOT EXISTS template_steps (
