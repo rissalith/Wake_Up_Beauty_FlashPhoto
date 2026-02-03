@@ -3,6 +3,15 @@
  */
 const { api } = require('../../config/api');
 
+// AI 生成步骤定义
+const AI_STEPS = [
+  { key: 'knowledge_retrieval', title: '知识检索', desc: '检索相关模板和最佳实践' },
+  { key: 'planning', title: '场景规划', desc: '分析需求并规划场景结构' },
+  { key: 'config_generation', title: '配置生成', desc: '生成详细的场景配置' },
+  { key: 'review', title: '质量审核', desc: '审核并优化配置质量' },
+  { key: 'done', title: '完成', desc: '生成完成' }
+];
+
 Page({
   data: {
     statusBarHeight: 20,
@@ -35,7 +44,13 @@ Page({
     aiProgress: 0,
     aiResult: null,
     aiTaskId: null,
-    aiPollTimer: null
+    aiPollTimer: null,
+    // 新增：AI 步骤状态
+    aiSteps: AI_STEPS.map(s => ({
+      ...s,
+      status: 'pending',
+      output: null
+    }))
   },
 
   onLoad(options) {
@@ -387,7 +402,13 @@ Page({
       aiDescription: '',
       aiGenerating: false,
       aiResult: null,
-      aiProgress: 0
+      aiProgress: 0,
+      // 重置步骤状态
+      aiSteps: AI_STEPS.map(s => ({
+        ...s,
+        status: 'pending',
+        output: null
+      }))
     });
   },
 
@@ -460,25 +481,84 @@ Page({
 
   // 轮询 AI 任务状态
   pollAiTaskStatus(taskId) {
+    // 步骤顺序映射（用于判断步骤是否已完成）
+    const stepOrderMap = {
+      'init': -1,  // 初始化状态
+      'knowledge_retrieval': 0,
+      'planning': 1,
+      'config_generation': 2,
+      'review': 3,
+      'review_iteration_1': 3,
+      'review_iteration_2': 3,
+      'review_iteration_3': 3,
+      'optimization_1': 3,
+      'optimization_2': 3,
+      'optimization_3': 3,
+      'image_generation': 3.5,
+      'done': 4
+    };
+
     const poll = async () => {
       try {
         const res = await api.aiAgentStatus(taskId);
 
         if (res.code === 200 && res.data) {
           const task = res.data;
+          const currentStep = task.current_step;
+          const stepOutputs = task.step_outputs || {};
+
+          console.log('[AI Poll] current_step:', currentStep, 'step_outputs:', stepOutputs);
+
+          // 更新步骤状态
+          const currentOrder = stepOrderMap[currentStep] ?? -1;
+          const updatedSteps = this.data.aiSteps.map(step => {
+            const stepOrder = stepOrderMap[step.key] ?? -1;
+
+            // 获取步骤输出
+            let output = stepOutputs[step.key] || null;
+
+            // 审核步骤特殊处理（合并 review_iteration_* 的输出）
+            if (step.key === 'review' && !output) {
+              output = stepOutputs.review || null;
+            }
+
+            // 如果是 init 状态，第一个步骤显示为进行中
+            if (currentStep === 'init' && step.key === 'knowledge_retrieval') {
+              return { ...step, status: 'in_progress', output: '准备中...' };
+            }
+
+            if (currentOrder > stepOrder) {
+              // 已完成的步骤
+              return { ...step, status: 'completed', output };
+            } else if (currentOrder === stepOrder || (step.key === 'review' && currentStep.startsWith('review_iteration'))) {
+              // 当前步骤
+              return { ...step, status: 'in_progress', output };
+            } else {
+              // 待处理的步骤
+              return { ...step, status: 'pending', output: null };
+            }
+          });
 
           // 更新进度
           const progressMap = {
-            'knowledge_retrieval': { progress: 20, text: '正在检索知识库...' },
-            'planning': { progress: 35, text: '正在规划场景...' },
-            'config_generation': { progress: 55, text: '正在生成配置...' },
-            'review_iteration_1': { progress: 75, text: '正在审核配置...' },
-            'review_iteration_2': { progress: 85, text: '正在优化配置...' },
+            'init': { progress: 5, text: '正在准备...' },
+            'knowledge_retrieval': { progress: 15, text: '正在检索知识库...' },
+            'planning': { progress: 30, text: '正在规划场景...' },
+            'config_generation': { progress: 50, text: '正在生成配置...' },
+            'review_iteration_1': { progress: 65, text: '正在审核配置...' },
+            'review_iteration_2': { progress: 75, text: '正在优化配置...' },
+            'review_iteration_3': { progress: 85, text: '正在优化配置...' },
+            'optimization_1': { progress: 70, text: '正在优化配置...' },
+            'optimization_2': { progress: 80, text: '正在优化配置...' },
+            'optimization_3': { progress: 90, text: '正在优化配置...' },
+            'image_generation': { progress: 90, text: '正在生成图片...' },
             'done': { progress: 100, text: '生成完成!' }
           };
 
-          const stepInfo = progressMap[task.current_step] || { progress: task.progress || 50, text: '处理中...' };
+          const stepInfo = progressMap[currentStep] || { progress: task.progress || 50, text: '处理中...' };
+
           this.setData({
+            aiSteps: updatedSteps,
             aiProgress: stepInfo.progress,
             aiGeneratingText: stepInfo.text
           });

@@ -49,14 +49,27 @@ router.post('/generate', async (req, res) => {
 
     // 异步生成（返回任务 ID）
     if (options.async) {
-      const task = require('../../lib/knowledge-base').createAgentTask(description);
+      const { createAgentTask, updateAgentTask } = require('../../lib/knowledge-base');
+      const task = createAgentTask(description);
+      console.log('[AI Agent API] 创建异步任务:', task.task_id);
 
-      // 在后台执行生成
+      // 在后台执行生成，传入已创建的 taskId
       setImmediate(async () => {
         try {
-          await orchestrator.generateSceneConfig(description, options);
+          console.log('[AI Agent API] 开始后台执行任务:', task.task_id);
+          await orchestrator.generateSceneConfig(description, { ...options, taskId: task.task_id });
+          console.log('[AI Agent API] 后台任务完成:', task.task_id);
         } catch (error) {
-          console.error('[AI Agent API] 后台生成失败:', error.message);
+          console.error('[AI Agent API] 后台生成失败:', error.message, error.stack);
+          // 更新任务状态为失败
+          try {
+            updateAgentTask(task.task_id, {
+              status: 'failed',
+              error_message: error.message
+            });
+          } catch (e) {
+            console.error('[AI Agent API] 更新失败状态失败:', e.message);
+          }
         }
       });
 
