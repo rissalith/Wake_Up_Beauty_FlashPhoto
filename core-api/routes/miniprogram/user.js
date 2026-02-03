@@ -13,6 +13,43 @@ const WX_CONFIG = {
   appSecret: process.env.WX_SECRET || ''
 };
 
+// 用户认证中间件
+const authMiddleware = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ code: 401, message: '未提供认证信息' });
+    }
+
+    // 支持 Bearer token 或直接传 userId
+    let userId = authHeader;
+    if (authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+
+    if (!userId) {
+      return res.status(401).json({ code: 401, message: '无效的认证信息' });
+    }
+
+    // 查找用户
+    const db = getDb();
+    let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    if (!user) {
+      user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
+    }
+
+    if (!user) {
+      return res.status(401).json({ code: 401, message: '用户不存在' });
+    }
+
+    req.user = { userId: user.id, openid: user.openid };
+    next();
+  } catch (error) {
+    console.error('认证中间件错误:', error);
+    res.status(500).json({ code: 500, message: '服务器错误' });
+  }
+};
+
 // 辅助函数：通过 id 或 openid 查找用户
 function findUserByIdOrOpenid(userId) {
   const db = getDb();
@@ -330,3 +367,4 @@ router.get('/stats/:userId', (req, res) => {
 });
 
 module.exports = router;
+module.exports.authMiddleware = authMiddleware;
