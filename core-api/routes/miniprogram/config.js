@@ -46,18 +46,38 @@ router.get('/init', (req, res) => {
       system[c.config_key] = value;
     });
 
-    // 2. 获取场景列表（官方场景 + 已审核的创作者场景）
-    const scenes = db.prepare(`
-      SELECT s.*,
-        CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
-        CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
-      FROM scenes s
-      LEFT JOIN creators c ON s.creator_id = c.user_id
-      LEFT JOIN users u ON s.creator_id = u.id
-      WHERE s.status IN ('active', 'coming_soon')
-        AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))
-      ORDER BY s.source ASC, s.sort_order ASC, s.use_count DESC, s.id ASC
-    `).all();
+    // 2. 检查 scenes 表是否有 source 字段
+    let hasSourceColumn = false;
+    try {
+      const tableInfo = db.prepare("PRAGMA table_info(scenes)").all();
+      hasSourceColumn = tableInfo.some(col => col.name === 'source');
+    } catch (e) {
+      console.error('检查 scenes 表结构失败:', e);
+    }
+
+    // 3. 获取场景列表
+    let scenes;
+    if (hasSourceColumn) {
+      // 新版查询：支持创作者场景
+      scenes = db.prepare(`
+        SELECT s.*,
+          CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
+          CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
+        FROM scenes s
+        LEFT JOIN creators c ON s.creator_id = c.user_id
+        LEFT JOIN users u ON s.creator_id = u.id
+        WHERE s.status IN ('active', 'coming_soon')
+          AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))
+        ORDER BY COALESCE(s.source, 'official') ASC, s.sort_order ASC, COALESCE(s.use_count, 0) DESC, s.id ASC
+      `).all();
+    } else {
+      // 旧版查询：只有官方场景
+      scenes = db.prepare(`
+        SELECT * FROM scenes
+        WHERE status IN ('active', 'coming_soon')
+        ORDER BY sort_order ASC, id ASC
+      `).all();
+    }
 
     // 根据语言处理场景名称和描述
     const localizedScenes = scenes.map(scene => {
@@ -71,7 +91,7 @@ router.get('/init', (req, res) => {
       return localizedScene;
     });
 
-    // 3. 获取版本号
+    // 4. 获取版本号
     const versionConfig = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'config_version'").get();
     const version = versionConfig ? parseInt(versionConfig.config_value) || 1 : 1;
 
@@ -369,32 +389,56 @@ router.get('/scenes', (req, res) => {
     const db = getDb();
     const { status, include_creator = 'true' } = req.query;
 
-    let sql = `
-      SELECT s.*,
-        CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
-        CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
-      FROM scenes s
-      LEFT JOIN creators c ON s.creator_id = c.user_id
-      LEFT JOIN users u ON s.creator_id = u.id
-      WHERE 1=1
-    `;
-    const params = [];
-
-    if (status) {
-      sql += " AND s.status = ?";
-      params.push(status);
+    // 检查 scenes 表是否有 source 字段
+    let hasSourceColumn = false;
+    try {
+      const tableInfo = db.prepare("PRAGMA table_info(scenes)").all();
+      hasSourceColumn = tableInfo.some(col => col.name === 'source');
+    } catch (e) {
+      console.error('检查 scenes 表结构失败:', e);
     }
 
-    // 是否包含创作者场景
-    if (include_creator === 'true') {
-      sql += " AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))";
+    let scenes;
+    if (hasSourceColumn) {
+      let sql = `
+        SELECT s.*,
+          CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
+          CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
+        FROM scenes s
+        LEFT JOIN creators c ON s.creator_id = c.user_id
+        LEFT JOIN users u ON s.creator_id = u.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (status) {
+        sql += " AND s.status = ?";
+        params.push(status);
+      }
+
+      // 是否包含创作者场景
+      if (include_creator === 'true') {
+        sql += " AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))";
+      } else {
+        sql += " AND s.source = 'official'";
+      }
+
+      sql += " ORDER BY COALESCE(s.source, 'official') ASC, s.sort_order ASC, COALESCE(s.use_count, 0) DESC, s.id ASC";
+
+      scenes = db.prepare(sql).all(...params);
     } else {
-      sql += " AND s.source = 'official'";
+      // 旧版查询
+      let sql = "SELECT * FROM scenes WHERE 1=1";
+      const params = [];
+
+      if (status) {
+        sql += " AND status = ?";
+        params.push(status);
+      }
+
+      sql += " ORDER BY sort_order ASC, id ASC";
+      scenes = db.prepare(sql).all(...params);
     }
-
-    sql += " ORDER BY s.source ASC, s.sort_order ASC, s.use_count DESC, s.id ASC";
-
-    const scenes = db.prepare(sql).all(...params);
 
     // 添加创作者标识
     const processedScenes = scenes.map(scene => ({
