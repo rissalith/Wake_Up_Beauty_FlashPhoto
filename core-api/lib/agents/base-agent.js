@@ -132,13 +132,16 @@ class BaseAgent {
           }
         );
 
-        // 提取文本响应
-        const textPart = response.data.candidates?.[0]?.content?.parts?.find(p => p.text);
-        if (!textPart) {
+        // 提取文本响应 - 取最后一个 text part（跳过思考过程）
+        const parts = response.data.candidates?.[0]?.content?.parts || [];
+        const textParts = parts.filter(p => p.text && !p.thought);
+
+        if (textParts.length === 0) {
           throw new Error('LLM 返回内容为空');
         }
 
-        return textPart.text;
+        // 返回最后一个 text part（通常是最终结果）
+        return textParts[textParts.length - 1].text;
 
       } catch (error) {
         lastError = error;
