@@ -120,11 +120,27 @@ router.get('/scene/:sceneId', (req, res) => {
     // 判断是否需要英文翻译
     const useEnglish = lang === 'en';
 
+    // 检查 user_templates 表是否存在
+    let hasTemplatesTable = false;
+    try {
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user_templates'").get();
+      hasTemplatesTable = !!tables;
+    } catch (e) {
+      console.error('检查 user_templates 表失败:', e);
+    }
+
     // 1. 优先从 user_templates 查询官方模板（模板兼容层）
-    const template = db.prepare(`
-      SELECT * FROM user_templates
-      WHERE (source_scene_id = ? OR id = ?) AND is_official = 1
-    `).get(sceneId, `official_${sceneId}`);
+    let template = null;
+    if (hasTemplatesTable) {
+      try {
+        template = db.prepare(`
+          SELECT * FROM user_templates
+          WHERE (source_scene_id = ? OR id = ?) AND is_official = 1
+        `).get(sceneId, `official_${sceneId}`);
+      } catch (e) {
+        console.error('查询 user_templates 失败:', e);
+      }
+    }
 
     if (template) {
       // 从模板系统返回数据
