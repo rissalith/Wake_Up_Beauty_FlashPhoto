@@ -1,9 +1,14 @@
 /**
  * AI 配置生成服务
- * 使用 Claude API 自动生成场景配置
+ * 使用 Gemini API 自动生成场景配置
  */
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+const axios = require('axios');
+
+// AI 服务配置（与 ai-review.js 保持一致）
+const AI_API_KEY = process.env.AI_API_KEY || '';
+const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
+const AI_MODEL = process.env.AI_CONFIG_MODEL || 'gemini-2.0-flash';
 
 // System Prompt - 指导 AI 生成符合格式的配置
 const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家。根据用户的描述，生成完整的场景配置。
@@ -75,14 +80,13 @@ const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家�
 }`;
 
 /**
- * 调用 Claude API 生成场景配置
+ * 调用 Gemini API 生成场景配置
  * @param {string} description - 用户输入的场景描述
- * @param {string} apiKey - Claude API Key
  * @returns {Promise<Object>} 生成的配置
  */
-async function generateSceneConfig(description, apiKey) {
-  if (!apiKey) {
-    throw new Error('未配置 CLAUDE_API_KEY');
+async function generateSceneConfig(description) {
+  if (!AI_API_KEY) {
+    throw new Error('未配置 AI_API_KEY');
   }
 
   const userPrompt = `请根据以下描述生成一个完整的 AI 图片生成场景配置：
@@ -92,37 +96,41 @@ ${description}
 请直接返回 JSON 格式的配置，不要包含任何其他文字。`;
 
   try {
-    const response = await fetch(CLAUDE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: userPrompt
-          }
+    const requestData = {
+      contents: [{
+        parts: [
+          { text: SYSTEM_PROMPT },
+          { text: userPrompt }
         ]
-      })
-    });
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 4096
+      }
+    };
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Claude API 错误: ${response.status} - ${errorData.error?.message || '未知错误'}`);
+    console.log('[AI Config Generator] 调用 Gemini API:', AI_MODEL);
+
+    const response = await axios.post(
+      `${AI_API_BASE}/v1beta/models/${AI_MODEL}:generateContent`,
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${AI_API_KEY}`
+        },
+        timeout: 60000
+      }
+    );
+
+    // 解析响应
+    const textPart = response.data.candidates?.[0]?.content?.parts?.find(p => p.text);
+    if (!textPart) {
+      throw new Error('Gemini API 返回内容为空');
     }
 
-    const data = await response.json();
-    const content = data.content?.[0]?.text;
-
-    if (!content) {
-      throw new Error('Claude API 返回内容为空');
-    }
+    const content = textPart.text;
+    console.log('[AI Config Generator] API 返回内容长度:', content.length);
 
     // 解析 JSON
     const config = parseJsonResponse(content);
@@ -130,9 +138,15 @@ ${description}
     // 验证配置
     validateConfig(config);
 
-    return config;
+    // 补全配置
+    return completeConfig(config);
+
   } catch (error) {
-    console.error('[AI Config Generator] 生成失败:', error);
+    console.error('[AI Config Generator] 生成失败:', error.message);
+    if (error.response) {
+      console.error('[AI Config Generator] API 响应状态:', error.response.status);
+      console.error('[AI Config Generator] API 响应数据:', JSON.stringify(error.response.data).substring(0, 500));
+    }
     throw error;
   }
 }

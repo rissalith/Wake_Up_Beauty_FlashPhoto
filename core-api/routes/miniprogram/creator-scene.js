@@ -537,15 +537,15 @@ router.post('/ai-generate', authMiddleware, creatorMiddleware, async (req, res) 
       return res.status(400).json({ code: 400, message: '请输入场景描述（至少2个字符）' });
     }
 
-    const apiKey = process.env.CLAUDE_API_KEY;
-    if (!apiKey) {
+    // 检查 AI_API_KEY（Gemini API）
+    if (!process.env.AI_API_KEY) {
       return res.status(500).json({ code: 500, message: 'AI 服务未配置，请联系管理员' });
     }
 
     console.log('[AI Generate] 开始生成场景配置:', description);
 
-    // 调用 AI 生成配置
-    const rawConfig = await generateSceneConfig(description.trim(), apiKey);
+    // 调用 AI 生成配置（使用 Gemini API）
+    const rawConfig = await generateSceneConfig(description.trim());
 
     // 补全配置
     const config = completeConfig(rawConfig);
@@ -576,15 +576,15 @@ router.post('/ai-create', authMiddleware, creatorMiddleware, async (req, res) =>
       return res.status(400).json({ code: 400, message: '请输入场景描述' });
     }
 
-    const apiKey = process.env.CLAUDE_API_KEY;
-    if (!apiKey) {
+    // 检查 AI_API_KEY（Gemini API）
+    if (!process.env.AI_API_KEY) {
       return res.status(500).json({ code: 500, message: 'AI 服务未配置' });
     }
 
     console.log('[AI Create] 开始生成并创建场景:', description);
 
-    // 生成配置
-    const rawConfig = await generateSceneConfig(description.trim(), apiKey);
+    // 生成配置（使用 Gemini API）
+    const rawConfig = await generateSceneConfig(description.trim());
     const config = completeConfig(rawConfig);
 
     // 创建场景
