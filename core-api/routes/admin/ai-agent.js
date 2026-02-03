@@ -54,7 +54,8 @@ router.post('/generate', async (req, res) => {
       console.log('[AI Agent API] 创建异步任务:', task.task_id);
 
       // 在后台执行生成，传入已创建的 taskId
-      setImmediate(async () => {
+      // 使用 setTimeout 确保异步执行
+      setTimeout(async () => {
         try {
           console.log('[AI Agent API] 开始后台执行任务:', task.task_id);
           await orchestrator.generateSceneConfig(description, { ...options, taskId: task.task_id });
@@ -71,7 +72,7 @@ router.post('/generate', async (req, res) => {
             console.error('[AI Agent API] 更新失败状态失败:', e.message);
           }
         }
-      });
+      }, 0);
 
       return res.json({
         code: 200,
