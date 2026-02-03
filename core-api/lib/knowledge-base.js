@@ -60,11 +60,19 @@ function initKnowledgeBase(database) {
         error_message TEXT,
         knowledge_used TEXT,
         execution_log TEXT,
+        step_outputs TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         completed_at DATETIME
       )
     `);
+
+    // 添加 step_outputs 列（如果不存在）
+    try {
+      db.exec(`ALTER TABLE agent_tasks ADD COLUMN step_outputs TEXT`);
+    } catch (e) {
+      // 列已存在，忽略错误
+    }
 
     db.exec(`
       CREATE TABLE IF NOT EXISTS generation_history (
