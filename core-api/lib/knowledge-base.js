@@ -691,6 +691,10 @@ function tryParseJSON(str) {
  * @returns {Object} 任务信息
  */
 function createAgentTask(description) {
+  if (!db) {
+    throw new Error('数据库未初始化');
+  }
+
   const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
@@ -716,10 +720,15 @@ function createAgentTask(description) {
  * @param {Object} updates - 更新数据
  */
 function updateAgentTask(taskId, updates) {
+  if (!db) {
+    console.error('[知识库] 数据库未初始化，无法更新任务');
+    return;
+  }
+
   const allowedFields = [
     'status', 'current_step', 'progress', 'config_result',
     'images_result', 'review_score', 'iterations', 'error_message',
-    'knowledge_used', 'execution_log', 'completed_at'
+    'knowledge_used', 'execution_log', 'completed_at', 'step_outputs'
   ];
 
   const updateFields = [];
@@ -743,7 +752,9 @@ function updateAgentTask(taskId, updates) {
 
   try {
     const sql = `UPDATE agent_tasks SET ${updateFields.join(', ')} WHERE id = ?`;
-    db.prepare(sql).run(...params);
+    console.log('[知识库] 更新任务:', taskId, 'fields:', Object.keys(updates).join(','));
+    const result = db.prepare(sql).run(...params);
+    console.log('[知识库] 更新结果:', result.changes, '行受影响');
   } catch (error) {
     console.error('[知识库] 更新任务失败:', error.message);
   }
@@ -755,6 +766,11 @@ function updateAgentTask(taskId, updates) {
  * @returns {Object|null} 任务信息
  */
 function getAgentTask(taskId) {
+  if (!db) {
+    console.error('[知识库] 数据库未初始化，无法获取任务');
+    return null;
+  }
+
   try {
     const sql = `SELECT * FROM agent_tasks WHERE id = ?`;
     const result = db.prepare(sql).get(taskId);
@@ -764,7 +780,8 @@ function getAgentTask(taskId) {
         ...result,
         config_result: tryParseJSON(result.config_result),
         images_result: tryParseJSON(result.images_result),
-        execution_log: tryParseJSON(result.execution_log)
+        execution_log: tryParseJSON(result.execution_log),
+        step_outputs: tryParseJSON(result.step_outputs)
       };
     }
     return null;
