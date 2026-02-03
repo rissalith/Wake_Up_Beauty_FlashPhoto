@@ -44,17 +44,25 @@ class AgentOrchestrator {
     const startTime = Date.now();
     console.log('[Orchestrator] 开始生成场景配置');
     console.log('[Orchestrator] 用户描述:', userDescription);
+    console.log('[Orchestrator] 传入的 options:', JSON.stringify(options));
 
-    // 创建任务
-    const task = createAgentTask(userDescription);
-    const taskId = task.task_id;
+    // 使用传入的 taskId 或创建新任务
+    let taskId = options.taskId;
+    console.log('[Orchestrator] 传入的 taskId:', taskId);
+    if (!taskId) {
+      console.log('[Orchestrator] 没有传入 taskId，创建新任务');
+      const task = createAgentTask(userDescription);
+      taskId = task.task_id;
+    }
+    console.log('[Orchestrator] 使用的 taskId:', taskId);
 
     const context = {
       taskId,
       userDescription,
       iteration: 0,
       history: [],
-      knowledgeUsed: []
+      knowledgeUsed: [],
+      stepOutputs: {}  // 存储每个步骤的输出摘要
     };
 
     try {
@@ -63,7 +71,8 @@ class AgentOrchestrator {
       updateAgentTask(taskId, {
         status: 'processing',
         current_step: 'knowledge_retrieval',
-        progress: 10
+        progress: 10,
+        step_outputs: context.stepOutputs
       });
 
       const knowledge = smartSearch(userDescription);
@@ -73,6 +82,10 @@ class AgentOrchestrator {
         ...knowledge.promptPatterns.map(p => p.id),
         ...knowledge.bestPractices.map(b => b.id)
       ];
+
+      // 记录步骤输出
+      const totalKnowledge = knowledge.templates.length + knowledge.promptPatterns.length + knowledge.bestPractices.length;
+      context.stepOutputs.knowledge_retrieval = `找到 ${totalKnowledge} 条相关知识`;
 
       console.log('[Orchestrator] 检索到知识:', {
         templates: knowledge.templates.length,
@@ -85,7 +98,8 @@ class AgentOrchestrator {
       console.log('[Orchestrator] Step 2: 规划阶段');
       updateAgentTask(taskId, {
         current_step: 'planning',
-        progress: 20
+        progress: 20,
+        step_outputs: context.stepOutputs
       });
 
       const planResult = await this.plannerAgent.execute(context);
@@ -100,13 +114,17 @@ class AgentOrchestrator {
         duration: planResult.duration
       });
 
+      // 记录步骤输出
+      context.stepOutputs.planning = `场景: ${context.plan.scene_name || context.plan.scene_type}`;
+
       console.log('[Orchestrator] 规划完成:', context.plan.scene_name);
 
       // Step 3: 生成配置
       console.log('[Orchestrator] Step 3: 配置生成');
       updateAgentTask(taskId, {
         current_step: 'config_generation',
-        progress: 40
+        progress: 40,
+        step_outputs: context.stepOutputs
       });
 
       const configResult = await this.configAgent.execute(context);
@@ -121,6 +139,9 @@ class AgentOrchestrator {
         duration: configResult.duration
       });
 
+      // 记录步骤输出
+      context.stepOutputs.config_generation = `生成 ${context.config.steps?.length || 0} 个步骤`;
+
       console.log('[Orchestrator] 配置生成完成, 步骤数:', context.config.steps.length);
 
       // Step 4: 审核与优化循环
@@ -130,7 +151,8 @@ class AgentOrchestrator {
         updateAgentTask(taskId, {
           current_step: `review_iteration_${context.iteration + 1}`,
           progress: 50 + context.iteration * 10,
-          iterations: context.iteration + 1
+          iterations: context.iteration + 1,
+          step_outputs: context.stepOutputs
         });
 
         const reviewResult = await this.reviewAgent.execute(context);
@@ -144,15 +166,20 @@ class AgentOrchestrator {
           console.log('[Orchestrator] 审核通过, 得分:', reviewResult.data.score);
           reviewPassed = true;
           context.reviewResult = reviewResult.data;
+          // 记录审核通过的输出
+          context.stepOutputs.review = `审核通过，得分 ${reviewResult.data.score || 0}`;
         } else {
           console.log('[Orchestrator] 审核未通过, 进行优化');
           context.reviewResult = reviewResult.data;
           context.previousReview = reviewResult.data;
+          // 记录审核中的输出
+          context.stepOutputs.review = `迭代优化中 (${context.iteration + 1}/${this.maxIterations})`;
 
           // 优化配置
           updateAgentTask(taskId, {
             current_step: `optimization_${context.iteration + 1}`,
-            progress: 55 + context.iteration * 10
+            progress: 55 + context.iteration * 10,
+            step_outputs: context.stepOutputs
           });
 
           const optimizeResult = await this.optimizerAgent.execute(context);
@@ -175,7 +202,8 @@ class AgentOrchestrator {
         console.log('[Orchestrator] Step 5: 图片生成');
         updateAgentTask(taskId, {
           current_step: 'image_generation',
-          progress: 80
+          progress: 80,
+          step_outputs: context.stepOutputs
         });
 
         const imageResult = await this.imageAgent.execute(context);
@@ -199,6 +227,9 @@ class AgentOrchestrator {
       // Step 6: 完成
       const duration = Date.now() - startTime;
       console.log(`[Orchestrator] 生成完成, 总耗时: ${duration}ms`);
+
+      // 记录完成输出
+      context.stepOutputs.done = `生成完成`;
 
       // 更新知识库使用次数
       if (context.knowledgeUsed.length > 0) {
@@ -226,6 +257,7 @@ class AgentOrchestrator {
         iterations: context.iteration + 1,
         knowledge_used: context.knowledgeUsed.join(','),
         execution_log: context.history,
+        step_outputs: context.stepOutputs,
         completed_at: new Date().toISOString()
       });
 
