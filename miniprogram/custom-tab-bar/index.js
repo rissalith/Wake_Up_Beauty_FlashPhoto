@@ -1,21 +1,25 @@
-const lang = require('../utils/lang.js');
-const imageConfig = require('../config/images.js');
-
+const { images } = require('../config/images');
 const HISTORY_KEY = 'photoHistory';
 
 Component({
   data: {
     selected: 0,
     generatingCount: 0,
-    disabled: false,  // TabBar禁用状态
-    disabledReason: '',  // 禁用原因
-    i18n: {},
-    images: imageConfig.images
+    disabled: false,
+    disabledReason: '',
+    // TabBar 图标
+    tabHome: images.tabHome,
+    tabHomeActive: images.tabHomeActive,
+    tabCreator: images.tabCreator,
+    tabCreatorActive: images.tabCreatorActive,
+    tabHistory: images.tabHistory,
+    tabHistoryActive: images.tabHistoryActive,
+    tabMine: images.tabMine,
+    tabMineActive: images.tabMineActive
   },
   lifetimes: {
     attached() {
       this.updateGeneratingCount();
-      this.loadLanguage();
 
       // 监听全局历史更新事件，实时刷新进度
       const app = getApp();
@@ -59,7 +63,6 @@ Component({
   pageLifetimes: {
     show() {
       this.updateGeneratingCount();
-      this.loadLanguage();
     }
   },
   methods: {
@@ -87,11 +90,9 @@ Component({
         this.setData({ generatingCount: 0 });
       }
     },
+    // 保持兼容性的空方法
     loadLanguage() {
-      this.setData({
-        i18n: lang.getLangData(),
-        images: imageConfig.images
-      });
+      // 简约版 TabBar 不需要多语言切换
     }
   }
 });

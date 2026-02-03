@@ -1,12 +1,23 @@
 <!-- 模板市场首页 -->
+<wxs src="../../utils/i18n.wxs" module="i18n" />
+
 <view class="page-container">
   <!-- 自定义导航栏 -->
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-content">
-      <view class="nav-search" bindtap="goToSearch">
-        <image class="search-icon" src="/images/icon-search.png" mode="aspectFit"></image>
-        <text class="search-placeholder">搜索模板</text>
+      <!-- 左侧语言切换 -->
+      <view class="lang-switch">
+        <view class="lang-option {{currentLang === 'zh-CN' ? 'active' : ''}}" bindtap="switchLanguage" data-lang="zh-CN">
+          <text>简</text>
+        </view>
+        <view class="lang-option {{currentLang === 'en' ? 'active' : ''}}" bindtap="switchLanguage" data-lang="en">
+          <text>En</text>
+        </view>
       </view>
+      <!-- 中间标题图片 -->
+      <image class="nav-title-img" src="{{titleImage}}" mode="heightFix"></image>
+      <!-- 右侧占位 -->
+      <view class="nav-placeholder"></view>
     </view>
   </view>
 
@@ -15,14 +26,14 @@
     <scroll-view class="tabs-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
       <view class="tabs-container">
         <view
-          class="tab-item {{currentCategory === item.id ? 'active' : ''}}"
+          class="tab-item {{(currentCategory === item.id) || (currentCategory === null && index === 0) ? 'active' : ''}}"
           wx:for="{{categories}}"
+          wx:for-index="index"
           wx:key="id"
           bindtap="switchCategory"
           data-id="{{item.id}}"
         >
-          <text class="tab-text">{{item.name}}</text>
-          <view class="tab-indicator" wx:if="{{currentCategory === item.id}}"></view>
+          <text class="tab-text">{{i18n.getName(item, currentLang)}}</text>
         </view>
       </view>
     </scroll-view>
@@ -58,26 +69,11 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <!-- 官方标签 -->
-            <view class="official-tag" wx:if="{{item.is_official}}">官方</view>
-            <!-- 精选标签 -->
-            <view class="featured-tag" wx:if="{{item.is_featured && !item.is_official}}">精选</view>
           </view>
-          <view class="card-info">
-            <text class="card-title">{{item.name}}</text>
-            <view class="card-meta">
-              <view class="card-creator" wx:if="{{item.creator}}">
-                <image class="creator-avatar" src="{{item.creator.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-                <text class="creator-name">{{item.creator.name}}</text>
-              </view>
-              <view class="card-stats">
-                <text class="stat-item">{{item.use_count || 0}}次使用</text>
-              </view>
-            </view>
-            <view class="card-action">
-              <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
-                <text class="action-text">+ 做同款</text>
-              </view>
+          <view class="card-bottom">
+            <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
+            <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
+              <text class="action-text">{{i18n.text('✦ 做同款', '✦ Try', currentLang)}}</text>
             </view>
           </view>
         </view>
@@ -99,24 +95,11 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <view class="official-tag" wx:if="{{item.is_official}}">官方</view>
-            <view class="featured-tag" wx:if="{{item.is_featured && !item.is_official}}">精选</view>
           </view>
-          <view class="card-info">
-            <text class="card-title">{{item.name}}</text>
-            <view class="card-meta">
-              <view class="card-creator" wx:if="{{item.creator}}">
-                <image class="creator-avatar" src="{{item.creator.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-                <text class="creator-name">{{item.creator.name}}</text>
-              </view>
-              <view class="card-stats">
-                <text class="stat-item">{{item.use_count || 0}}次使用</text>
-              </view>
-            </view>
-            <view class="card-action">
-              <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
-                <text class="action-text">+ 做同款</text>
-              </view>
+          <view class="card-bottom">
+            <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
+            <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
+              <text class="action-text">{{i18n.text('✦ 做同款', '✦ Try', currentLang)}}</text>
             </view>
           </view>
         </view>
@@ -126,19 +109,18 @@
     <!-- 加载状态 -->
     <view class="loading-more" wx:if="{{loading}}">
       <view class="loading-spinner"></view>
-      <text class="loading-text">加载中...</text>
+      <text class="loading-text">{{i18n.text('加载中...', 'Loading...', currentLang)}}</text>
     </view>
 
     <!-- 没有更多 -->
     <view class="no-more" wx:if="{{!hasMore && templates.length > 0}}">
-      <text class="no-more-text">— 没有更多了 —</text>
+      <text class="no-more-text">— {{i18n.text('没有更多了', 'No more', currentLang)}} —</text>
     </view>
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{!loading && templates.length === 0}}">
-      <image class="empty-icon" src="/images/empty-template.png" mode="aspectFit"></image>
-      <text class="empty-text">暂无模板</text>
-      <text class="empty-hint">创作者们正在努力创作中...</text>
+      <text class="empty-text">{{i18n.text('暂无模板', 'No templates', currentLang)}}</text>
+      <text class="empty-hint">{{i18n.text('创作者们正在努力创作中...', 'Creators are working hard...', currentLang)}}</text>
     </view>
 
     <!-- 底部安全区 -->

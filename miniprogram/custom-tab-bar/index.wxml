@@ -1,21 +1,26 @@
 <view class="tab-bar {{disabled ? 'disabled' : ''}}">
-  <view class="tab-bar-item {{selected === 0 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/index/index" data-index="0">
-    <view class="tab-icon-wrap">
-      <image class="tab-icon" src="{{selected === 0 ? images.tabHomeActive : images.tabHome}}" mode="aspectFit"></image>
-    </view>
-    <text class="tab-text">{{i18n.tabHome || '首页'}}</text>
+  <!-- 首页 -->
+  <view class="tab-bar-item {{selected === 0 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/market/market" data-index="0">
+    <image class="tab-icon" src="{{selected === 0 ? tabHomeActive : tabHome}}" mode="aspectFit"></image>
+    <text class="tab-text">首页</text>
   </view>
-  <view class="tab-bar-item {{selected === 1 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/history/history" data-index="1">
-    <view class="tab-icon-wrap">
-      <image class="tab-icon" src="{{selected === 1 ? images.tabHistoryActive : images.tabHistory}}" mode="aspectFit"></image>
-      <view class="tab-badge" wx:if="{{generatingCount > 0}}">{{generatingCount > 99 ? '99+' : generatingCount}}</view>
-    </view>
-    <text class="tab-text">{{i18n.tabHistory || '历史'}}</text>
+
+  <!-- 创作 -->
+  <view class="tab-bar-item {{selected === 1 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/creator/creator" data-index="1">
+    <image class="tab-icon" src="{{selected === 1 ? tabCreatorActive : tabCreator}}" mode="aspectFit"></image>
+    <text class="tab-text">创作</text>
   </view>
-  <view class="tab-bar-item {{selected === 2 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/mine/mine" data-index="2">
-    <view class="tab-icon-wrap">
-      <image class="tab-icon" src="{{selected === 2 ? images.tabMineActive : images.tabMine}}" mode="aspectFit"></image>
-    </view>
-    <text class="tab-text">{{i18n.tabMine || '我的'}}</text>
+
+  <!-- 历史 -->
+  <view class="tab-bar-item {{selected === 2 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/history/history" data-index="2">
+    <image class="tab-icon" src="{{selected === 2 ? tabHistoryActive : tabHistory}}" mode="aspectFit"></image>
+    <text class="tab-text">历史</text>
+    <view class="tab-badge" wx:if="{{generatingCount > 0}}">{{generatingCount > 99 ? '99+' : generatingCount}}</view>
+  </view>
+
+  <!-- 我的 -->
+  <view class="tab-bar-item {{selected === 3 ? 'active' : ''}} {{disabled ? 'item-disabled' : ''}}" bindtap="switchTab" data-path="/pages/mine/mine" data-index="3">
+    <image class="tab-icon" src="{{selected === 3 ? tabMineActive : tabMine}}" mode="aspectFit"></image>
+    <text class="tab-text">我的</text>
   </view>
 </view>

@@ -86,7 +86,7 @@ Page({
     this.loadRecentPointsRecords(); // 加载最近醒币明细
     // 设置tabBar选中状态并刷新语言和生成计数
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 });
+      this.getTabBar().setData({ selected: 3 });
       this.getTabBar().loadLanguage();
       this.getTabBar().updateGeneratingCount();
     }

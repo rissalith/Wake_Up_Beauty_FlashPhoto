@@ -1,8 +1,8 @@
 {
   "pages": [
-    "pages/index/index",
     "pages/market/market",
     "pages/history/history",
+    "pages/creator/creator",
     "pages/mine/mine",
     "pages/scene/scene",
     "pages/recharge/recharge",
@@ -16,11 +16,11 @@
     "pages/feedback-submit/feedback-submit",
     "pages/webview/index",
     "pages/video-reward/video-reward",
-    "pages/creator/creator",
     "pages/creator/create-template",
     "pages/creator/my-templates",
     "pages/creator/earnings",
-    "pages/template-detail/template-detail"
+    "pages/template-detail/template-detail",
+    "pages/index/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -31,12 +31,16 @@
   "tabBar": {
     "custom": true,
     "color": "#999999",
-    "selectedColor": "#C68B4D",
+    "selectedColor": "#5B9BD5",
     "backgroundColor": "#ffffff",
     "list": [
       {
-        "pagePath": "pages/index/index",
+        "pagePath": "pages/market/market",
         "text": "首页"
+      },
+      {
+        "pagePath": "pages/creator/creator",
+        "text": "创作"
       },
       {
         "pagePath": "pages/history/history",

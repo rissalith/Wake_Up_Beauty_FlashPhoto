@@ -557,6 +557,7 @@ const titleImages = reactive({
 // TabBar图标
 const tabbarIcons = ref([
   { name: 'home', label: '首页', normal: '', active: '' },
+  { name: 'creator', label: '创作', normal: '', active: '' },
   { name: 'history', label: '历史', normal: '', active: '' },
   { name: 'mine', label: '我的', normal: '', active: '' }
 ])
