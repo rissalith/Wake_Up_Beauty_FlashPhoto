@@ -159,6 +159,31 @@
 
     <!-- 步骤3：设置参数 -->
     <view class="step-content" wx:if="{{currentStep === 3}}">
+      <!-- 步骤配置区域 -->
+      <view class="steps-section" wx:if="{{formData.steps.length > 0}}">
+        <view class="section-header">
+          <text class="section-title">用户操作步骤</text>
+          <text class="section-hint">共 {{formData.steps.length}} 个步骤</text>
+        </view>
+        <view class="step-list">
+          <view class="step-card" wx:for="{{formData.steps}}" wx:key="step_key">
+            <view class="step-order">{{index + 1}}</view>
+            <view class="step-info">
+              <text class="step-title">{{item.title}}</text>
+              <text class="step-type">{{item.component_type}}</text>
+            </view>
+            <view class="step-options" wx:if="{{item.options.length > 0}}">
+              <text class="option-tag" wx:for="{{item.options}}" wx:for-item="opt" wx:key="value">{{opt.label}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无步骤提示 -->
+      <view class="no-steps-hint" wx:if="{{formData.steps.length === 0}}">
+        <text class="hint-text">暂无步骤配置，请使用 AI 智能生成或手动添加</text>
+      </view>
+
       <view class="prompt-section">
         <view class="form-item">
           <text class="form-label required">Prompt 模板</text>
@@ -249,18 +274,42 @@
           </view>
         </view>
 
-        <!-- 生成中 -->
+        <!-- 生成中 - Timeline 视图 -->
         <view class="ai-generating-section" wx:if="{{aiGenerating}}">
-          <view class="ai-loading-animation">
-            <view class="ai-loading-dot"></view>
-            <view class="ai-loading-dot"></view>
-            <view class="ai-loading-dot"></view>
+          <view class="ai-timeline-header">
+            <text class="ai-timeline-title">处理流程</text>
           </view>
-          <text class="ai-generating-text">{{aiGeneratingText}}</text>
-          <view class="ai-progress-bar">
-            <view class="ai-progress-fill" style="width: {{aiProgress}}%;"></view>
+
+          <view class="ai-timeline">
+            <view
+              class="ai-timeline-item {{item.status}}"
+              wx:for="{{aiSteps}}"
+              wx:key="key"
+            >
+              <!-- 时间线节点 -->
+              <view class="ai-timeline-node">
+                <view class="ai-timeline-dot {{item.status}}">
+                  <text wx:if="{{item.status === 'completed'}}">✓</text>
+                </view>
+                <view class="ai-timeline-line" wx:if="{{index < aiSteps.length - 1}}"></view>
+              </view>
+
+              <!-- 步骤内容 -->
+              <view class="ai-timeline-content">
+                <text class="ai-step-title">{{item.title}}</text>
+                <text class="ai-step-desc">{{item.desc}}</text>
+                <text class="ai-step-output" wx:if="{{item.output}}">{{item.output}}</text>
+              </view>
+            </view>
           </view>
-          <text class="ai-progress-text">{{aiProgress}}%</text>
+
+          <!-- 总进度条 -->
+          <view class="ai-total-progress">
+            <view class="ai-progress-bar">
+              <view class="ai-progress-fill" style="width: {{aiProgress}}%;"></view>
+            </view>
+            <text class="ai-progress-text">{{aiProgress}}%</text>
+          </view>
         </view>
 
         <!-- 生成结果 -->

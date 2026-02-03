@@ -32,22 +32,19 @@ class ConfigAgent extends BaseAgent {
 4. 每个步骤的选项数量控制在 3-8 个
 5. Prompt 模板必须使用 {{variable_name}} 引用步骤的 step_key
 6. 必须提供 negative_prompt
-7. prompt_text 使用英文，label 使用中文
+7. **重要：所有文本都使用中文，包括 prompt_text 和 template**
 
 ## 数据结构
 {
   "scene": {
     "name": "场景中文名称",
-    "name_en": "Scene English Name",
     "description": "场景中文描述",
-    "description_en": "Scene English description",
     "points_cost": 50
   },
   "steps": [
     {
       "step_key": "upload",
       "title": "上传照片",
-      "title_en": "Upload Photo",
       "component_type": "image_upload",
       "is_required": true,
       "options": []
@@ -55,25 +52,35 @@ class ConfigAgent extends BaseAgent {
     {
       "step_key": "gender",
       "title": "选择性别",
-      "title_en": "Select Gender",
       "component_type": "gender_select",
       "is_required": true,
       "options": [
-        { "label": "男", "label_en": "Male", "value": "male", "prompt_text": "male person" },
-        { "label": "女", "label_en": "Female", "value": "female", "prompt_text": "female person" }
+        { "label": "男", "value": "male", "prompt_text": "一位男性" },
+        { "label": "女", "value": "female", "prompt_text": "一位女性" }
+      ]
+    },
+    {
+      "step_key": "background",
+      "title": "选择背景",
+      "component_type": "tags",
+      "is_required": true,
+      "options": [
+        { "label": "喜庆红色", "value": "red", "prompt_text": "喜庆的红色背景，带有中国传统元素" },
+        { "label": "金色华丽", "value": "gold", "prompt_text": "金色华丽的背景，富贵吉祥" }
       ]
     }
   ],
   "prompt_template": {
-    "template": "Generate a professional portrait. Subject: {{gender}}. Background: {{background}}. Style: high quality.",
-    "negative_prompt": "blurry, distorted, low quality, watermark"
+    "template": "【重要】严格保持参考照片中的人脸特征，包括脸型、五官、肤色。生成一张高质量的{{gender}}肖像照片，{{background}}。风格：专业摄影，清晰锐利，自然光线。",
+    "negative_prompt": "模糊，变形，低质量，水印，文字，面部变形，多余肢体"
   }
 }
 
 ## 重要提示
-1. Prompt 模板中必须包含人脸保持指令
-2. 每个选项的 prompt_text 必须是具体、可执行的英文描述
+1. Prompt 模板中必须包含人脸保持指令（中文）
+2. 每个选项的 prompt_text 必须是具体、描述性的中文
 3. 确保所有步骤的 step_key 在 prompt_template 中被引用
+4. negative_prompt 也使用中文
 
 只返回 JSON，不要其他文字。`;
   }
@@ -242,12 +249,13 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
       config.prompt_template.template = this.generateDefaultTemplate(stepKeys);
     }
     if (!config.prompt_template.negative_prompt) {
-      config.prompt_template.negative_prompt = 'blurry, distorted, low quality, watermark, text, deformed face, extra limbs';
+      config.prompt_template.negative_prompt = '模糊，变形，低质量，水印，文字，面部变形，多余肢体，畸形';
     }
 
     // 确保 Prompt 包含人脸保持指令
-    if (!config.prompt_template.template.toLowerCase().includes('face') &&
-        !config.prompt_template.template.toLowerCase().includes('facial')) {
+    if (!config.prompt_template.template.includes('人脸') &&
+        !config.prompt_template.template.includes('面部') &&
+        !config.prompt_template.template.includes('脸型')) {
       config.prompt_template.template = this.addFacePreservation(config.prompt_template.template);
     }
 
@@ -260,14 +268,14 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
    * @returns {string} Prompt 模板
    */
   generateDefaultTemplate(stepKeys) {
-    let template = 'CRITICAL: Maintain exact facial features from the reference photo. ';
-    template += 'Generate a high-quality portrait photo. ';
+    let template = '【重要】严格保持参考照片中的人脸特征，包括脸型、五官、肤色，生成的人脸必须与原照片高度一致。';
+    template += '生成一张高质量的肖像照片。';
 
     for (const key of stepKeys) {
-      template += `{{${key}}}. `;
+      template += `{{${key}}}。`;
     }
 
-    template += 'Style: professional photography, sharp focus, natural lighting, high resolution.';
+    template += '风格：专业摄影，清晰锐利，自然光线，高分辨率。';
 
     return template;
   }
@@ -278,7 +286,7 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
    * @returns {string} 添加后的模板
    */
   addFacePreservation(template) {
-    const faceInstruction = 'CRITICAL: Maintain exact facial features from the reference photo including face shape, eyes, nose, mouth, and skin tone. The generated face must be immediately recognizable as the same person. ';
+    const faceInstruction = '【重要】严格保持参考照片中的人脸特征，包括脸型、眼睛、鼻子、嘴巴和肤色，生成的人脸必须与原照片高度一致。';
     return faceInstruction + template;
   }
 }

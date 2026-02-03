@@ -31,7 +31,8 @@ Page({
       cover_image: '',
       reference_image: '',
       prompt_template: '',
-      negative_prompt: ''
+      negative_prompt: '',
+      steps: []  // 步骤配置
     },
     canNext: false,
     uploading: false,
@@ -603,14 +604,15 @@ Page({
       return;
     }
 
-    // 提取结果
+    // 提取结果，包括步骤配置
     const result = {
       name: config.scene?.name || '',
       description: config.scene?.description || '',
       points_cost: config.scene?.points_cost || 50,
       prompt: config.prompt_template?.template || '',
       negative_prompt: config.prompt_template?.negative_prompt || '',
-      score: task.review_score || 0
+      score: task.review_score || 0,
+      steps: config.steps || []  // 保存步骤配置
     };
 
     this.setData({
@@ -646,6 +648,7 @@ Page({
       'formData.points_cost': aiResult.points_cost,
       'formData.prompt_template': aiResult.prompt,
       'formData.negative_prompt': aiResult.negative_prompt,
+      'formData.steps': aiResult.steps || [],  // 应用步骤配置
       showAiModal: false
     });
 
