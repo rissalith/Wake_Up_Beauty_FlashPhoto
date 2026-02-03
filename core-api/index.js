@@ -88,6 +88,7 @@ const adminMonitorRoutes = require('./routes/admin/monitor');
 const adminGradeSchemesRoutes = require('./routes/admin/grade-schemes');
 const adminTemplateReviewRoutes = require('./routes/admin/template-review');
 const adminCreatorSceneReviewRoutes = require('./routes/admin/creator-scene-review');
+const adminAiAgentRoutes = require('./routes/admin/ai-agent');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -129,6 +130,7 @@ app.use('/api/admin/monitor', adminMonitorRoutes);
 app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
 app.use('/api/admin/template-review', adminTemplateReviewRoutes);
 app.use('/api/admin/creator-scenes', adminCreatorSceneReviewRoutes);
+app.use('/api/admin/ai-agent', adminAiAgentRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);
@@ -1558,6 +1560,15 @@ async function startServer() {
     // 初始化数据库
     await initDatabase();
     console.log('[Core API] 数据库初始化完成');
+
+    // 初始化知识库
+    try {
+      const { initKnowledgeBase } = require('./lib/knowledge-base');
+      initKnowledgeBase(getDb());
+      console.log('[Core API] AI Agent 知识库初始化完成');
+    } catch (kbError) {
+      console.warn('[Core API] 知识库初始化失败:', kbError.message);
+    }
 
     // 初始化 Redis 消息处理器
     try {
