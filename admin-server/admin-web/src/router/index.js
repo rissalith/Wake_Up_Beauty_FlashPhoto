@@ -61,6 +61,12 @@ const routes = [
         meta: { title: '创作者场景审核' }
       },
       {
+        path: 'official-templates',
+        name: 'OfficialTemplates',
+        component: () => import('../views/OfficialTemplates.vue'),
+        meta: { title: '官方模板管理' }
+      },
+      {
         path: 'categories',
         name: 'Categories',
         component: () => import('../views/Categories.vue'),

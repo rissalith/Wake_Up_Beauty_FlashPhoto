@@ -90,6 +90,7 @@ router.get('/init', (req, res) => {
 });
 
 // 获取单个场景完整配置（包含步骤和prompt）
+// 支持模板兼容：优先从 user_templates 查询官方模板
 router.get('/scene/:sceneId', (req, res) => {
   try {
     const db = getDb();
@@ -99,7 +100,99 @@ router.get('/scene/:sceneId', (req, res) => {
     // 判断是否需要英文翻译
     const useEnglish = lang === 'en';
 
-    // 1. 获取场景基本信息（支持 id 或 scene_key）
+    // 1. 优先从 user_templates 查询官方模板（模板兼容层）
+    const template = db.prepare(`
+      SELECT * FROM user_templates
+      WHERE (source_scene_id = ? OR id = ?) AND is_official = 1
+    `).get(sceneId, `official_${sceneId}`);
+
+    if (template) {
+      // 从模板系统返回数据
+      const templateSteps = db.prepare(`
+        SELECT * FROM template_steps WHERE template_id = ? ORDER BY step_order
+      `).all(template.id);
+
+      const stepsWithOptions = templateSteps.map(step => {
+        const options = db.prepare(`
+          SELECT * FROM template_step_options WHERE step_id = ? ORDER BY sort_order
+        `).all(step.id);
+
+        const localizedOptions = options.map(opt => {
+          const localizedOpt = { ...opt };
+          if (useEnglish) {
+            localizedOpt.label = opt.label_en || opt.label;
+            localizedOpt.name = opt.label_en || opt.label;
+          } else {
+            localizedOpt.name = opt.label;
+          }
+          localizedOpt.name_en = opt.label_en;
+          return localizedOpt;
+        });
+
+        let parsedConfig = {};
+        if (step.config) {
+          try {
+            parsedConfig = typeof step.config === 'string' ? JSON.parse(step.config) : step.config;
+          } catch (e) {
+            console.error('[Config] Failed to parse template step config:', step.step_key, e.message);
+          }
+        }
+
+        return {
+          ...step,
+          config: parsedConfig,
+          name: step.title,
+          title: useEnglish ? (step.title_en || step.title) : step.title,
+          title_en: step.title_en,
+          free_count: step.free_count !== undefined ? step.free_count : 1,
+          cost_per_roll: step.cost_per_roll !== undefined ? step.cost_per_roll : 10,
+          options: localizedOptions
+        };
+      });
+
+      const promptRow = db.prepare(`
+        SELECT * FROM template_prompts WHERE template_id = ? AND is_active = 1 LIMIT 1
+      `).get(template.id);
+
+      const prompt = promptRow ? {
+        id: promptRow.id,
+        template_id: promptRow.template_id,
+        name: promptRow.name,
+        template: promptRow.template,
+        negative_prompt: promptRow.negative_prompt,
+        reference_weight: promptRow.reference_weight,
+        face_swap_mode: promptRow.face_swap_mode,
+        is_active: promptRow.is_active
+      } : null;
+
+      // 构建场景对象（从模板数据）
+      const scene = {
+        id: template.source_scene_id || template.id,
+        scene_key: template.source_scene_id || template.id,
+        name: useEnglish ? (template.name_en || template.name) : template.name,
+        name_en: template.name_en,
+        description: useEnglish ? (template.description_en || template.description) : template.description,
+        description_en: template.description_en,
+        icon: template.cover_image,
+        cover_image: template.cover_image,
+        points_cost: template.points_cost,
+        status: template.status,
+        is_official: 1,
+        template_id: template.id  // 标记来源于模板系统
+      };
+
+      return res.json({
+        code: 200,
+        data: {
+          scene,
+          steps: stepsWithOptions,
+          prompt,
+          source: 'template'  // 标记数据来源
+        }
+      });
+    }
+
+    // 2. 回退到旧的 scenes 表查询
     let scene = db.prepare("SELECT * FROM scenes WHERE id = ? OR scene_key = ?").get(sceneId, sceneId);
     if (!scene) {
       return res.status(404).json({ code: -1, msg: '场景不存在' });
@@ -189,7 +282,8 @@ router.get('/scene/:sceneId', (req, res) => {
       data: {
         scene,
         steps: stepsWithOptions,
-        prompt
+        prompt,
+        source: 'scene'  // 标记数据来源
       }
     });
   } catch (error) {

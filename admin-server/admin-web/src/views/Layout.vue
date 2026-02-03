@@ -41,6 +41,10 @@
           <el-icon><Grid /></el-icon>
           <span>场景管理</span>
         </el-menu-item>
+        <el-menu-item index="/official-templates">
+          <el-icon><Files /></el-icon>
+          <span>官方模板管理</span>
+        </el-menu-item>
         <el-menu-item index="/creator-scenes">
           <el-icon><Stamp /></el-icon>
           <span>创作者场景审核</span>

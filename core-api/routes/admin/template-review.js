@@ -464,4 +464,544 @@ router.delete('/categories/:id', (req, res) => {
   }
 });
 
+// ==================== 官方模板管理 ====================
+
+const OFFICIAL_CREATOR_ID = 'official_creator';
+
+// 确保官方创作者存在
+function ensureOfficialCreator(db) {
+  let creator = db.prepare('SELECT * FROM creators WHERE id = ?').get(OFFICIAL_CREATOR_ID);
+  if (!creator) {
+    // 确保系统用户存在
+    let systemUser = db.prepare("SELECT * FROM users WHERE id = 'system'").get();
+    if (!systemUser) {
+      db.prepare(`
+        INSERT INTO users (id, openid, nickname, avatar_url, points, status, created_at)
+        VALUES ('system', 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo.png', 0, 'active', datetime('now'))
+      `).run();
+    }
+    // 创建官方创作者
+    db.prepare(`
+      INSERT INTO creators (id, user_id, creator_name, creator_avatar, bio, level, status, created_at)
+      VALUES (?, 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo.png', '醒美闪图官方出品', 5, 'active', datetime('now'))
+    `).run(OFFICIAL_CREATOR_ID);
+  }
+  return OFFICIAL_CREATOR_ID;
+}
+
+// 获取官方模板列表
+router.get('/official/list', (req, res) => {
+  try {
+    const db = getDb();
+    const { status, keyword, page = 1, pageSize = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    let whereClause = 'WHERE t.is_official = 1';
+    const params = [];
+
+    if (status) {
+      whereClause += ' AND t.status = ?';
+      params.push(status);
+    }
+
+    if (keyword) {
+      whereClause += ' AND (t.name LIKE ? OR t.description LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+
+    const { total } = db.prepare(`
+      SELECT COUNT(*) as total FROM user_templates t ${whereClause}
+    `).get(...params);
+
+    const templates = db.prepare(`
+      SELECT
+        t.*,
+        tc.name as category_name
+      FROM user_templates t
+      LEFT JOIN template_categories tc ON t.category_id = tc.id
+      ${whereClause}
+      ORDER BY t.updated_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    res.json({
+      code: 200,
+      data: {
+        list: templates.map(t => ({
+          ...t,
+          tags: t.tags ? t.tags.split(',') : []
+        })),
+        total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 获取官方模板列表失败:', error);
+    res.status(500).json({ code: 500, msg: '获取官方模板列表失败' });
+  }
+});
+
+// 创建官方模板（跳过审核，直接上架）
+router.post('/official', (req, res) => {
+  try {
+    const db = getDb();
+    const {
+      name, name_en, description, description_en,
+      cover_image, reference_image, category_id, tags,
+      gender = 'all', points_cost = 50, is_featured = 0,
+      source_scene_id
+    } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ code: 400, msg: '模板名称不能为空' });
+    }
+
+    if (!cover_image) {
+      return res.status(400).json({ code: 400, msg: '封面图不能为空' });
+    }
+
+    // 确保官方创作者存在
+    const creatorId = ensureOfficialCreator(db);
+
+    // 生成模板ID
+    const templateId = source_scene_id ? `official_${source_scene_id}` : `official_${Date.now()}`;
+
+    // 检查是否已存在
+    const existing = db.prepare('SELECT id FROM user_templates WHERE id = ?').get(templateId);
+    if (existing) {
+      return res.status(400).json({ code: 400, msg: '模板ID已存在' });
+    }
+
+    // 创建模板（直接上架）
+    db.prepare(`
+      INSERT INTO user_templates (
+        id, creator_id, name, name_en, description, description_en,
+        cover_image, reference_image, category_id, tags, gender,
+        points_cost, status, is_featured, is_official, source_scene_id,
+        published_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, 1, ?, datetime('now'), datetime('now'), datetime('now'))
+    `).run(
+      templateId, creatorId, name, name_en || '', description || '', description_en || '',
+      cover_image, reference_image || cover_image, category_id || null,
+      Array.isArray(tags) ? tags.join(',') : (tags || ''),
+      gender, points_cost, is_featured ? 1 : 0, source_scene_id || null
+    );
+
+    // 更新分类统计
+    if (category_id) {
+      db.prepare(`
+        UPDATE template_categories SET template_count = template_count + 1 WHERE id = ?
+      `).run(category_id);
+    }
+
+    res.json({
+      code: 200,
+      msg: '创建成功',
+      data: { id: templateId }
+    });
+  } catch (error) {
+    console.error('[Admin] 创建官方模板失败:', error);
+    res.status(500).json({ code: 500, msg: '创建失败' });
+  }
+});
+
+// 更新官方模板
+router.put('/official/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const {
+      name, name_en, description, description_en,
+      cover_image, reference_image, category_id, tags,
+      gender, points_cost, is_featured, status
+    } = req.body;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ? AND is_official = 1').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '官方模板不存在' });
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (name_en !== undefined) { updates.push('name_en = ?'); params.push(name_en); }
+    if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+    if (description_en !== undefined) { updates.push('description_en = ?'); params.push(description_en); }
+    if (cover_image !== undefined) { updates.push('cover_image = ?'); params.push(cover_image); }
+    if (reference_image !== undefined) { updates.push('reference_image = ?'); params.push(reference_image); }
+    if (category_id !== undefined) { updates.push('category_id = ?'); params.push(category_id); }
+    if (tags !== undefined) {
+      updates.push('tags = ?');
+      params.push(Array.isArray(tags) ? tags.join(',') : tags);
+    }
+    if (gender !== undefined) { updates.push('gender = ?'); params.push(gender); }
+    if (points_cost !== undefined) { updates.push('points_cost = ?'); params.push(points_cost); }
+    if (is_featured !== undefined) { updates.push('is_featured = ?'); params.push(is_featured ? 1 : 0); }
+    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+
+    if (updates.length > 0) {
+      updates.push('updated_at = datetime(\'now\')');
+      params.push(id);
+      db.prepare(`UPDATE user_templates SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+    }
+
+    // 处理分类变更的统计
+    if (category_id !== undefined && category_id !== template.category_id) {
+      if (template.category_id && template.status === 'active') {
+        db.prepare('UPDATE template_categories SET template_count = template_count - 1 WHERE id = ?').run(template.category_id);
+      }
+      if (category_id && (status === 'active' || (!status && template.status === 'active'))) {
+        db.prepare('UPDATE template_categories SET template_count = template_count + 1 WHERE id = ?').run(category_id);
+      }
+    }
+
+    res.json({ code: 200, msg: '更新成功' });
+  } catch (error) {
+    console.error('[Admin] 更新官方模板失败:', error);
+    res.status(500).json({ code: 500, msg: '更新失败' });
+  }
+});
+
+// 配置官方模板步骤
+router.post('/official/:id/steps', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { steps } = req.body;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ? AND is_official = 1').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '官方模板不存在' });
+    }
+
+    // 删除现有步骤和选项
+    const existingSteps = db.prepare('SELECT id FROM template_steps WHERE template_id = ?').all(id);
+    for (const step of existingSteps) {
+      db.prepare('DELETE FROM template_step_options WHERE step_id = ?').run(step.id);
+    }
+    db.prepare('DELETE FROM template_steps WHERE template_id = ?').run(id);
+
+    // 插入新步骤
+    if (steps && steps.length > 0) {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepResult = db.prepare(`
+          INSERT INTO template_steps (
+            template_id, step_order, step_key, title, title_en, subtitle,
+            component_type, is_required, is_visible, config
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          id, i + 1, step.step_key || `step_${i + 1}`,
+          step.title || '', step.title_en || '', step.subtitle || '',
+          step.component_type || 'select',
+          step.is_required !== false ? 1 : 0,
+          step.is_visible !== false ? 1 : 0,
+          step.config ? JSON.stringify(step.config) : ''
+        );
+
+        const stepId = stepResult.lastInsertRowid;
+
+        // 插入选项
+        if (step.options && step.options.length > 0) {
+          for (let j = 0; j < step.options.length; j++) {
+            const opt = step.options[j];
+            db.prepare(`
+              INSERT INTO template_step_options (
+                step_id, option_key, label, label_en, icon, image,
+                prompt_text, sort_order, is_default, is_visible
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              stepId, opt.option_key || `opt_${j + 1}`,
+              opt.label || '', opt.label_en || '', opt.icon || '', opt.image || '',
+              opt.prompt_text || '', j, opt.is_default ? 1 : 0, opt.is_visible !== false ? 1 : 0
+            );
+          }
+        }
+      }
+    }
+
+    res.json({ code: 200, msg: '步骤配置成功' });
+  } catch (error) {
+    console.error('[Admin] 配置官方模板步骤失败:', error);
+    res.status(500).json({ code: 500, msg: '配置失败' });
+  }
+});
+
+// 配置官方模板 Prompt
+router.put('/official/:id/prompt', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { name, template: promptTemplate, negative_prompt, reference_weight, face_swap_mode } = req.body;
+
+    const tpl = db.prepare('SELECT * FROM user_templates WHERE id = ? AND is_official = 1').get(id);
+    if (!tpl) {
+      return res.status(404).json({ code: 404, msg: '官方模板不存在' });
+    }
+
+    // 检查是否已有 Prompt
+    const existingPrompt = db.prepare('SELECT * FROM template_prompts WHERE template_id = ?').get(id);
+
+    if (existingPrompt) {
+      // 更新
+      db.prepare(`
+        UPDATE template_prompts SET
+          name = ?, template = ?, negative_prompt = ?,
+          reference_weight = ?, face_swap_mode = ?, updated_at = datetime('now')
+        WHERE template_id = ?
+      `).run(
+        name || existingPrompt.name,
+        promptTemplate || existingPrompt.template,
+        negative_prompt !== undefined ? negative_prompt : existingPrompt.negative_prompt,
+        reference_weight !== undefined ? reference_weight : existingPrompt.reference_weight,
+        face_swap_mode || existingPrompt.face_swap_mode,
+        id
+      );
+    } else {
+      // 创建
+      db.prepare(`
+        INSERT INTO template_prompts (
+          template_id, name, template, negative_prompt, reference_weight, face_swap_mode, is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, 1)
+      `).run(
+        id, name || '默认', promptTemplate || '', negative_prompt || '',
+        reference_weight || 0.8, face_swap_mode || 'replace'
+      );
+    }
+
+    res.json({ code: 200, msg: 'Prompt 配置成功' });
+  } catch (error) {
+    console.error('[Admin] 配置官方模板 Prompt 失败:', error);
+    res.status(500).json({ code: 500, msg: '配置失败' });
+  }
+});
+
+// 删除官方模板
+router.delete('/official/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ? AND is_official = 1').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '官方模板不存在' });
+    }
+
+    // 删除步骤选项
+    const steps = db.prepare('SELECT id FROM template_steps WHERE template_id = ?').all(id);
+    for (const step of steps) {
+      db.prepare('DELETE FROM template_step_options WHERE step_id = ?').run(step.id);
+    }
+
+    // 删除步骤
+    db.prepare('DELETE FROM template_steps WHERE template_id = ?').run(id);
+
+    // 删除 Prompt
+    db.prepare('DELETE FROM template_prompts WHERE template_id = ?').run(id);
+
+    // 删除模板
+    db.prepare('DELETE FROM user_templates WHERE id = ?').run(id);
+
+    // 更新分类统计
+    if (template.category_id && template.status === 'active') {
+      db.prepare('UPDATE template_categories SET template_count = template_count - 1 WHERE id = ?').run(template.category_id);
+    }
+
+    res.json({ code: 200, msg: '删除成功' });
+  } catch (error) {
+    console.error('[Admin] 删除官方模板失败:', error);
+    res.status(500).json({ code: 500, msg: '删除失败' });
+  }
+});
+
+// 官方模板上架/下架
+router.post('/official/:id/toggle-status', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['active', 'offline'].includes(status)) {
+      return res.status(400).json({ code: 400, msg: '状态值无效' });
+    }
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ? AND is_official = 1').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '官方模板不存在' });
+    }
+
+    const oldStatus = template.status;
+
+    db.prepare(`
+      UPDATE user_templates SET status = ?, updated_at = datetime('now')
+      ${status === 'active' ? ", published_at = datetime('now')" : ''}
+      WHERE id = ?
+    `).run(status, id);
+
+    // 更新分类统计
+    if (template.category_id) {
+      if (oldStatus === 'active' && status === 'offline') {
+        db.prepare('UPDATE template_categories SET template_count = template_count - 1 WHERE id = ?').run(template.category_id);
+      } else if (oldStatus !== 'active' && status === 'active') {
+        db.prepare('UPDATE template_categories SET template_count = template_count + 1 WHERE id = ?').run(template.category_id);
+      }
+    }
+
+    res.json({
+      code: 200,
+      msg: status === 'active' ? '已上架' : '已下架'
+    });
+  } catch (error) {
+    console.error('[Admin] 切换官方模板状态失败:', error);
+    res.status(500).json({ code: 500, msg: '操作失败' });
+  }
+});
+
+// 从场景同步到官方模板
+router.post('/official/sync-from-scene', (req, res) => {
+  try {
+    const db = getDb();
+    const { scene_key } = req.body;
+
+    if (!scene_key) {
+      return res.status(400).json({ code: 400, msg: '场景标识不能为空' });
+    }
+
+    // 查找场景
+    const scene = db.prepare('SELECT * FROM scenes WHERE scene_key = ?').get(scene_key);
+    if (!scene) {
+      return res.status(404).json({ code: 404, msg: '场景不存在' });
+    }
+
+    // 确保官方创作者存在
+    const creatorId = ensureOfficialCreator(db);
+
+    const templateId = `official_${scene_key}`;
+
+    // 检查是否已存在
+    const existing = db.prepare('SELECT id FROM user_templates WHERE id = ?').get(templateId);
+
+    // 场景到分类的映射
+    const SCENE_TO_CATEGORY = {
+      'horse_year_avatar': 2,
+      'idphoto': 4,
+      'professional': 3,
+      'portrait': 3,
+      'family': 3,
+      'pet': 5,
+      'wedding': 3
+    };
+    const categoryId = SCENE_TO_CATEGORY[scene_key] || 1;
+
+    const templateStatus = (scene.status === 'coming_soon' || scene.status === 'inactive') ? 'offline' : 'active';
+
+    if (existing) {
+      // 更新现有模板
+      db.prepare(`
+        UPDATE user_templates SET
+          name = ?, name_en = ?, description = ?, description_en = ?,
+          cover_image = ?, reference_image = ?, category_id = ?,
+          points_cost = ?, status = ?, is_featured = ?, source_scene_id = ?,
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).run(
+        scene.name || '', scene.name_en || '', scene.description || '', scene.description_en || '',
+        scene.icon || '', scene.icon || '', categoryId,
+        scene.points_cost || 50, templateStatus, scene.is_highlighted ? 1 : 0, scene_key,
+        templateId
+      );
+    } else {
+      // 创建新模板
+      db.prepare(`
+        INSERT INTO user_templates (
+          id, creator_id, name, name_en, description, description_en,
+          cover_image, reference_image, category_id, tags, gender,
+          points_cost, status, is_featured, is_official, source_scene_id,
+          published_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'all', ?, ?, ?, 1, ?, datetime('now'), datetime('now'), datetime('now'))
+      `).run(
+        templateId, creatorId, scene.name || '', scene.name_en || '',
+        scene.description || '', scene.description_en || '',
+        scene.icon || '', scene.icon || '', categoryId, scene.name || '',
+        scene.points_cost || 50, templateStatus, scene.is_highlighted ? 1 : 0, scene_key
+      );
+    }
+
+    // 同步步骤
+    // 先删除现有步骤
+    const existingSteps = db.prepare('SELECT id FROM template_steps WHERE template_id = ?').all(templateId);
+    for (const step of existingSteps) {
+      db.prepare('DELETE FROM template_step_options WHERE step_id = ?').run(step.id);
+    }
+    db.prepare('DELETE FROM template_steps WHERE template_id = ?').run(templateId);
+
+    // 复制场景步骤
+    const sceneSteps = db.prepare('SELECT * FROM scene_steps WHERE scene_id = ? ORDER BY step_order').all(scene_key);
+    for (const step of sceneSteps) {
+      const stepResult = db.prepare(`
+        INSERT INTO template_steps (
+          template_id, step_order, step_key, title, title_en,
+          component_type, is_required, is_visible, config
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        templateId, step.step_order || 0, step.step_key || '',
+        step.title || step.step_name || '', step.title_en || step.step_name_en || '',
+        step.component_type || 'select', step.is_required ? 1 : 0,
+        step.is_visible !== 0 ? 1 : 0, step.config || ''
+      );
+
+      const newStepId = stepResult.lastInsertRowid;
+
+      // 复制选项
+      const options = db.prepare('SELECT * FROM step_options WHERE step_id = ? ORDER BY sort_order').all(step.id);
+      for (const opt of options) {
+        db.prepare(`
+          INSERT INTO template_step_options (
+            step_id, option_key, label, label_en, icon, image,
+            prompt_text, sort_order, is_default, is_visible
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          newStepId, opt.option_key || '', opt.label || opt.name || '',
+          opt.label_en || opt.name_en || '', opt.icon || '', opt.image || '',
+          opt.prompt_text || '', opt.sort_order || 0, opt.is_default ? 1 : 0,
+          opt.is_visible !== 0 ? 1 : 0
+        );
+      }
+    }
+
+    // 同步 Prompt
+    db.prepare('DELETE FROM template_prompts WHERE template_id = ?').run(templateId);
+    const prompts = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ?').all(scene_key);
+    for (const prompt of prompts) {
+      db.prepare(`
+        INSERT INTO template_prompts (
+          template_id, name, template, negative_prompt, reference_weight, face_swap_mode, is_active
+        ) VALUES (?, ?, ?, ?, 0.8, 'replace', 1)
+      `).run(
+        templateId, prompt.name || '', prompt.template || prompt.template_content || '',
+        prompt.negative_prompt || ''
+      );
+    }
+
+    // 更新分类统计
+    db.prepare(`
+      UPDATE template_categories SET template_count = (
+        SELECT COUNT(*) FROM user_templates WHERE category_id = template_categories.id AND status = 'active'
+      )
+    `).run();
+
+    res.json({
+      code: 200,
+      msg: existing ? '同步更新成功' : '同步创建成功',
+      data: { id: templateId }
+    });
+  } catch (error) {
+    console.error('[Admin] 从场景同步失败:', error);
+    res.status(500).json({ code: 500, msg: '同步失败' });
+  }
+});
+
 module.exports = router;

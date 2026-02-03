@@ -107,6 +107,33 @@
       </view>
     </view>
 
+    <!-- 热门模板区域 -->
+    <view class="hot-templates-section" wx:if="{{showHotTemplates && hotTemplates.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">{{i18n.hotTemplates || '热门模板'}}</text>
+        <view class="view-more" bindtap="goToMarket">
+          <text>{{i18n.viewMore || '查看更多'}}</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+      <scroll-view class="templates-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="templates-list">
+          <view class="template-card" wx:for="{{hotTemplates}}" wx:key="id" bindtap="goToTemplate" data-id="{{item.id}}">
+            <view class="template-cover-wrap">
+              <image class="template-cover" src="{{item.cover_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
+              <view class="official-badge" wx:if="{{item.isOfficial}}">{{i18n.official || '官方'}}</view>
+            </view>
+            <view class="template-info">
+              <text class="template-name">{{item.displayName}}</text>
+              <view class="template-stats">
+                <text class="use-count">{{item.use_count || 0}} {{i18n.uses || '次使用'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 特色功能 -->
     <view class="feature-section" wx:if="{{featureImage}}">
       <image class="feature-banner-img" src="{{featureImage}}" mode="widthFix" binderror="onFeatureImageError"></image>

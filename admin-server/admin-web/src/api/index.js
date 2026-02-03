@@ -114,4 +114,30 @@ export const couponsApi = {
   getStats: () => Promise.resolve({ code: 0, data: { totalUsed: 0, totalIssued: 0 } })
 }
 
+// 模板分类管理
+export const categoriesApi = {
+  getList: () => api.get('/admin/template-review/categories/all'),
+  create: (data) => api.post('/admin/template-review/categories', data),
+  update: (id, data) => api.put(`/admin/template-review/categories/${id}`, data),
+  delete: (id) => api.delete(`/admin/template-review/categories/${id}`)
+}
+
+// 官方模板管理
+export const officialTemplatesApi = {
+  getList: (params) => api.get('/admin/template-review/official/list', { params }),
+  create: (data) => api.post('/admin/template-review/official', data),
+  update: (id, data) => api.put(`/admin/template-review/official/${id}`, data),
+  delete: (id) => api.delete(`/admin/template-review/official/${id}`),
+  getDetail: (id) => api.get(`/admin/template-review/${id}`),
+  configSteps: (id, data) => api.post(`/admin/template-review/official/${id}/steps`, data),
+  configPrompt: (id, data) => api.put(`/admin/template-review/official/${id}/prompt`, data),
+  toggleStatus: (id, data) => api.post(`/admin/template-review/official/${id}/toggle-status`, data),
+  syncFromScene: (data) => api.post('/admin/template-review/official/sync-from-scene', data)
+}
+
+// 场景管理（用于同步）
+export const scenesApi = {
+  getList: () => api.get('/admin/scenes')
+}
+
 export default api

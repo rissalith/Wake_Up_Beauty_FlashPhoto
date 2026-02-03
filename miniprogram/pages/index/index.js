@@ -35,7 +35,10 @@ Page({
     pageCount: 0,          // 总页数
     scenesPerPage: 3,      // 每页显示的场景数
     announcement: '',      // 公告
-    configLoaded: false    // 配置是否加载完成
+    configLoaded: false,   // 配置是否加载完成
+    // 热门模板
+    hotTemplates: [],      // 热门模板列表
+    showHotTemplates: true // 是否显示热门模板区域
   },
 
   onLoad(options) {
@@ -53,6 +56,9 @@ Page({
 
     // 加载中台配置
     this.loadMidplatformConfig();
+
+    // 加载热门模板
+    this.loadHotTemplates();
 
     // 处理邀请链接
     if (options.inviter) {
@@ -230,6 +236,72 @@ Page({
     return scene[field] || '';
   },
 
+  // 加载热门模板
+  async loadHotTemplates() {
+    try {
+      const app = getApp();
+      const baseUrl = app.globalData.baseUrl || 'https://pop-pub.com';
+
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${baseUrl}/api/market/hot`,
+          method: 'GET',
+          data: { limit: 6 },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      if (res.statusCode === 200 && res.data.code === 200) {
+        const templates = res.data.data.templates || [];
+        const currentLang = this.data.currentLanguage;
+
+        // 处理模板数据，添加多语言显示字段
+        const hotTemplates = templates.map(t => ({
+          ...t,
+          displayName: currentLang === 'en' ? (t.name_en || t.name) : t.name,
+          displayDesc: currentLang === 'en' ? (t.description_en || t.description) : t.description,
+          isOfficial: t.is_official === 1
+        }));
+
+        this.setData({ hotTemplates });
+      }
+    } catch (error) {
+      // 静默处理，热门模板加载失败不影响主流程
+      console.error('加载热门模板失败:', error);
+    }
+  },
+
+  // 跳转到模板详情
+  goToTemplate(e) {
+    const templateId = e.currentTarget.dataset.id;
+    if (!templateId) return;
+
+    tracker.trackClick('hot_template', 'card', templateId);
+
+    wx.navigateTo({
+      url: `/pages/template-detail/template-detail?id=${templateId}`,
+      fail: () => {
+        wx.showToast({ title: '页面跳转失败', icon: 'none' });
+      }
+    });
+  },
+
+  // 跳转到模板市场
+  goToMarket() {
+    tracker.trackClick('view_more_templates', 'button');
+
+    wx.switchTab({
+      url: '/pages/market/market',
+      fail: () => {
+        // 如果 switchTab 失败，尝试 navigateTo
+        wx.navigateTo({
+          url: '/pages/market/market'
+        });
+      }
+    });
+  },
+
   // 更新场景显示文本（语言切换时调用）
   updateSceneDisplayText(langCode) {
     const { scenePages } = this.data;
@@ -332,7 +404,7 @@ Page({
   onShow() {
     // 设置tabBar选中状态并刷新语言和生成计数
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0 });
+      this.getTabBar().setData({ selected: 1 });
       this.getTabBar().loadLanguage();
       this.getTabBar().updateGeneratingCount();
     }

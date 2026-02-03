@@ -599,6 +599,7 @@ function createTables() {
       reject_reason TEXT,
       is_featured INTEGER DEFAULT 0,
       is_official INTEGER DEFAULT 0,
+      source_scene_id TEXT,
       view_count INTEGER DEFAULT 0,
       use_count INTEGER DEFAULT 0,
       like_count INTEGER DEFAULT 0,
@@ -611,6 +612,13 @@ function createTables() {
       FOREIGN KEY (category_id) REFERENCES template_categories(id)
     )
   `);
+
+  // 为 source_scene_id 添加索引（如果不存在）
+  try {
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_user_templates_source_scene ON user_templates(source_scene_id)`);
+  } catch (e) {
+    // 索引可能已存在
+  }
 
   // 模板步骤配置表
   db.exec(`
@@ -1100,7 +1108,8 @@ async function initDefaultData() {
       ['萌宠', 'Cute Pets', null, null, 4, 1],
       ['艺术', 'Art', null, null, 5, 1],
       ['趣味', 'Fun', null, null, 6, 1],
-      ['节日', 'Festival', null, null, 7, 1]
+      ['节日', 'Festival', null, null, 7, 1],
+      ['其他', 'Other', null, null, 99, 1]
     ];
     const stmt = db.prepare('INSERT INTO template_categories (name, name_en, icon, cover_image, sort_order, is_visible) VALUES (?, ?, ?, ?, ?, ?)');
     categories.forEach(c => stmt.run(...c));

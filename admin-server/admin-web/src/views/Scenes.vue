@@ -1,10 +1,24 @@
 <template>
   <div class="scene-management">
+    <!-- 迁移提示 -->
+    <el-alert
+      title="场景管理已迁移"
+      type="warning"
+      :closable="false"
+      show-icon
+      style="margin-bottom: 20px;"
+    >
+      <template #default>
+        场景数据已迁移到「官方模板管理」，建议使用新的模板管理功能。
+        <el-button type="primary" link @click="$router.push('/official-templates')">前往官方模板管理</el-button>
+      </template>
+    </el-alert>
+
     <!-- 头部操作栏 -->
     <div class="page-header">
       <div class="header-left">
         <h2>场景管理</h2>
-        <span class="subtitle">管理所有AI生成场景，配置步骤和定价</span>
+        <span class="subtitle">管理所有AI生成场景，配置步骤和定价（旧版，建议使用官方模板管理）</span>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="showAddDialog">
