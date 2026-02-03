@@ -6,6 +6,91 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../../config/database');
 
+// ==================== 静态路由（必须在 /:id 之前定义）====================
+
+// 获取分类列表
+router.get('/categories', (req, res) => {
+  try {
+    const db = getDb();
+    const categories = db.prepare(`
+      SELECT * FROM template_categories ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({ code: 200, data: categories });
+  } catch (error) {
+    console.error('[Admin] 获取分类失败:', error);
+    res.status(500).json({ code: 500, msg: '获取分类失败' });
+  }
+});
+
+// 获取所有模板（清单区域，支持多状态筛选）
+router.get('/all', (req, res) => {
+  try {
+    const db = getDb();
+    const { status, category_id, keyword, page = 1, pageSize = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(pageSize);
+    const limit = parseInt(pageSize);
+
+    // 构建查询条件
+    let whereClause = "WHERE t.status NOT IN ('reviewing', 'pending')";
+    const params = [];
+
+    if (status) {
+      whereClause += ' AND t.status = ?';
+      params.push(status);
+    }
+
+    if (category_id) {
+      whereClause += ' AND t.category_id = ?';
+      params.push(category_id);
+    }
+
+    if (keyword) {
+      whereClause += ' AND (t.name LIKE ? OR t.description LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+
+    // 查询总数
+    const { total } = db.prepare(`
+      SELECT COUNT(*) as total FROM user_templates t ${whereClause}
+    `).get(...params);
+
+    // 查询列表
+    const templates = db.prepare(`
+      SELECT
+        t.*,
+        c.creator_name, c.creator_avatar, c.user_id as creator_user_id,
+        tc.name as category_name
+      FROM user_templates t
+      LEFT JOIN creators c ON t.creator_id = c.id
+      LEFT JOIN template_categories tc ON t.category_id = tc.id
+      ${whereClause}
+      ORDER BY t.is_official DESC, t.is_featured DESC, t.updated_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    res.json({
+      code: 200,
+      data: {
+        list: templates.map(t => ({
+          ...t,
+          tags: t.tags ? t.tags.split(',') : [],
+          is_featured: t.is_featured === 1,
+          is_official: t.is_official === 1
+        })),
+        total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    });
+  } catch (error) {
+    console.error('[Admin] 获取模板清单失败:', error);
+    res.status(500).json({ code: 500, msg: '获取模板清单失败' });
+  }
+});
+
+// ==================== 动态路由 ====================
+
 // 获取待审核模板列表
 router.get('/pending', (req, res) => {
   try {
@@ -1011,89 +1096,6 @@ router.post('/official/sync-from-scene', (req, res) => {
   } catch (error) {
     console.error('[Admin] 从场景同步失败:', error);
     res.status(500).json({ code: 500, msg: '同步失败' });
-  }
-});
-
-// ==================== 模板管理页面 API ====================
-
-// 获取所有模板（清单区域，支持多状态筛选）
-router.get('/all', (req, res) => {
-  try {
-    const db = getDb();
-    const { status, category_id, keyword, page = 1, pageSize = 20 } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(pageSize);
-    const limit = parseInt(pageSize);
-
-    // 构建查询条件
-    let whereClause = "WHERE t.status NOT IN ('reviewing', 'pending')";
-    const params = [];
-
-    if (status) {
-      whereClause += ' AND t.status = ?';
-      params.push(status);
-    }
-
-    if (category_id) {
-      whereClause += ' AND t.category_id = ?';
-      params.push(category_id);
-    }
-
-    if (keyword) {
-      whereClause += ' AND (t.name LIKE ? OR t.description LIKE ?)';
-      params.push(`%${keyword}%`, `%${keyword}%`);
-    }
-
-    // 查询总数
-    const { total } = db.prepare(`
-      SELECT COUNT(*) as total FROM user_templates t ${whereClause}
-    `).get(...params);
-
-    // 查询列表
-    const templates = db.prepare(`
-      SELECT
-        t.*,
-        c.creator_name, c.creator_avatar, c.user_id as creator_user_id,
-        tc.name as category_name
-      FROM user_templates t
-      LEFT JOIN creators c ON t.creator_id = c.id
-      LEFT JOIN template_categories tc ON t.category_id = tc.id
-      ${whereClause}
-      ORDER BY t.is_official DESC, t.is_featured DESC, t.updated_at DESC
-      LIMIT ? OFFSET ?
-    `).all(...params, limit, offset);
-
-    res.json({
-      code: 200,
-      data: {
-        list: templates.map(t => ({
-          ...t,
-          tags: t.tags ? t.tags.split(',') : [],
-          is_featured: t.is_featured === 1,
-          is_official: t.is_official === 1
-        })),
-        total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
-      }
-    });
-  } catch (error) {
-    console.error('[Admin] 获取模板清单失败:', error);
-    res.status(500).json({ code: 500, msg: '获取模板清单失败' });
-  }
-});
-
-// 获取分类列表
-router.get('/categories', (req, res) => {
-  try {
-    const db = getDb();
-    const categories = db.prepare(`
-      SELECT * FROM template_categories ORDER BY sort_order ASC, id ASC
-    `).all();
-
-    res.json({ code: 200, data: categories });
-  } catch (error) {
-    console.error('[Admin] 获取分类失败:', error);
-    res.status(500).json({ code: 500, msg: '获取分类失败' });
   }
 });
 
