@@ -41,6 +41,14 @@
           <el-icon><Grid /></el-icon>
           <span>场景管理</span>
         </el-menu-item>
+        <el-menu-item index="/creator-scenes">
+          <el-icon><Stamp /></el-icon>
+          <span>创作者场景审核</span>
+        </el-menu-item>
+        <el-menu-item index="/categories">
+          <el-icon><Collection /></el-icon>
+          <span>分类管理</span>
+        </el-menu-item>
         <el-menu-item index="/assets">
           <el-icon><FolderOpened /></el-icon>
           <span>素材管理</span>

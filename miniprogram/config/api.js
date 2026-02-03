@@ -705,6 +705,95 @@ const api = {
     return request({
       url: `/template/user/favorites?user_id=${userId}&page=${page}&pageSize=${pageSize}`
     });
+  },
+
+  // ========== 创作者场景相关 ==========
+  // 获取我的场景列表
+  getMyCreatorScenes(page = 1, pageSize = 20, status = '') {
+    let url = `/creator-scene/my-list?page=${page}&pageSize=${pageSize}`;
+    if (status) url += `&status=${status}`;
+    return request({ url });
+  },
+
+  // 创建场景
+  createCreatorScene(data) {
+    return request({
+      url: '/creator-scene',
+      method: 'POST',
+      data
+    });
+  },
+
+  // 获取场景详情
+  getCreatorSceneDetail(sceneId) {
+    return request({
+      url: `/creator-scene/${sceneId}`
+    });
+  },
+
+  // 更新场景基本信息
+  updateCreatorScene(sceneId, data) {
+    return request({
+      url: `/creator-scene/${sceneId}`,
+      method: 'PUT',
+      data
+    });
+  },
+
+  // 删除场景
+  deleteCreatorScene(sceneId) {
+    return request({
+      url: `/creator-scene/${sceneId}`,
+      method: 'DELETE'
+    });
+  },
+
+  // 保存场景步骤配置
+  saveCreatorSceneSteps(sceneId, steps) {
+    return request({
+      url: `/creator-scene/${sceneId}/steps`,
+      method: 'POST',
+      data: { steps }
+    });
+  },
+
+  // 保存场景 Prompt 模板
+  saveCreatorScenePrompt(sceneId, data) {
+    return request({
+      url: `/creator-scene/${sceneId}/prompt`,
+      method: 'PUT',
+      data
+    });
+  },
+
+  // 提交场景审核
+  submitCreatorSceneReview(sceneId) {
+    return request({
+      url: `/creator-scene/${sceneId}/submit`,
+      method: 'POST'
+    });
+  },
+
+  // 点赞/取消点赞场景
+  likeCreatorScene(sceneId) {
+    return request({
+      url: `/creator-scene/${sceneId}/like`,
+      method: 'POST'
+    });
+  },
+
+  // 获取可用的步骤类型
+  getStepTypes() {
+    return request({
+      url: '/creator-scene/step-types/list'
+    });
+  },
+
+  // 获取品级列表
+  getGradesList() {
+    return request({
+      url: '/creator-scene/grades/list'
+    });
   }
 };
 

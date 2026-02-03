@@ -4,7 +4,7 @@
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-content">
       <view class="nav-back" bindtap="goBack">
-        <image class="back-icon" src="/images/icon-back-white.png" mode="aspectFit"></image>
+        <image class="back-icon" src="/images/icon-back.svg" mode="aspectFit"></image>
       </view>
       <text class="nav-title">创作者中心</text>
       <view class="nav-placeholder"></view>
@@ -13,10 +13,26 @@
 
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <!-- 开始创作入口 -->
+    <view class="start-create-section" bindtap="goToSceneSelect">
+      <view class="start-create-content">
+        <view class="start-create-icon">
+          <image class="start-icon-img" src="/images/icon-add.svg" mode="aspectFit"></image>
+        </view>
+        <view class="start-create-info">
+          <text class="start-create-title">开始创作</text>
+          <text class="start-create-desc">选择场景，生成专属照片</text>
+        </view>
+      </view>
+      <view class="start-create-arrow">
+        <image class="arrow-icon" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+
     <!-- 创作者信息卡片 -->
     <view class="creator-card">
       <view class="creator-header">
-        <image class="creator-avatar" src="{{creator.creator_avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <image class="creator-avatar" src="{{creator.creator_avatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
         <view class="creator-info">
           <view class="creator-name-row">
             <text class="creator-name">{{creator.creator_name || '创作者'}}</text>
@@ -88,34 +104,57 @@
 
     <!-- 功能入口 -->
     <view class="menu-section">
+      <!-- 场景相关 -->
+      <view class="menu-group-title">场景创作</view>
+      <view class="menu-item" bindtap="createScene">
+        <view class="menu-icon-wrap create">
+          <image class="menu-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
+        </view>
+        <text class="menu-text">创建场景</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
+      </view>
+      <view class="menu-item" bindtap="goToMyScenes">
+        <view class="menu-icon-wrap">
+          <image class="menu-icon" src="/images/icon-scene.svg" mode="aspectFit"></image>
+        </view>
+        <text class="menu-text">我的场景</text>
+        <text class="menu-badge" wx:if="{{sceneStats.pending > 0}}">{{sceneStats.pending}}待审核</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
+      </view>
+
+      <!-- 模板相关 -->
+      <view class="menu-group-title">模板创作</view>
       <view class="menu-item" bindtap="createTemplate">
         <view class="menu-icon-wrap create">
-          <image class="menu-icon" src="/images/icon-add.png" mode="aspectFit"></image>
+          <image class="menu-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
         </view>
         <text class="menu-text">创建模板</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.png" mode="aspectFit"></image>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
       </view>
       <view class="menu-item" bindtap="goToMyTemplates">
         <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-template.png" mode="aspectFit"></image>
+          <image class="menu-icon" src="/images/icon-template.svg" mode="aspectFit"></image>
         </view>
         <text class="menu-text">我的模板</text>
         <text class="menu-badge" wx:if="{{templateStats.pending > 0}}">{{templateStats.pending}}待审核</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.png" mode="aspectFit"></image>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
       </view>
+
+      <!-- 其他功能 -->
+      <view class="menu-group-title">其他</view>
       <view class="menu-item" bindtap="goToEarnings">
         <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-coin.png" mode="aspectFit"></image>
+          <image class="menu-icon" src="/images/icon-coin.svg" mode="aspectFit"></image>
         </view>
         <text class="menu-text">收益明细</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.png" mode="aspectFit"></image>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
       </view>
       <view class="menu-item" bindtap="goToFavorites">
         <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-favorite.png" mode="aspectFit"></image>
+          <image class="menu-icon" src="/images/icon-favorite.svg" mode="aspectFit"></image>
         </view>
         <text class="menu-text">我的收藏</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.png" mode="aspectFit"></image>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
       </view>
     </view>
 
@@ -125,7 +164,7 @@
         <text class="section-title">我的模板</text>
         <view class="view-all" bindtap="goToMyTemplates">
           <text class="view-all-text">查看全部</text>
-          <image class="view-all-arrow" src="/images/icon-arrow-right.png" mode="aspectFit"></image>
+          <image class="view-all-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
         </view>
       </view>
 
@@ -148,7 +187,7 @@
 
       <!-- 空状态 -->
       <view class="empty-templates" wx:if="{{templates.length === 0 && !loading}}">
-        <image class="empty-icon" src="/images/empty-template.png" mode="aspectFit"></image>
+        <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
         <text class="empty-text">还没有创建模板</text>
         <view class="empty-btn" bindtap="createTemplate">
           <text class="empty-btn-text">立即创建</text>

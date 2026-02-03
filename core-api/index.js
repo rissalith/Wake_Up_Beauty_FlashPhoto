@@ -76,6 +76,7 @@ const miniprogramVideoRewardRoutes = require('./routes/miniprogram/video-reward'
 const miniprogramMarketRoutes = require('./routes/miniprogram/market');
 const miniprogramCreatorRoutes = require('./routes/miniprogram/creator');
 const miniprogramTemplateRoutes = require('./routes/miniprogram/template');
+const miniprogramCreatorSceneRoutes = require('./routes/miniprogram/creator-scene');
 
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
@@ -86,6 +87,7 @@ const adminScenesRoutes = require('./routes/admin/scenes');
 const adminMonitorRoutes = require('./routes/admin/monitor');
 const adminGradeSchemesRoutes = require('./routes/admin/grade-schemes');
 const adminTemplateReviewRoutes = require('./routes/admin/template-review');
+const adminCreatorSceneReviewRoutes = require('./routes/admin/creator-scene-review');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -115,6 +117,7 @@ app.use('/api/video-reward', miniprogramVideoRewardRoutes);
 app.use('/api/market', miniprogramMarketRoutes);
 app.use('/api/creator', miniprogramCreatorRoutes);
 app.use('/api/template', miniprogramTemplateRoutes);
+app.use('/api/creator-scene', miniprogramCreatorSceneRoutes);
 
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);
@@ -125,6 +128,7 @@ app.use('/api/admin/scenes', adminScenesRoutes);
 app.use('/api/admin/monitor', adminMonitorRoutes);
 app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
 app.use('/api/admin/templates', adminTemplateReviewRoutes);
+app.use('/api/admin/creator-scenes', adminCreatorSceneReviewRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);

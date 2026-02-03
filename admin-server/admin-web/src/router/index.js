@@ -55,6 +55,18 @@ const routes = [
         meta: { title: '场景管理' }
       },
       {
+        path: 'creator-scenes',
+        name: 'CreatorScenes',
+        component: () => import('../views/CreatorScenes.vue'),
+        meta: { title: '创作者场景审核' }
+      },
+      {
+        path: 'categories',
+        name: 'Categories',
+        component: () => import('../views/Categories.vue'),
+        meta: { title: '分类管理' }
+      },
+      {
         path: 'assets',
         name: 'Assets',
         component: () => import('../views/Assets.vue'),

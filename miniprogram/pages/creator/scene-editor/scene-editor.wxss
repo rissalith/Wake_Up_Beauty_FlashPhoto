@@ -1,0 +1,683 @@
+/* 场景编辑器页面样式 */
+
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+}
+
+.nav-content {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-back {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.back-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nav-action {
+  padding: 6px 12px;
+}
+
+.save-text {
+  font-size: 14px;
+  color: #fff;
+}
+
+/* 步骤指示器 */
+.wizard-steps {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 20px;
+  z-index: 99;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-item.active .step-number {
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  color: #fff;
+}
+
+.step-item.completed .step-number {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.step-name {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #999;
+}
+
+.step-item.active .step-name {
+  color: #C68B4D;
+  font-weight: 500;
+}
+
+.step-line {
+  position: absolute;
+  top: 34px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 0;
+}
+
+/* 内容区域 */
+.content-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 70px;
+  overflow-y: auto;
+}
+
+.step-content {
+  padding: 16px;
+}
+
+/* 表单样式 */
+.form-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.form-item {
+  margin-bottom: 20px;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #FF6B6B;
+}
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 100px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-textarea.large {
+  height: 150px;
+}
+
+/* 图标选择器 */
+.icon-picker {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.icon-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.icon-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #ccc;
+  border-radius: 12px;
+}
+
+.placeholder-text {
+  font-size: 32px;
+  color: #ccc;
+}
+
+.placeholder-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* 醒币输入 */
+.points-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.points-input {
+  flex: 1;
+  height: 44px;
+  font-size: 14px;
+}
+
+.points-unit {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 步骤列表 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.add-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 16px;
+}
+
+.add-text {
+  font-size: 13px;
+  color: #fff;
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+}
+
+.step-order {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-info {
+  flex: 1;
+  margin-left: 12px;
+}
+
+.step-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+}
+
+.step-type {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.step-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-icon {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.action-icon.edit {
+  color: #4CAF50;
+  background: #E8F5E9;
+}
+
+.action-icon.delete {
+  color: #F44336;
+  background: #FFEBEE;
+}
+
+.step-options {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.options-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.options-text {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 空状态 */
+.empty-steps {
+  padding: 40px 20px;
+  text-align: center;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #999;
+  display: block;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 8px;
+  display: block;
+}
+
+/* 类型提示 */
+.type-tips {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.tips-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.type-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.type-item:last-child {
+  border-bottom: none;
+}
+
+.type-name {
+  font-size: 13px;
+  color: #333;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.type-desc {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 变量区域 */
+.variables-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #FFF8F0;
+  border-radius: 8px;
+}
+
+.variables-title {
+  font-size: 13px;
+  color: #C68B4D;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.variables-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variable-tag {
+  padding: 6px 12px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1rpx solid #E8B686;
+}
+
+.variable-name {
+  font-size: 12px;
+  color: #C68B4D;
+  font-weight: 500;
+}
+
+.variable-hint {
+  font-size: 11px;
+  color: #999;
+  margin-left: 4px;
+}
+
+/* Prompt 提示 */
+.prompt-tips {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.tips-content {
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  display: block;
+  margin-top: 8px;
+}
+
+/* 预览区域 */
+.preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-card {
+  display: flex;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.preview-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.preview-info {
+  flex: 1;
+  margin-left: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.preview-desc {
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.preview-cost {
+  font-size: 14px;
+  color: #C68B4D;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.preview-steps,
+.preview-prompt {
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.preview-step {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.preview-step:last-child {
+  border-bottom: none;
+}
+
+.preview-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-step-name {
+  flex: 1;
+  margin-left: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.preview-step-type {
+  font-size: 12px;
+  color: #999;
+}
+
+.preview-prompt-text {
+  font-size: 13px;
+  color: #666;
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  display: block;
+}
+
+.preview-actions {
+  margin-top: 16px;
+}
+
+.preview-btn {
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  border: 1rpx solid #E8B686;
+}
+
+.preview-btn .btn-text {
+  font-size: 14px;
+  color: #C68B4D;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  padding-bottom: env(safe-area-inset-bottom);
+  gap: 12px;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-prev {
+  flex: 1;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 22px;
+}
+
+.btn-prev .btn-text {
+  font-size: 15px;
+  color: #666;
+}
+
+.btn-next,
+.btn-submit {
+  flex: 2;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 22px;
+}
+
+.btn-next .btn-text,
+.btn-submit .btn-text {
+  font-size: 15px;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* 加载状态 */
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 200;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #C68B4D;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #999;
+}
+
+/* 底部安全区 */
+.safe-bottom {
+  height: 20px;
+}

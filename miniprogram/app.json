@@ -19,6 +19,9 @@
     "pages/creator/create-template",
     "pages/creator/my-templates",
     "pages/creator/earnings",
+    "pages/creator/my-scenes/my-scenes",
+    "pages/creator/scene-editor/scene-editor",
+    "pages/creator/step-editor/step-editor",
     "pages/template-detail/template-detail",
     "pages/index/index"
   ],

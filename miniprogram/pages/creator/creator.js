@@ -10,13 +10,16 @@ Page({
     creator: {},
     levelInfo: {},
     templateStats: {},
+    sceneStats: {},
     templates: [],
+    scenes: [],
     loading: true,
     showLoginModal: false,
     statusMap: {
       draft: '草稿',
       pending: '审核中',
       active: '已上架',
+      approved: '已上架',
       rejected: '已拒绝',
       offline: '已下架'
     }
@@ -35,6 +38,11 @@ Page({
   },
 
   onShow() {
+    // 设置tabBar选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 });
+    }
+
     const userId = wx.getStorageSync('userId');
     if (!userId) {
       this.setData({ showLoginModal: true });
@@ -53,11 +61,12 @@ Page({
 
     try {
       // 并行加载数据
-      const [profileRes, levelRes, statsRes, templatesRes] = await Promise.all([
+      const [profileRes, levelRes, statsRes, templatesRes, scenesRes] = await Promise.all([
         api.getCreatorProfile(userId),
         api.getCreatorLevel(userId),
         api.getCreatorStats(userId),
-        api.getCreatorTemplates(userId, null, 1, 5)
+        api.getCreatorTemplates(userId, null, 1, 5),
+        api.getMyCreatorScenes ? api.getMyCreatorScenes(1, 5) : Promise.resolve({ code: 200, data: { list: [] } })
       ]);
 
       // 创作者信息
@@ -81,6 +90,16 @@ Page({
       if (templatesRes.code === 200 && templatesRes.data) {
         this.setData({ templates: templatesRes.data.list || [] });
       }
+
+      // 场景列表
+      if (scenesRes.code === 0 && scenesRes.data) {
+        const sceneList = scenesRes.data.list || [];
+        const pendingCount = sceneList.filter(s => s.review_status === 'pending').length;
+        this.setData({
+          scenes: sceneList,
+          sceneStats: { pending: pendingCount }
+        });
+      }
     } catch (error) {
       console.error('加载创作者数据失败:', error);
       wx.showToast({
@@ -101,6 +120,13 @@ Page({
     });
   },
 
+  // 跳转到场景选择页面
+  goToSceneSelect() {
+    wx.navigateTo({
+      url: '/pages/index/index'
+    });
+  },
+
   // 编辑资料
   editProfile() {
     wx.navigateTo({
@@ -112,6 +138,20 @@ Page({
   createTemplate() {
     wx.navigateTo({
       url: '/pages/creator/create-template'
+    });
+  },
+
+  // 创建场景
+  createScene() {
+    wx.navigateTo({
+      url: '/pages/creator/scene-editor/scene-editor'
+    });
+  },
+
+  // 查看我的场景
+  goToMyScenes() {
+    wx.navigateTo({
+      url: '/pages/creator/my-scenes/my-scenes'
     });
   },
 

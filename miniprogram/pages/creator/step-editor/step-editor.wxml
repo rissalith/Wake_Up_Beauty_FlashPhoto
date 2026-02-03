@@ -1,0 +1,189 @@
+<!-- 步骤编辑器页面 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-back.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">{{mode === 'edit' ? '编辑步骤' : '添加步骤'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view class="content-area" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <!-- 步骤类型选择 -->
+    <view class="section">
+      <text class="section-title">选择步骤类型 <text class="required">*</text></text>
+      <view class="type-grid">
+        <view class="type-card {{step.step_type === item.type ? 'selected' : ''}}"
+              wx:for="{{stepTypes}}" wx:key="type"
+              data-type="{{item.type}}" bindtap="selectType">
+          <text class="type-name">{{item.name}}</text>
+          <text class="type-desc">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 基本信息 -->
+    <view class="section" wx:if="{{step.step_type}}">
+      <text class="section-title">基本信息</text>
+      <view class="form-card">
+        <view class="form-item">
+          <text class="form-label">步骤标题 <text class="required">*</text></text>
+          <input class="form-input" placeholder="如：选择性别" value="{{step.title}}" bindinput="onTitleInput" maxlength="20"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">步骤描述</text>
+          <input class="form-input" placeholder="可选，显示在标题下方" value="{{step.description}}" bindinput="onDescInput" maxlength="50"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">变量名</text>
+          <input class="form-input" placeholder="用于Prompt中引用，如 gender" value="{{step.variable_name}}" bindinput="onVariableInput" maxlength="20"/>
+          <text class="form-hint">在Prompt中使用 {{'{{'}}{{step.variable_name || 'variable'}}{{'}}'}}</text>
+        </view>
+
+        <view class="form-item row">
+          <text class="form-label">必填步骤</text>
+          <switch checked="{{step.is_required}}" bindchange="toggleRequired" color="#C68B4D"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- 摇骰子配置 -->
+    <view class="section" wx:if="{{step.step_type === 'dice_roll'}}">
+      <text class="section-title">摇骰子配置</text>
+      <view class="form-card">
+        <view class="form-item">
+          <text class="form-label">免费次数</text>
+          <view class="number-input-wrap">
+            <input class="number-input" type="number" value="{{step.config.free_rolls || 1}}" bindinput="onFreeRollsInput"/>
+            <text class="number-unit">次</text>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">额外摇骰消耗</text>
+          <view class="number-input-wrap">
+            <input class="number-input" type="number" value="{{step.config.roll_cost || 1}}" bindinput="onRollCostInput"/>
+            <text class="number-unit">醒币/次</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选项配置 -->
+    <view class="section" wx:if="{{selectedType && selectedType.hasOptions}}">
+      <view class="section-header">
+        <text class="section-title">选项配置</text>
+        <view class="add-btn" bindtap="addOption">
+          <text class="add-text">+ 添加选项</text>
+        </view>
+      </view>
+
+      <!-- 选项列表 -->
+      <view class="option-list" wx:if="{{step.options.length > 0}}">
+        <view class="option-card" wx:for="{{step.options}}" wx:key="index">
+          <view class="option-main">
+            <image class="option-image" wx:if="{{item.image_url}}" src="{{item.image_url}}" mode="aspectFill"></image>
+            <view class="option-info">
+              <text class="option-label">{{item.label}}</text>
+              <text class="option-prompt" wx:if="{{item.prompt_text}}">Prompt: {{item.prompt_text}}</text>
+              <view class="option-meta" wx:if="{{step.step_type === 'dice_roll'}}">
+                <text class="grade-tag" style="color: {{grades[item.grade] ? grades[item.grade].color : '#999'}}">{{item.grade}}</text>
+                <text class="probability-text">概率: {{item.probability}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="option-actions">
+            <view class="action-btn" data-index="{{index}}" bindtap="editOption">编辑</view>
+            <view class="action-btn delete" data-index="{{index}}" bindtap="deleteOption">删除</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-options" wx:if="{{step.options.length === 0}}">
+        <text class="empty-text">还没有添加选项</text>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <!-- 底部保存按钮 -->
+  <view class="bottom-bar">
+    <view class="save-btn" bindtap="saveStep">
+      <text class="save-text">保存步骤</text>
+    </view>
+  </view>
+
+  <!-- 选项编辑弹窗 -->
+  <view class="option-editor-mask" wx:if="{{showOptionEditor}}" bindtap="closeOptionEditor">
+    <view class="option-editor" catchtap="">
+      <view class="editor-header">
+        <text class="editor-title">{{editingOptionIndex >= 0 ? '编辑选项' : '添加选项'}}</text>
+        <view class="close-btn" bindtap="closeOptionEditor">×</view>
+      </view>
+
+      <scroll-view class="editor-content" scroll-y="{{true}}">
+        <view class="form-item">
+          <text class="form-label">选项名称 <text class="required">*</text></text>
+          <input class="form-input" placeholder="显示给用户的名称" value="{{editingOption.label}}" bindinput="onOptionLabelInput"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">选项值</text>
+          <input class="form-input" placeholder="可选，用于程序处理" value="{{editingOption.value}}" bindinput="onOptionValueInput"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">Prompt文本</text>
+          <input class="form-input" placeholder="选中时插入到Prompt的文本" value="{{editingOption.prompt_text}}" bindinput="onOptionPromptInput"/>
+        </view>
+
+        <!-- 图片选项 -->
+        <view class="form-item" wx:if="{{step.step_type === 'image_tag_select'}}">
+          <text class="form-label">选项图片</text>
+          <view class="image-picker" bindtap="chooseOptionImage">
+            <image class="picker-preview" wx:if="{{editingOption.image_url}}" src="{{editingOption.image_url}}" mode="aspectFill"></image>
+            <text class="picker-placeholder" wx:else>+ 选择图片</text>
+          </view>
+        </view>
+
+        <!-- 摇骰子品级 -->
+        <view class="form-item" wx:if="{{step.step_type === 'dice_roll'}}">
+          <text class="form-label">品级</text>
+          <view class="grade-list">
+            <view class="grade-item {{editingOption.grade === item.value ? 'selected' : ''}}"
+                  wx:for="{{grades}}" wx:key="value"
+                  data-grade="{{item.value}}" bindtap="selectGrade"
+                  style="border-color: {{item.color}}; {{editingOption.grade === item.value ? 'background: ' + item.color : ''}}">
+              <text class="grade-name" style="color: {{editingOption.grade === item.value ? '#fff' : item.color}}">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 概率 -->
+        <view class="form-item" wx:if="{{step.step_type === 'dice_roll'}}">
+          <text class="form-label">概率权重</text>
+          <input class="form-input" type="digit" placeholder="默认1.0" value="{{editingOption.probability}}" bindinput="onProbabilityInput"/>
+          <text class="form-hint">数值越大，被抽中的概率越高</text>
+        </view>
+      </scroll-view>
+
+      <view class="editor-footer">
+        <view class="cancel-btn" bindtap="closeOptionEditor">
+          <text class="btn-text">取消</text>
+        </view>
+        <view class="confirm-btn" bindtap="saveOption">
+          <text class="btn-text">确定</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

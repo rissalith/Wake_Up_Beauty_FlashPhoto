@@ -762,6 +762,92 @@ function createTables() {
     )
   `);
 
+  // ==================== 创作者场景相关表 ====================
+
+  // 场景点赞表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scene_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      scene_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, scene_id)
+    )
+  `);
+
+  // 场景收藏表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scene_favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      scene_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, scene_id)
+    )
+  `);
+
+  // 场景使用记录表（用于计算创作者收益）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scene_usage_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      scene_id INTEGER NOT NULL,
+      creator_id TEXT,
+      points_cost INTEGER DEFAULT 0,
+      creator_earning INTEGER DEFAULT 0,
+      result_image TEXT,
+      status TEXT DEFAULT 'success',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 场景审核记录表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scene_reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scene_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      admin_id TEXT,
+      reason TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // 为 scenes 表添加创作者相关字段
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN creator_id TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec("ALTER TABLE scenes ADD COLUMN source TEXT DEFAULT 'official'");
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec("ALTER TABLE scenes ADD COLUMN review_status TEXT DEFAULT 'approved'");
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN reject_reason TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN submitted_at DATETIME');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN approved_at DATETIME');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN view_count INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN use_count INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN like_count INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN favorite_count INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE scenes ADD COLUMN revenue_share INTEGER DEFAULT 10');
+  } catch (e) { /* 字段可能已存在 */ }
+
   // 为 users 表添加创作者相关字段
   try {
     db.exec('ALTER TABLE users ADD COLUMN is_creator INTEGER DEFAULT 0');
@@ -888,7 +974,20 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_creator_earnings_creator ON creator_earnings(creator_id)',
     'CREATE INDEX IF NOT EXISTS idx_creator_earnings_template ON creator_earnings(template_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_reviews_template ON template_reviews(template_id)',
-    'CREATE INDEX IF NOT EXISTS idx_template_categories_visible ON template_categories(is_visible)'
+    'CREATE INDEX IF NOT EXISTS idx_template_categories_visible ON template_categories(is_visible)',
+    // 创作者场景索引
+    'CREATE INDEX IF NOT EXISTS idx_scenes_creator ON scenes(creator_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scenes_source ON scenes(source)',
+    'CREATE INDEX IF NOT EXISTS idx_scenes_review_status ON scenes(review_status)',
+    'CREATE INDEX IF NOT EXISTS idx_scenes_use_count ON scenes(use_count DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_likes_user ON scene_likes(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_likes_scene ON scene_likes(scene_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_favorites_user ON scene_favorites(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_favorites_scene ON scene_favorites(scene_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_usage_user ON scene_usage_records(user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_usage_scene ON scene_usage_records(scene_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_usage_creator ON scene_usage_records(creator_id)',
+    'CREATE INDEX IF NOT EXISTS idx_scene_reviews_scene ON scene_reviews(scene_id)'
   ];
   
   indexes.forEach(sql => {

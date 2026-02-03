@@ -1,0 +1,198 @@
+<!-- 场景编辑器页面 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-back.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">{{isEdit ? '编辑场景' : '创建场景'}}</text>
+      <view class="nav-action" bindtap="saveDraft">
+        <text class="save-text">保存</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 步骤指示器 -->
+  <view class="wizard-steps" style="top: {{navBarHeight}}px;">
+    <view class="step-item {{index <= currentStep ? 'active' : ''}} {{index < currentStep ? 'completed' : ''}}"
+          wx:for="{{wizardSteps}}" wx:key="key">
+      <view class="step-number">{{index + 1}}</view>
+      <text class="step-name">{{item.name}}</text>
+    </view>
+    <view class="step-line"></view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view class="content-area" style="top: {{navBarHeight + 70}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <!-- 步骤1: 基本信息 -->
+    <view class="step-content" wx:if="{{currentStep === 0}}">
+      <view class="form-section">
+        <view class="form-item">
+          <text class="form-label">场景名称 <text class="required">*</text></text>
+          <input class="form-input" placeholder="请输入场景名称" value="{{scene.name}}" bindinput="onNameInput" maxlength="20"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">场景描述</text>
+          <textarea class="form-textarea" placeholder="请输入场景描述" value="{{scene.description}}" bindinput="onDescInput" maxlength="200"/>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">场景图标</text>
+          <view class="icon-picker" bindtap="chooseIcon">
+            <image class="icon-preview" wx:if="{{scene.icon}}" src="{{scene.icon}}" mode="aspectFill"></image>
+            <view class="icon-placeholder" wx:else>
+              <text class="placeholder-text">+</text>
+              <text class="placeholder-hint">点击上传</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">消耗醒币</text>
+          <view class="points-input-wrap">
+            <input class="points-input" type="number" value="{{scene.points_cost}}" bindinput="onPointsInput"/>
+            <text class="points-unit">醒币/次</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 步骤2: 流程设计 -->
+    <view class="step-content" wx:if="{{currentStep === 1}}">
+      <view class="section-header">
+        <text class="section-title">步骤列表</text>
+        <view class="add-btn" bindtap="addStep">
+          <text class="add-text">+ 添加步骤</text>
+        </view>
+      </view>
+
+      <!-- 步骤列表 -->
+      <view class="step-list" wx:if="{{steps.length > 0}}">
+        <view class="step-card" wx:for="{{steps}}" wx:key="index">
+          <view class="step-header">
+            <view class="step-order">{{index + 1}}</view>
+            <view class="step-info">
+              <text class="step-title">{{item.title || '未命名步骤'}}</text>
+              <text class="step-type">{{item.step_type}}</text>
+            </view>
+            <view class="step-actions">
+              <view class="action-icon" data-index="{{index}}" data-direction="up" bindtap="moveStep" wx:if="{{index > 0}}">↑</view>
+              <view class="action-icon" data-index="{{index}}" data-direction="down" bindtap="moveStep" wx:if="{{index < steps.length - 1}}">↓</view>
+              <view class="action-icon edit" data-index="{{index}}" bindtap="editStep">编辑</view>
+              <view class="action-icon delete" data-index="{{index}}" bindtap="deleteStep">删除</view>
+            </view>
+          </view>
+          <view class="step-options" wx:if="{{item.options && item.options.length > 0}}">
+            <text class="options-label">选项: </text>
+            <text class="options-text">{{item.options.length}}个选项</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-steps" wx:if="{{steps.length === 0}}">
+        <text class="empty-text">还没有添加步骤</text>
+        <text class="empty-hint">点击上方"添加步骤"开始配置</text>
+      </view>
+
+      <!-- 步骤类型说明 -->
+      <view class="type-tips">
+        <text class="tips-title">可用步骤类型：</text>
+        <view class="type-item" wx:for="{{stepTypes}}" wx:key="type">
+          <text class="type-name">{{item.name}}</text>
+          <text class="type-desc">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 步骤3: Prompt配置 -->
+    <view class="step-content" wx:if="{{currentStep === 2}}">
+      <view class="form-section">
+        <view class="form-item">
+          <text class="form-label">Prompt模板 <text class="required">*</text></text>
+          <textarea class="form-textarea large" placeholder="请输入Prompt模板，使用 {{变量名}} 插入变量" value="{{prompt.prompt_template}}" bindinput="onPromptInput"/>
+        </view>
+
+        <!-- 可用变量 -->
+        <view class="variables-section" wx:if="{{availableVariables.length > 0}}">
+          <text class="variables-title">可用变量（点击插入）：</text>
+          <view class="variables-list">
+            <view class="variable-tag" wx:for="{{availableVariables}}" wx:key="name" data-variable="{{item.name}}" bindtap="insertVariable">
+              <text class="variable-name">{{item.name}}</text>
+              <text class="variable-hint">{{item.title}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">负面提示词</text>
+          <textarea class="form-textarea" placeholder="请输入负面提示词（可选）" value="{{prompt.negative_prompt}}" bindinput="onNegativePromptInput"/>
+        </view>
+      </view>
+
+      <!-- Prompt 示例 -->
+      <view class="prompt-tips">
+        <text class="tips-title">Prompt 示例：</text>
+        <text class="tips-content">A beautiful {{gender}} portrait, {{style}} style, high quality, detailed face</text>
+      </view>
+    </view>
+
+    <!-- 步骤4: 预览 -->
+    <view class="step-content" wx:if="{{currentStep === 3}}">
+      <view class="preview-section">
+        <view class="preview-card">
+          <image class="preview-icon" src="{{scene.icon || '/images/default-scene.svg'}}" mode="aspectFill"></image>
+          <view class="preview-info">
+            <text class="preview-name">{{scene.name}}</text>
+            <text class="preview-desc">{{scene.description || '暂无描述'}}</text>
+            <text class="preview-cost">{{scene.points_cost}}醒币/次</text>
+          </view>
+        </view>
+
+        <view class="preview-steps">
+          <text class="preview-title">流程步骤 ({{steps.length}}步)</text>
+          <view class="preview-step" wx:for="{{steps}}" wx:key="index">
+            <text class="preview-step-num">{{index + 1}}</text>
+            <text class="preview-step-name">{{item.title}}</text>
+            <text class="preview-step-type">{{item.step_type}}</text>
+          </view>
+        </view>
+
+        <view class="preview-prompt">
+          <text class="preview-title">Prompt模板</text>
+          <text class="preview-prompt-text">{{prompt.prompt_template}}</text>
+        </view>
+      </view>
+
+      <view class="preview-actions">
+        <view class="preview-btn" bindtap="previewScene">
+          <text class="btn-text">预览效果</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <view class="btn-prev" wx:if="{{currentStep > 0}}" bindtap="prevStep">
+      <text class="btn-text">上一步</text>
+    </view>
+    <view class="btn-next" wx:if="{{currentStep < wizardSteps.length - 1}}" bindtap="nextStep">
+      <text class="btn-text">{{saving ? '保存中...' : '下一步'}}</text>
+    </view>
+    <view class="btn-submit" wx:if="{{currentStep === wizardSteps.length - 1}}" bindtap="submitReview">
+      <text class="btn-text">提交审核</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-mask" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+</view>

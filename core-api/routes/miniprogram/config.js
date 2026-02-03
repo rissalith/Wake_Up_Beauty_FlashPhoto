@@ -46,8 +46,18 @@ router.get('/init', (req, res) => {
       system[c.config_key] = value;
     });
 
-    // 2. 获取场景列表（只返回上线和即将上线的场景）
-    const scenes = db.prepare("SELECT * FROM scenes WHERE status IN ('active', 'coming_soon') ORDER BY sort_order ASC, id ASC").all();
+    // 2. 获取场景列表（官方场景 + 已审核的创作者场景）
+    const scenes = db.prepare(`
+      SELECT s.*,
+        CASE WHEN s.source = 'creator' THEN c.pen_name ELSE NULL END as creator_name,
+        CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
+      FROM scenes s
+      LEFT JOIN creators c ON s.creator_id = c.user_id
+      LEFT JOIN users u ON s.creator_id = u.id
+      WHERE s.status IN ('active', 'coming_soon')
+        AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))
+      ORDER BY s.source ASC, s.sort_order ASC, s.use_count DESC, s.id ASC
+    `).all();
 
     // 根据语言处理场景名称和描述
     const localizedScenes = scenes.map(scene => {
@@ -56,6 +66,8 @@ router.get('/init', (req, res) => {
         localizedScene.name = scene.name_en || scene.name;
         localizedScene.description = scene.description_en || scene.description;
       }
+      // 添加创作者标识
+      localizedScene.is_creator_scene = scene.source === 'creator';
       return localizedScene;
     });
 
@@ -261,23 +273,44 @@ router.get('/rewards', (req, res) => {
 router.get('/scenes', (req, res) => {
   try {
     const db = getDb();
-    const { status } = req.query;
+    const { status, include_creator = 'true' } = req.query;
 
-    let sql = "SELECT * FROM scenes WHERE 1=1";
+    let sql = `
+      SELECT s.*,
+        CASE WHEN s.source = 'creator' THEN c.pen_name ELSE NULL END as creator_name,
+        CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
+      FROM scenes s
+      LEFT JOIN creators c ON s.creator_id = c.user_id
+      LEFT JOIN users u ON s.creator_id = u.id
+      WHERE 1=1
+    `;
     const params = [];
 
     if (status) {
-      sql += " AND status = ?";
+      sql += " AND s.status = ?";
       params.push(status);
     }
 
-    sql += " ORDER BY sort_order ASC, id ASC";
+    // 是否包含创作者场景
+    if (include_creator === 'true') {
+      sql += " AND (s.source = 'official' OR (s.source = 'creator' AND s.review_status = 'approved'))";
+    } else {
+      sql += " AND s.source = 'official'";
+    }
+
+    sql += " ORDER BY s.source ASC, s.sort_order ASC, s.use_count DESC, s.id ASC";
 
     const scenes = db.prepare(sql).all(...params);
 
+    // 添加创作者标识
+    const processedScenes = scenes.map(scene => ({
+      ...scene,
+      is_creator_scene: scene.source === 'creator'
+    }));
+
     res.json({
       code: 0,
-      data: scenes
+      data: processedScenes
     });
   } catch (error) {
     console.error('获取场景列表错误:', error);
