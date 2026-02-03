@@ -804,6 +804,25 @@ const api = {
       data,
       timeout: 60000  // AI 生成可能需要较长时间
     });
+  },
+
+  // AI Agent 生成模板配置
+  aiAgentGenerate(data) {
+    return request({
+      url: '/admin/ai-agent/generate',
+      method: 'POST',
+      data,
+      timeout: 120000  // AI Agent 生成需要较长时间
+    });
+  },
+
+  // 获取 AI Agent 任务状态
+  aiAgentStatus(taskId) {
+    return request({
+      url: `/admin/ai-agent/status/${taskId}`,
+      method: 'GET',
+      timeout: 10000
+    });
   }
 };
 

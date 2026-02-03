@@ -25,7 +25,17 @@ Page({
       negative_prompt: ''
     },
     canNext: false,
-    uploading: false
+    uploading: false,
+
+    // AI 生成相关
+    showAiModal: false,
+    aiDescription: '',
+    aiGenerating: false,
+    aiGeneratingText: '正在分析需求...',
+    aiProgress: 0,
+    aiResult: null,
+    aiTaskId: null,
+    aiPollTimer: null
   },
 
   onLoad(options) {
@@ -59,7 +69,11 @@ Page({
     try {
       const res = await api.getTemplateCategories();
       if (res.code === 200 && res.data) {
-        this.setData({ categories: res.data });
+        // 过滤掉"推荐"分类（系统推荐，不允许用户选择）
+        const filteredCategories = res.data.filter(c =>
+          c.name !== '推荐' && c.name_en !== 'Featured'
+        );
+        this.setData({ categories: filteredCategories });
       }
     } catch (error) {
       console.error('加载分类失败:', error);
@@ -362,5 +376,206 @@ Page({
       title: '我正在创建模板',
       path: '/pages/creator/creator'
     };
+  },
+
+  // ==================== AI 智能生成相关 ====================
+
+  // 显示 AI 生成弹窗
+  showAiGenerateModal() {
+    this.setData({
+      showAiModal: true,
+      aiDescription: '',
+      aiGenerating: false,
+      aiResult: null,
+      aiProgress: 0
+    });
+  },
+
+  // 隐藏 AI 生成弹窗
+  hideAiGenerateModal() {
+    // 如果正在生成，先取消
+    if (this.data.aiPollTimer) {
+      clearInterval(this.data.aiPollTimer);
+      this.setData({ aiPollTimer: null });
+    }
+    this.setData({ showAiModal: false });
+  },
+
+  // 阻止冒泡
+  preventBubble() {},
+
+  // AI 描述输入
+  onAiDescriptionInput(e) {
+    this.setData({ aiDescription: e.detail.value });
+  },
+
+  // 使用示例
+  useAiExample(e) {
+    const text = e.currentTarget.dataset.text;
+    this.setData({ aiDescription: text });
+  },
+
+  // 开始 AI 生成
+  async startAiGenerate() {
+    const { aiDescription } = this.data;
+    if (aiDescription.length < 5) {
+      wx.showToast({ title: '请输入更详细的描述', icon: 'none' });
+      return;
+    }
+
+    this.setData({
+      aiGenerating: true,
+      aiGeneratingText: '正在分析需求...',
+      aiProgress: 5,
+      aiResult: null
+    });
+
+    try {
+      // 调用 AI Agent API
+      const res = await api.aiAgentGenerate({
+        description: aiDescription,
+        options: {
+          async: true,
+          generateImages: false
+        }
+      });
+
+      if (res.code === 200 && res.data && res.data.task_id) {
+        this.setData({
+          aiTaskId: res.data.task_id,
+          aiProgress: 10
+        });
+
+        // 开始轮询任务状态
+        this.pollAiTaskStatus(res.data.task_id);
+      } else {
+        throw new Error(res.msg || '创建任务失败');
+      }
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      wx.showToast({ title: error.message || '生成失败', icon: 'none' });
+      this.setData({ aiGenerating: false });
+    }
+  },
+
+  // 轮询 AI 任务状态
+  pollAiTaskStatus(taskId) {
+    const poll = async () => {
+      try {
+        const res = await api.aiAgentStatus(taskId);
+
+        if (res.code === 200 && res.data) {
+          const task = res.data;
+
+          // 更新进度
+          const progressMap = {
+            'knowledge_retrieval': { progress: 20, text: '正在检索知识库...' },
+            'planning': { progress: 35, text: '正在规划场景...' },
+            'config_generation': { progress: 55, text: '正在生成配置...' },
+            'review_iteration_1': { progress: 75, text: '正在审核配置...' },
+            'review_iteration_2': { progress: 85, text: '正在优化配置...' },
+            'done': { progress: 100, text: '生成完成!' }
+          };
+
+          const stepInfo = progressMap[task.current_step] || { progress: task.progress || 50, text: '处理中...' };
+          this.setData({
+            aiProgress: stepInfo.progress,
+            aiGeneratingText: stepInfo.text
+          });
+
+          // 检查是否完成
+          if (task.status === 'completed') {
+            this.clearAiPollTimer();
+            this.handleAiGenerateSuccess(task);
+          } else if (task.status === 'failed') {
+            this.clearAiPollTimer();
+            wx.showToast({ title: task.error_message || '生成失败', icon: 'none' });
+            this.setData({ aiGenerating: false });
+          }
+        }
+      } catch (error) {
+        console.error('轮询状态失败:', error);
+      }
+    };
+
+    // 立即执行一次
+    poll();
+
+    // 每 2 秒轮询一次
+    const timer = setInterval(poll, 2000);
+    this.setData({ aiPollTimer: timer });
+  },
+
+  // 清除轮询定时器
+  clearAiPollTimer() {
+    if (this.data.aiPollTimer) {
+      clearInterval(this.data.aiPollTimer);
+      this.setData({ aiPollTimer: null });
+    }
+  },
+
+  // AI 生成成功
+  handleAiGenerateSuccess(task) {
+    const config = task.config_result;
+    if (!config) {
+      wx.showToast({ title: '生成结果为空', icon: 'none' });
+      this.setData({ aiGenerating: false });
+      return;
+    }
+
+    // 提取结果
+    const result = {
+      name: config.scene?.name || '',
+      description: config.scene?.description || '',
+      points_cost: config.scene?.points_cost || 50,
+      prompt: config.prompt_template?.template || '',
+      negative_prompt: config.prompt_template?.negative_prompt || '',
+      score: task.review_score || 0
+    };
+
+    this.setData({
+      aiGenerating: false,
+      aiResult: result
+    });
+  },
+
+  // 取消 AI 生成
+  cancelAiGenerate() {
+    this.clearAiPollTimer();
+    this.setData({
+      aiGenerating: false,
+      aiProgress: 0
+    });
+  },
+
+  // 重新生成
+  retryAiGenerate() {
+    this.setData({ aiResult: null });
+    this.startAiGenerate();
+  },
+
+  // 应用 AI 生成结果
+  applyAiResult() {
+    const { aiResult } = this.data;
+    if (!aiResult) return;
+
+    // 应用到表单
+    this.setData({
+      'formData.name': aiResult.name,
+      'formData.description': aiResult.description,
+      'formData.points_cost': aiResult.points_cost,
+      'formData.prompt_template': aiResult.prompt,
+      'formData.negative_prompt': aiResult.negative_prompt,
+      showAiModal: false
+    });
+
+    this.checkCanNext();
+
+    wx.showToast({ title: '已应用配置', icon: 'success' });
+  },
+
+  // 页面卸载时清理
+  onUnload() {
+    this.clearAiPollTimer();
   }
 });

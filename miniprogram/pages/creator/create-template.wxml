@@ -4,7 +4,7 @@
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-content">
       <view class="nav-back" bindtap="goBack">
-        <image class="back-icon" src="/images/icon-back-white.png" mode="aspectFit"></image>
+        <image class="back-icon" src="/images/icon-back-white.svg" mode="aspectFit"></image>
       </view>
       <text class="nav-title">{{isEdit ? '编辑模板' : '创建模板'}}</text>
       <view class="nav-placeholder"></view>
@@ -33,6 +33,22 @@
 
     <!-- 步骤1：基本信息 -->
     <view class="step-content" wx:if="{{currentStep === 1}}">
+      <!-- AI 智能生成入口 -->
+      <view class="ai-generate-section" wx:if="{{!isEdit}}">
+        <view class="ai-generate-card" bindtap="showAiGenerateModal">
+          <view class="ai-icon-wrapper">
+            <text class="ai-icon">✨</text>
+          </view>
+          <view class="ai-text-wrapper">
+            <text class="ai-title">AI 智能生成</text>
+            <text class="ai-desc">描述你想要的模板，AI 自动生成配置</text>
+          </view>
+          <view class="ai-arrow">
+            <text>›</text>
+          </view>
+        </view>
+      </view>
+
       <view class="form-section">
         <view class="form-item">
           <text class="form-label required">模板名称</text>
@@ -67,21 +83,9 @@
               <text class="picker-text {{categoryIndex >= 0 ? '' : 'placeholder'}}">
                 {{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择分类'}}
               </text>
-              <image class="picker-arrow" src="/images/icon-arrow-down.png" mode="aspectFit"></image>
+              <image class="picker-arrow" src="/images/icon-arrow-down.svg" mode="aspectFit"></image>
             </view>
           </picker>
-        </view>
-
-        <view class="form-item">
-          <text class="form-label">标签</text>
-          <input
-            class="form-input"
-            placeholder="输入标签，用逗号分隔"
-            value="{{formData.tags}}"
-            bindinput="onInputChange"
-            data-field="tags"
-          />
-          <text class="form-hint">例如：春节,新年,喜庆</text>
         </view>
 
         <view class="form-item">
@@ -123,7 +127,7 @@
           <view class="upload-area" bindtap="chooseCoverImage">
             <image wx:if="{{formData.cover_image}}" class="upload-preview" src="{{formData.cover_image}}" mode="aspectFill"></image>
             <view wx:else class="upload-placeholder">
-              <image class="upload-icon" src="/images/icon-add-image.png" mode="aspectFit"></image>
+              <image class="upload-icon" src="/images/icon-add-image.svg" mode="aspectFit"></image>
               <text class="upload-text">点击上传封面图</text>
             </view>
           </view>
@@ -135,7 +139,7 @@
           <view class="upload-area" bindtap="chooseReferenceImage">
             <image wx:if="{{formData.reference_image}}" class="upload-preview" src="{{formData.reference_image}}" mode="aspectFill"></image>
             <view wx:else class="upload-placeholder">
-              <image class="upload-icon" src="/images/icon-add-image.png" mode="aspectFit"></image>
+              <image class="upload-icon" src="/images/icon-add-image.svg" mode="aspectFit"></image>
               <text class="upload-text">点击上传参考图</text>
             </view>
           </view>
@@ -186,7 +190,7 @@
       <view class="preview-section">
         <text class="preview-title">模板预览</text>
         <view class="preview-card">
-          <image class="preview-cover" src="{{formData.cover_image || '/images/placeholder.png'}}" mode="aspectFill"></image>
+          <image class="preview-cover" src="{{formData.cover_image || '/images/placeholder.svg'}}" mode="aspectFill"></image>
           <view class="preview-info">
             <text class="preview-name">{{formData.name || '模板名称'}}</text>
             <text class="preview-price">{{formData.points_cost || 50}} 醒币</text>
@@ -209,6 +213,101 @@
     </view>
     <view class="btn-draft" wx:if="{{currentStep === 3}}" bindtap="saveDraft">
       <text class="btn-text">保存草稿</text>
+    </view>
+  </view>
+
+  <!-- AI 生成弹窗 -->
+  <view class="ai-modal-mask" wx:if="{{showAiModal}}" bindtap="hideAiGenerateModal">
+    <view class="ai-modal" catchtap="preventBubble">
+      <view class="ai-modal-header">
+        <text class="ai-modal-title">AI 智能生成</text>
+        <view class="ai-modal-close" bindtap="hideAiGenerateModal">×</view>
+      </view>
+
+      <view class="ai-modal-body">
+        <!-- 输入区域 -->
+        <view class="ai-input-section" wx:if="{{!aiGenerating && !aiResult}}">
+          <text class="ai-input-label">描述你想要的模板</text>
+          <textarea
+            class="ai-input-textarea"
+            placeholder="例如：春节拜年场景，用户可以选择不同的祝福语和喜庆背景"
+            value="{{aiDescription}}"
+            bindinput="onAiDescriptionInput"
+            maxlength="200"
+          />
+          <text class="ai-input-count">{{aiDescription.length || 0}}/200</text>
+
+          <!-- 示例 -->
+          <view class="ai-examples">
+            <text class="ai-examples-title">试试这些示例：</text>
+            <view class="ai-example-tags">
+              <text class="ai-example-tag" bindtap="useAiExample" data-text="春节拜年场景，用户可以选择祝福语和喜庆背景">春节拜年</text>
+              <text class="ai-example-tag" bindtap="useAiExample" data-text="职业证件照，用户可以选择背景颜色和服装风格">职业证件照</text>
+              <text class="ai-example-tag" bindtap="useAiExample" data-text="情人节主题，用户可以选择浪漫背景和装饰">情人节</text>
+              <text class="ai-example-tag" bindtap="useAiExample" data-text="毕业照场景，用户可以选择学士服和校园背景">毕业照</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 生成中 -->
+        <view class="ai-generating-section" wx:if="{{aiGenerating}}">
+          <view class="ai-loading-animation">
+            <view class="ai-loading-dot"></view>
+            <view class="ai-loading-dot"></view>
+            <view class="ai-loading-dot"></view>
+          </view>
+          <text class="ai-generating-text">{{aiGeneratingText}}</text>
+          <view class="ai-progress-bar">
+            <view class="ai-progress-fill" style="width: {{aiProgress}}%;"></view>
+          </view>
+          <text class="ai-progress-text">{{aiProgress}}%</text>
+        </view>
+
+        <!-- 生成结果 -->
+        <view class="ai-result-section" wx:if="{{aiResult}}">
+          <view class="ai-result-header">
+            <text class="ai-result-title">生成完成</text>
+            <text class="ai-result-score">评分: {{aiResult.score || 0}}</text>
+          </view>
+
+          <view class="ai-result-item">
+            <text class="ai-result-label">模板名称</text>
+            <text class="ai-result-value">{{aiResult.name}}</text>
+          </view>
+
+          <view class="ai-result-item">
+            <text class="ai-result-label">模板描述</text>
+            <text class="ai-result-value">{{aiResult.description}}</text>
+          </view>
+
+          <view class="ai-result-item">
+            <text class="ai-result-label">Prompt 模板</text>
+            <text class="ai-result-value prompt">{{aiResult.prompt}}</text>
+          </view>
+
+          <view class="ai-result-item">
+            <text class="ai-result-label">建议定价</text>
+            <text class="ai-result-value">{{aiResult.points_cost}} 醒币</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="ai-modal-footer">
+        <view wx:if="{{!aiGenerating && !aiResult}}" class="ai-btn-generate {{aiDescription.length > 5 ? '' : 'disabled'}}" bindtap="startAiGenerate">
+          <text>开始生成</text>
+        </view>
+        <view wx:if="{{aiGenerating}}" class="ai-btn-cancel" bindtap="cancelAiGenerate">
+          <text>取消</text>
+        </view>
+        <view wx:if="{{aiResult}}" class="ai-btn-group">
+          <view class="ai-btn-retry" bindtap="retryAiGenerate">
+            <text>重新生成</text>
+          </view>
+          <view class="ai-btn-apply" bindtap="applyAiResult">
+            <text>应用配置</text>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </view>
