@@ -13,7 +13,7 @@ const axios = require('axios');
 // AI 服务配置
 const AI_API_KEY = process.env.AI_API_KEY || '';
 const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
-const AI_REVIEW_MODEL = process.env.AI_REVIEW_MODEL || 'gemini-2.0-flash';
+const AI_REVIEW_MODEL = process.env.AI_REVIEW_MODEL || 'gemini-3-flash-preview';
 
 // 审核结果状态
 const REVIEW_STATUS = {

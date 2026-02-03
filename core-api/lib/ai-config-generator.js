@@ -8,7 +8,7 @@ const axios = require('axios');
 // AI 服务配置（与 ai-review.js 保持一致）
 const AI_API_KEY = process.env.AI_API_KEY || '';
 const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
-const AI_MODEL = process.env.AI_CONFIG_MODEL || 'gemini-2.0-flash';
+const AI_MODEL = process.env.AI_CONFIG_MODEL || 'gemini-3-flash-preview';
 
 // System Prompt - 指导 AI 生成符合格式的配置
 const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家。根据用户的描述，生成完整的场景配置。
