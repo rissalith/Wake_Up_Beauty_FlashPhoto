@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="header-left">
         <h2>分类管理</h2>
-        <span class="subtitle">管理模板市场的分类标签</span>
+        <span class="subtitle">管理模板市场的分类标签，拖拽调整顺序</span>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="showAddDialog">
@@ -15,34 +15,20 @@
 
     <!-- 分类列表 -->
     <div class="category-list" v-loading="loading">
-      <el-table :data="categories" row-key="id" empty-text="暂无分类数据">
-        <el-table-column label="排序" width="100" align="center">
-          <template #default="{ row }">
-            <el-input-number
-              v-model="row.sort_order"
-              :min="0"
-              :max="999"
-              size="small"
-              controls-position="right"
-              @change="updateSortOrder(row)"
-              style="width: 80px"
-            />
+      <el-table
+        :data="categories"
+        row-key="id"
+        empty-text="暂无分类数据"
+        @row-drop="handleDrop"
+      >
+        <el-table-column label="" width="50" align="center">
+          <template #default>
+            <el-icon class="drag-handle"><Rank /></el-icon>
           </template>
         </el-table-column>
         <el-table-column label="分类名称" min-width="200">
           <template #default="{ row }">
             <div class="category-info">
-              <el-image
-                v-if="row.icon"
-                class="category-icon"
-                :src="row.icon"
-                fit="cover"
-              >
-                <template #error>
-                  <div class="icon-placeholder">{{ row.name?.charAt(0) || '?' }}</div>
-                </template>
-              </el-image>
-              <div v-else class="icon-placeholder">{{ row.name?.charAt(0) || '?' }}</div>
               <div class="category-detail">
                 <div class="category-name">{{ row.name }}</div>
                 <div class="category-name-en" v-if="row.name_en">{{ row.name_en }}</div>
@@ -80,6 +66,12 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 拖拽提示 -->
+      <div class="drag-tip">
+        <el-icon><InfoFilled /></el-icon>
+        <span>拖拽行可调整分类顺序</span>
+      </div>
     </div>
 
     <!-- 新增/编辑分类对话框 -->
@@ -95,13 +87,6 @@
         <el-form-item label="英文名称">
           <el-input v-model="form.name_en" placeholder="请输入英文名称（可选）" />
         </el-form-item>
-        <el-form-item label="图标URL">
-          <el-input v-model="form.icon" placeholder="请输入图标URL（可选）" />
-        </el-form-item>
-        <el-form-item label="排序权重">
-          <el-input-number v-model="form.sort_order" :min="0" :max="999" />
-          <span class="form-tip">数值越小越靠前</span>
-        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -112,10 +97,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { ref, onMounted, nextTick } from 'vue'
+import { Plus, Rank, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { categoriesApi } from '../api'
+import Sortable from 'sortablejs'
 
 const loading = ref(false)
 const categories = ref([])
@@ -127,13 +113,48 @@ const editingId = ref(null)
 
 const form = ref({
   name: '',
-  name_en: '',
-  icon: '',
-  sort_order: 0
+  name_en: ''
 })
 
 const rules = {
   name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }]
+}
+
+// 初始化拖拽排序
+const initSortable = () => {
+  nextTick(() => {
+    const el = document.querySelector('.category-list .el-table__body-wrapper tbody')
+    if (el) {
+      Sortable.create(el, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: async ({ oldIndex, newIndex }) => {
+          if (oldIndex === newIndex) return
+
+          // 更新本地数据顺序
+          const movedItem = categories.value.splice(oldIndex, 1)[0]
+          categories.value.splice(newIndex, 0, movedItem)
+
+          // 生成新的排序数据
+          const orders = categories.value.map((item, index) => ({
+            id: item.id,
+            sort_order: index
+          }))
+
+          // 调用后端更新排序
+          try {
+            await categoriesApi.reorder(orders)
+            ElMessage.success('排序已更新')
+          } catch (error) {
+            console.error('更新排序失败:', error)
+            // 失败时重新加载
+            loadCategories()
+          }
+        }
+      })
+    }
+  })
 }
 
 // 加载分类列表
@@ -143,6 +164,7 @@ const loadCategories = async () => {
     const res = await categoriesApi.getList()
     if (res.code === 200) {
       categories.value = res.data || []
+      initSortable()
     }
   } catch (error) {
     console.error('加载分类失败:', error)
@@ -157,9 +179,7 @@ const showAddDialog = () => {
   editingId.value = null
   form.value = {
     name: '',
-    name_en: '',
-    icon: '',
-    sort_order: categories.value.length
+    name_en: ''
   }
   dialogVisible.value = true
 }
@@ -170,9 +190,7 @@ const editCategory = (row) => {
   editingId.value = row.id
   form.value = {
     name: row.name,
-    name_en: row.name_en || '',
-    icon: row.icon || '',
-    sort_order: row.sort_order || 0
+    name_en: row.name_en || ''
   }
   dialogVisible.value = true
 }
@@ -190,7 +208,11 @@ const submitForm = async () => {
         await categoriesApi.update(editingId.value, form.value)
         ElMessage.success('更新成功')
       } else {
-        await categoriesApi.create(form.value)
+        // 新增时设置排序为最后
+        await categoriesApi.create({
+          ...form.value,
+          sort_order: categories.value.length
+        })
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
@@ -201,17 +223,6 @@ const submitForm = async () => {
       submitting.value = false
     }
   })
-}
-
-// 更新排序
-const updateSortOrder = async (row) => {
-  try {
-    await categoriesApi.update(row.id, { sort_order: row.sort_order })
-    ElMessage.success('排序已更新')
-    loadCategories()
-  } catch (error) {
-    console.error('更新排序失败:', error)
-  }
 }
 
 // 更新显示状态
@@ -284,31 +295,20 @@ onMounted(() => {
   padding: 20px;
 }
 
+.drag-handle {
+  cursor: move;
+  color: #c0c4cc;
+  font-size: 18px;
+}
+
+.drag-handle:hover {
+  color: #409eff;
+}
+
 .category-info {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.category-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.icon-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
-  flex-shrink: 0;
 }
 
 .category-detail {
@@ -337,9 +337,29 @@ onMounted(() => {
   gap: 8px;
 }
 
-.form-tip {
-  font-size: 12px;
+.drag-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  font-size: 13px;
   color: #909399;
-  margin-left: 12px;
+}
+
+/* 拖拽时的样式 */
+:deep(.sortable-ghost) {
+  opacity: 0.5;
+  background: #e6f7ff;
+}
+
+:deep(.el-table__row) {
+  cursor: default;
+}
+
+:deep(.el-table__row .drag-handle) {
+  cursor: move;
 }
 </style>

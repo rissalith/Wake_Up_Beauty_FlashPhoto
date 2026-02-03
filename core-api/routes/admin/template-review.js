@@ -507,6 +507,28 @@ router.post('/categories', (req, res) => {
   }
 });
 
+// 批量更新分类排序（拖拽排序）- 必须在 /categories/:id 之前
+router.post('/categories/reorder', (req, res) => {
+  try {
+    const db = getDb();
+    const { orders } = req.body;
+
+    if (!Array.isArray(orders)) {
+      return res.status(400).json({ code: 400, msg: '参数格式错误' });
+    }
+
+    const stmt = db.prepare('UPDATE template_categories SET sort_order = ? WHERE id = ?');
+    for (const item of orders) {
+      stmt.run(item.sort_order, item.id);
+    }
+
+    res.json({ code: 200, msg: '排序更新成功' });
+  } catch (error) {
+    console.error('[Admin] 批量更新排序失败:', error);
+    res.status(500).json({ code: 500, msg: '更新排序失败' });
+  }
+});
+
 // 更新分类
 router.put('/categories/:id', (req, res) => {
   try {
@@ -616,7 +638,7 @@ router.get('/official/list', (req, res) => {
       FROM user_templates t
       LEFT JOIN template_categories tc ON t.category_id = tc.id
       ${whereClause}
-      ORDER BY t.updated_at DESC
+      ORDER BY CASE WHEN t.status = 'active' THEN 0 ELSE 1 END, t.updated_at DESC
       LIMIT ? OFFSET ?
     `).all(...params, limit, offset);
 

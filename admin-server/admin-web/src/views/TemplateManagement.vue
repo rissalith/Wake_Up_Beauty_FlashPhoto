@@ -463,7 +463,7 @@ const approveTemplate = async (row) => {
       type: 'info'
     })
 
-    const res = await api.post(`/api/admin/template-review/${row.id}/approve`)
+    const res = await api.post(`/admin/template-review/${row.id}/approve`)
     if (res.code === 200) {
       ElMessage.success('审核通过')
       loadReviewTemplates()
@@ -491,7 +491,7 @@ const confirmReject = async () => {
 
   rejecting.value = true
   try {
-    const res = await api.post(`/api/admin/template-review/${rejectForm.templateId}/reject`, {
+    const res = await api.post(`/admin/template-review/${rejectForm.templateId}/reject`, {
       reason: rejectForm.reason
     })
     if (res.code === 200) {
@@ -530,7 +530,7 @@ const editTemplate = (row) => {
 const saveTemplate = async () => {
   saving.value = true
   try {
-    const res = await api.put(`/api/admin/template-review/${editForm.id}`, editForm)
+    const res = await api.put(`/admin/template-review/${editForm.id}`, editForm)
     if (res.code === 200) {
       ElMessage.success('保存成功')
       editDialogVisible.value = false
@@ -546,7 +546,7 @@ const saveTemplate = async () => {
 // 更新精选状态
 const updateTemplateFeatured = async (row) => {
   try {
-    await api.put(`/api/admin/template-review/${row.id}`, {
+    await api.put(`/admin/template-review/${row.id}`, {
       is_featured: row.is_featured
     })
     ElMessage.success('更新成功')
@@ -565,7 +565,7 @@ const offlineTemplate = async (row) => {
       type: 'warning'
     })
 
-    const res = await api.post(`/api/admin/template-review/${row.id}/offline`)
+    const res = await api.post(`/admin/template-review/${row.id}/offline`)
     if (res.code === 200) {
       ElMessage.success('已下架')
       loadListTemplates()
@@ -586,7 +586,7 @@ const onlineTemplate = async (row) => {
       type: 'info'
     })
 
-    const res = await api.post(`/api/admin/template-review/${row.id}/online`)
+    const res = await api.post(`/admin/template-review/${row.id}/online`)
     if (res.code === 200) {
       ElMessage.success('已上架')
       loadListTemplates()
@@ -607,7 +607,7 @@ const deleteTemplate = async (row) => {
       type: 'warning'
     })
 
-    const res = await api.delete(`/api/admin/template-review/${row.id}`)
+    const res = await api.delete(`/admin/template-review/${row.id}`)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       loadListTemplates()

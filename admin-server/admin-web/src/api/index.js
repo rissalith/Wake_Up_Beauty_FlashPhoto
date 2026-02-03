@@ -116,10 +116,11 @@ export const couponsApi = {
 
 // 模板分类管理
 export const categoriesApi = {
-  getList: () => api.get('/admin/template-review/categories/all'),
+  getList: () => api.get('/admin/template-review/categories'),
   create: (data) => api.post('/admin/template-review/categories', data),
   update: (id, data) => api.put(`/admin/template-review/categories/${id}`, data),
-  delete: (id) => api.delete(`/admin/template-review/categories/${id}`)
+  delete: (id) => api.delete(`/admin/template-review/categories/${id}`),
+  reorder: (orders) => api.post('/admin/template-review/categories/reorder', { orders })
 }
 
 // 官方模板管理
