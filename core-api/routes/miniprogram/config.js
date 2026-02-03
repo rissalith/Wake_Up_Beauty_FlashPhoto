@@ -49,7 +49,7 @@ router.get('/init', (req, res) => {
     // 2. 获取场景列表（官方场景 + 已审核的创作者场景）
     const scenes = db.prepare(`
       SELECT s.*,
-        CASE WHEN s.source = 'creator' THEN c.pen_name ELSE NULL END as creator_name,
+        CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
         CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
       FROM scenes s
       LEFT JOIN creators c ON s.creator_id = c.user_id
@@ -371,7 +371,7 @@ router.get('/scenes', (req, res) => {
 
     let sql = `
       SELECT s.*,
-        CASE WHEN s.source = 'creator' THEN c.pen_name ELSE NULL END as creator_name,
+        CASE WHEN s.source = 'creator' THEN c.creator_name ELSE NULL END as creator_name,
         CASE WHEN s.source = 'creator' THEN u.avatar_url ELSE NULL END as creator_avatar
       FROM scenes s
       LEFT JOIN creators c ON s.creator_id = c.user_id
