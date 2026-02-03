@@ -3,6 +3,7 @@
  * 向导式编辑流程：基本信息 -> 步骤配置 -> Prompt配置 -> 预览
  */
 const { api } = require('../../../config/api');
+const { uploadTempFileWithCredential } = require('../../../utils/cos');
 
 Page({
   data: {
@@ -43,7 +44,15 @@ Page({
     },
 
     // 可用变量
-    availableVariables: []
+    availableVariables: [],
+
+    // Prompt 预览
+    promptPreview: '',
+
+    // AI 生成相关
+    showAiDialog: false,
+    aiDescription: '',
+    aiGenerating: false
   },
 
   onLoad(options) {
@@ -186,7 +195,13 @@ Page({
     await this.saveCurrentStep();
 
     if (currentStep < wizardSteps.length - 1) {
-      this.setData({ currentStep: currentStep + 1 });
+      const newStep = currentStep + 1;
+      this.setData({ currentStep: newStep });
+
+      // 如果进入 Prompt 配置步骤，更新预览
+      if (newStep === 2) {
+        this.updatePromptPreview();
+      }
     }
   },
 
@@ -296,9 +311,13 @@ Page({
   async uploadIcon(filePath) {
     wx.showLoading({ title: '上传中...' });
     try {
-      // 这里需要实现图片上传逻辑
-      // 暂时使用本地路径
-      this.setData({ 'scene.icon': filePath });
+      // 使用 COS 上传
+      const result = await uploadTempFileWithCredential(filePath, 'icon', 'scene', {
+        compress: true,
+        quality: 80,
+        maxWidth: 200
+      });
+      this.setData({ 'scene.icon': result.url });
       wx.showToast({ title: '上传成功', icon: 'success' });
     } catch (error) {
       console.error('上传图标失败:', error);
@@ -373,10 +392,29 @@ Page({
   // ========== Prompt配置相关 ==========
   onPromptInput(e) {
     this.setData({ 'prompt.prompt_template': e.detail.value });
+    this.updatePromptPreview();
   },
 
   onNegativePromptInput(e) {
     this.setData({ 'prompt.negative_prompt': e.detail.value });
+  },
+
+  // 更新 Prompt 预览
+  updatePromptPreview() {
+    const { prompt, steps } = this.data;
+    let preview = prompt.prompt_template;
+
+    // 用示例值替换变量
+    steps.forEach(step => {
+      if (step.variable_name && step.options && step.options.length > 0) {
+        const exampleOption = step.options[0];
+        const exampleValue = exampleOption.prompt_text || exampleOption.label || exampleOption.value;
+        const regex = new RegExp(`\\{\\{${step.variable_name}\\}\\}`, 'g');
+        preview = preview.replace(regex, `[${exampleValue}]`);
+      }
+    });
+
+    this.setData({ promptPreview: preview });
   },
 
   // 插入变量
@@ -445,5 +483,103 @@ Page({
     } catch (error) {
       // 错误已在 saveCurrentStep 中处理
     }
+  },
+
+  // ========== AI 智能生成相关 ==========
+  // 显示 AI 对话框
+  showAiDialog() {
+    this.setData({ showAiDialog: true });
+  },
+
+  // 隐藏 AI 对话框
+  hideAiDialog() {
+    this.setData({ showAiDialog: false, aiDescription: '' });
+  },
+
+  // AI 描述输入
+  onAiDescInput(e) {
+    this.setData({ aiDescription: e.detail.value });
+  },
+
+  // 填充示例
+  fillExample(e) {
+    const text = e.currentTarget.dataset.text;
+    this.setData({ aiDescription: text });
+  },
+
+  // 调用 AI 生成配置
+  async generateWithAi() {
+    const { aiDescription } = this.data;
+
+    if (!aiDescription.trim()) {
+      wx.showToast({ title: '请输入场景描述', icon: 'none' });
+      return;
+    }
+
+    this.setData({ aiGenerating: true });
+
+    try {
+      const res = await api.aiGenerateScene({ description: aiDescription });
+
+      if (res.code === 0 && res.data) {
+        const config = res.data;
+
+        // 应用 AI 生成的配置
+        this.applyAiConfig(config);
+
+        wx.showToast({ title: '生成成功', icon: 'success' });
+        this.setData({ showAiDialog: false, aiDescription: '' });
+      } else {
+        wx.showToast({ title: res.message || '生成失败', icon: 'none' });
+      }
+    } catch (error) {
+      console.error('AI 生成失败:', error);
+      wx.showToast({ title: '生成失败，请重试', icon: 'none' });
+    } finally {
+      this.setData({ aiGenerating: false });
+    }
+  },
+
+  // 应用 AI 生成的配置
+  applyAiConfig(config) {
+    const { scene, steps, prompt_template } = config;
+
+    // 更新场景基本信息
+    if (scene) {
+      this.setData({
+        'scene.name': scene.name || '',
+        'scene.description': scene.description || '',
+        'scene.points_cost': scene.points_cost || 10
+      });
+    }
+
+    // 更新步骤配置
+    if (steps && Array.isArray(steps)) {
+      // 转换步骤格式
+      const formattedSteps = steps.map((step, index) => ({
+        title: step.title || '',
+        step_type: step.component_type || 'single_select',
+        variable_name: step.step_key || `step_${index}`,
+        is_required: step.is_required !== false,
+        options: (step.options || []).map((opt, optIndex) => ({
+          label: opt.label || '',
+          value: opt.value || `option_${optIndex}`,
+          prompt_text: opt.prompt_text || '',
+          grade: opt.grade || 'normal'
+        }))
+      }));
+      this.setData({ steps: formattedSteps });
+    }
+
+    // 更新 Prompt 配置
+    if (prompt_template) {
+      this.setData({
+        'prompt.prompt_template': prompt_template.template || '',
+        'prompt.negative_prompt': prompt_template.negative_prompt || ''
+      });
+    }
+
+    // 更新可用变量
+    this.updateAvailableVariables();
   }
 });

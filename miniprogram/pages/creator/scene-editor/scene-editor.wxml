@@ -27,6 +27,22 @@
   <scroll-view class="content-area" style="top: {{navBarHeight + 70}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
     <!-- 步骤1: 基本信息 -->
     <view class="step-content" wx:if="{{currentStep === 0}}">
+      <!-- AI 智能生成入口 -->
+      <view class="ai-generate-section">
+        <view class="ai-generate-card" bindtap="showAiDialog">
+          <view class="ai-icon-wrap">
+            <text class="ai-icon">✨</text>
+          </view>
+          <view class="ai-info">
+            <text class="ai-title">AI 智能生成</text>
+            <text class="ai-desc">输入描述，自动生成完整场景配置</text>
+          </view>
+          <view class="ai-arrow">
+            <text class="arrow-text">→</text>
+          </view>
+        </view>
+      </view>
+
       <view class="form-section">
         <view class="form-item">
           <text class="form-label">场景名称 <text class="required">*</text></text>
@@ -112,7 +128,7 @@
       <view class="form-section">
         <view class="form-item">
           <text class="form-label">Prompt模板 <text class="required">*</text></text>
-          <textarea class="form-textarea large" placeholder="请输入Prompt模板，使用 {{变量名}} 插入变量" value="{{prompt.prompt_template}}" bindinput="onPromptInput"/>
+          <textarea class="form-textarea large" placeholder="请输入Prompt模板，使用双花括号包裹变量名" value="{{prompt.prompt_template}}" bindinput="onPromptInput"/>
         </view>
 
         <!-- 可用变量 -->
@@ -136,6 +152,19 @@
       <view class="prompt-tips">
         <text class="tips-title">Prompt 示例：</text>
         <text class="tips-content">A beautiful {{gender}} portrait, {{style}} style, high quality, detailed face</text>
+      </view>
+
+      <!-- Prompt 实时预览 -->
+      <view class="prompt-preview-section" wx:if="{{prompt.prompt_template}}">
+        <text class="preview-section-title">实时预览</text>
+        <view class="prompt-preview-card">
+          <text class="preview-label">最终 Prompt（变量将被替换为用户选择）：</text>
+          <text class="prompt-preview-text">{{promptPreview || prompt.prompt_template}}</text>
+        </view>
+        <view class="prompt-stats">
+          <text class="stat-item">字符数: {{prompt.prompt_template.length}}</text>
+          <text class="stat-item">变量数: {{availableVariables.length}}</text>
+        </view>
       </view>
     </view>
 
@@ -194,5 +223,42 @@
   <view class="loading-mask" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- AI 生成对话框 -->
+  <view class="ai-dialog-mask" wx:if="{{showAiDialog}}" bindtap="hideAiDialog">
+    <view class="ai-dialog" catchtap="">
+      <view class="ai-dialog-header">
+        <text class="ai-dialog-title">AI 智能生成</text>
+        <view class="ai-dialog-close" bindtap="hideAiDialog">×</view>
+      </view>
+      <view class="ai-dialog-body">
+        <text class="ai-dialog-hint">描述你想要创建的场景，AI 将自动生成完整配置</text>
+        <textarea
+          class="ai-dialog-input"
+          placeholder="例如：春节全家福、职业证件照、古风写真..."
+          value="{{aiDescription}}"
+          bindinput="onAiDescInput"
+          maxlength="200"
+          auto-height
+        />
+        <view class="ai-dialog-examples">
+          <text class="examples-title">示例：</text>
+          <view class="example-tags">
+            <text class="example-tag" data-text="春节全家福，喜庆红色背景" bindtap="fillExample">春节全家福</text>
+            <text class="example-tag" data-text="职业证件照，正式商务风格" bindtap="fillExample">职业证件照</text>
+            <text class="example-tag" data-text="古风写真，汉服仙侠风格" bindtap="fillExample">古风写真</text>
+            <text class="example-tag" data-text="情侣合照，浪漫唯美风格" bindtap="fillExample">情侣合照</text>
+          </view>
+        </view>
+      </view>
+      <view class="ai-dialog-footer">
+        <view class="ai-dialog-btn cancel" bindtap="hideAiDialog">取消</view>
+        <view class="ai-dialog-btn confirm {{aiGenerating ? 'disabled' : ''}}" bindtap="generateWithAi">
+          <text wx:if="{{!aiGenerating}}">开始生成</text>
+          <text wx:else>生成中...</text>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

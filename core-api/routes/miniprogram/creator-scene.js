@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../config/database');
 const { authMiddleware } = require('./user');
+const { generateSceneConfig, completeConfig } = require('../../lib/ai-config-generator');
 
 // 验证创作者身份
 const creatorMiddleware = async (req, res, next) => {
@@ -524,6 +525,166 @@ router.get('/grades/list', authMiddleware, creatorMiddleware, (req, res) => {
   } catch (error) {
     console.error('获取品级列表失败:', error);
     res.status(500).json({ code: 500, message: '获取品级列表失败' });
+  }
+});
+
+// AI 自动生成场景配置
+router.post('/ai-generate', authMiddleware, creatorMiddleware, async (req, res) => {
+  try {
+    const { description } = req.body;
+
+    if (!description || description.trim().length < 2) {
+      return res.status(400).json({ code: 400, message: '请输入场景描述（至少2个字符）' });
+    }
+
+    const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ code: 500, message: 'AI 服务未配置，请联系管理员' });
+    }
+
+    console.log('[AI Generate] 开始生成场景配置:', description);
+
+    // 调用 AI 生成配置
+    const rawConfig = await generateSceneConfig(description.trim(), apiKey);
+
+    // 补全配置
+    const config = completeConfig(rawConfig);
+
+    console.log('[AI Generate] 生成成功:', config.scene.name);
+
+    res.json({
+      code: 0,
+      data: config,
+      message: '生成成功'
+    });
+  } catch (error) {
+    console.error('[AI Generate] 生成失败:', error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || 'AI 生成失败，请稍后重试'
+    });
+  }
+});
+
+// AI 生成并直接创建场景
+router.post('/ai-create', authMiddleware, creatorMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { description } = req.body;
+
+    if (!description || description.trim().length < 2) {
+      return res.status(400).json({ code: 400, message: '请输入场景描述' });
+    }
+
+    const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ code: 500, message: 'AI 服务未配置' });
+    }
+
+    console.log('[AI Create] 开始生成并创建场景:', description);
+
+    // 生成配置
+    const rawConfig = await generateSceneConfig(description.trim(), apiKey);
+    const config = completeConfig(rawConfig);
+
+    // 创建场景
+    const transaction = db.transaction(() => {
+      // 1. 创建场景
+      const sceneResult = db.prepare(`
+        INSERT INTO scenes (name, description, icon, points_cost, creator_id, source, review_status, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'creator', 'draft', 'inactive', datetime('now'))
+      `).run(
+        config.scene.name,
+        config.scene.description || '',
+        config.scene.icon || '',
+        config.scene.points_cost || 50,
+        userId
+      );
+
+      const sceneId = sceneResult.lastInsertRowid;
+
+      // 2. 创建步骤
+      for (let i = 0; i < config.steps.length; i++) {
+        const step = config.steps[i];
+        const stepResult = db.prepare(`
+          INSERT INTO scene_steps (scene_id, step_order, step_type, title, description, variable_name, is_required, config)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          sceneId,
+          i + 1,
+          step.component_type,
+          step.title || '',
+          step.description || '',
+          step.step_key || '',
+          step.is_required ? 1 : 0,
+          JSON.stringify(step.config || {})
+        );
+
+        // 3. 创建选项
+        if (step.options && step.options.length > 0) {
+          for (let j = 0; j < step.options.length; j++) {
+            const option = step.options[j];
+            db.prepare(`
+              INSERT INTO step_options (step_id, label, value, image_url, prompt_text, sort_order, grade, probability)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              stepResult.lastInsertRowid,
+              option.label || '',
+              option.value || '',
+              option.image_url || '',
+              option.prompt_text || '',
+              j + 1,
+              option.grade || 'normal',
+              option.probability || 1.0
+            );
+          }
+        }
+      }
+
+      // 4. 创建 Prompt 模板
+      if (config.prompt_template) {
+        db.prepare(`
+          INSERT INTO prompt_templates (scene_id, name, prompt_template, negative_prompt, model_config, is_default)
+          VALUES (?, ?, ?, ?, ?, 1)
+        `).run(
+          sceneId,
+          '默认模板',
+          config.prompt_template.template || '',
+          config.prompt_template.negative_prompt || '',
+          JSON.stringify({})
+        );
+      }
+
+      return sceneId;
+    });
+
+    const sceneId = transaction();
+
+    // 获取完整的场景数据
+    const scene = db.prepare('SELECT * FROM scenes WHERE id = ?').get(sceneId);
+    const steps = db.prepare('SELECT * FROM scene_steps WHERE scene_id = ? ORDER BY step_order ASC').all(sceneId);
+    for (const step of steps) {
+      step.options = db.prepare('SELECT * FROM step_options WHERE step_id = ? ORDER BY sort_order ASC').all(step.id);
+    }
+    const prompts = db.prepare('SELECT * FROM prompt_templates WHERE scene_id = ?').all(sceneId);
+
+    console.log('[AI Create] 创建成功, sceneId:', sceneId);
+
+    res.json({
+      code: 0,
+      data: {
+        ...scene,
+        steps,
+        prompts
+      },
+      message: '场景创建成功'
+    });
+  } catch (error) {
+    console.error('[AI Create] 创建失败:', error);
+    res.status(500).json({
+      code: 500,
+      message: error.message || '创建失败，请稍后重试'
+    });
   }
 });
 

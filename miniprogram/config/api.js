@@ -794,6 +794,16 @@ const api = {
     return request({
       url: '/creator-scene/grades/list'
     });
+  },
+
+  // AI 智能生成场景配置
+  aiGenerateScene(data) {
+    return request({
+      url: '/creator-scene/ai-generate',
+      method: 'POST',
+      data,
+      timeout: 60000  // AI 生成可能需要较长时间
+    });
   }
 };
 

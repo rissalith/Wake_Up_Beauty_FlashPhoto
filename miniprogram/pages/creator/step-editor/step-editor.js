@@ -3,6 +3,7 @@
  * 配置单个步骤的类型、选项等
  */
 const { api } = require('../../../config/api');
+const { uploadTempFileWithCredential } = require('../../../utils/cos');
 
 Page({
   data: {
@@ -203,9 +204,24 @@ Page({
       count: 1,
       mediaType: ['image'],
       sourceType: ['album'],
-      success: (res) => {
+      success: async (res) => {
         const tempFilePath = res.tempFiles[0].tempFilePath;
-        this.setData({ 'editingOption.image_url': tempFilePath });
+        wx.showLoading({ title: '上传中...' });
+        try {
+          // 使用 COS 上传
+          const result = await uploadTempFileWithCredential(tempFilePath, 'option', 'step', {
+            compress: true,
+            quality: 80,
+            maxWidth: 300
+          });
+          this.setData({ 'editingOption.image_url': result.url });
+          wx.showToast({ title: '上传成功', icon: 'success' });
+        } catch (error) {
+          console.error('上传选项图片失败:', error);
+          wx.showToast({ title: '上传失败', icon: 'none' });
+        } finally {
+          wx.hideLoading();
+        }
       }
     });
   },
