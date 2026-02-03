@@ -127,7 +127,7 @@ app.use('/api/admin/config', adminConfigRoutes);
 app.use('/api/admin/scenes', adminScenesRoutes);
 app.use('/api/admin/monitor', adminMonitorRoutes);
 app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
-app.use('/api/admin/templates', adminTemplateReviewRoutes);
+app.use('/api/admin/template-review', adminTemplateReviewRoutes);
 app.use('/api/admin/creator-scenes', adminCreatorSceneReviewRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
