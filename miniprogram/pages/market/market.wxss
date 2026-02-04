@@ -33,11 +33,16 @@
 }
 
 .lang-option {
-  padding: 4px 10px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
   border-radius: 6px;
+  line-height: 1;
+}
+
+.lang-option text {
+  display: block;
 }
 
 .lang-option.active {
@@ -76,12 +81,12 @@
   position: relative;
   padding: 12px 16px;
   font-size: 15px;
-  color: #999;
+  color: #666;
   flex-shrink: 0;
 }
 
 .tab-item.active {
-  color: #C68B4D;
+  color: #333;
   font-weight: 600;
 }
 

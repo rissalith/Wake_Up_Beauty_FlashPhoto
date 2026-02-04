@@ -823,6 +823,16 @@ const api = {
       method: 'GET',
       timeout: 10000
     });
+  },
+
+  // AI 生成模板图片（封面图/参考图）
+  generateTemplateImage(data) {
+    return request({
+      url: '/admin/ai-agent/generate-image',
+      method: 'POST',
+      data,
+      timeout: 120000  // 图片生成需要较长时间
+    });
   }
 };
 

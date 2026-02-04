@@ -1,7 +1,52 @@
+/**
+ * 国际化工具函数 (WXS)
+ * 用于在 WXML 中根据语言显示对应文本
+ */
+
+/**
+ * 获取国际化名称
+ * @param {Object} item - 包含 name 和 name_en 的对象
+ * @param {String} lang - 当前语言 'zh-CN' 或 'en'
+ * @returns {String} 对应语言的名称
+ */
+function getName(item, lang) {
+  if (!item) return '';
+  if (lang === 'en' && item.name_en) {
+    return item.name_en;
+  }
+  return item.name || '';
+}
+
+/**
+ * 获取国际化描述
+ * @param {Object} item - 包含 description 和 description_en 的对象
+ * @param {String} lang - 当前语言
+ * @returns {String} 对应语言的描述
+ */
+function getDesc(item, lang) {
+  if (!item) return '';
+  if (lang === 'en' && item.description_en) {
+    return item.description_en;
+  }
+  return item.description || '';
+}
+
+/**
+ * 根据语言选择文本
+ * @param {String} zhText - 中文文本
+ * @param {String} enText - 英文文本
+ * @param {String} lang - 当前语言
+ * @returns {String} 对应语言的文本
+ */
+function text(zhText, enText, lang) {
+  if (lang === 'en' && enText) {
+    return enText;
+  }
+  return zhText || '';
+}
+
 module.exports = {
-  t: function (key, ownerInstance) {
-    console.log(key)
-    // return ownerInstance.callMethod('t', {key: key})
-    return '123'
-  },
+  getName: getName,
+  getDesc: getDesc,
+  text: text
 };

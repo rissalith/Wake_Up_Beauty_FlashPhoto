@@ -19,6 +19,7 @@
     "pages/creator/create-template",
     "pages/creator/my-templates",
     "pages/creator/earnings",
+    "pages/creator/background-tasks",
     "pages/creator/my-scenes/my-scenes",
     "pages/creator/scene-editor/scene-editor",
     "pages/creator/step-editor/step-editor",

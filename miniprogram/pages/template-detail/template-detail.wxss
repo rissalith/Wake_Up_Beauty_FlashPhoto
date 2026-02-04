@@ -33,6 +33,7 @@
 .back-icon {
   width: 40rpx;
   height: 40rpx;
+  filter: brightness(0) invert(1);
 }
 
 .nav-title {

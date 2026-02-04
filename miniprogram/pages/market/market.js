@@ -2,6 +2,8 @@
  * 模板市场首页
  */
 const { api } = require('../../config/api');
+const imageConfig = require('../../config/images');
+const lang = require('../../utils/lang');
 const app = getApp();
 
 Page({
@@ -9,7 +11,7 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 64,
     categories: [],
-    currentCategory: 0, // 0 表示全部/推荐
+    currentCategory: null,
     templates: [],
     leftColumn: [],
     rightColumn: [],
@@ -18,7 +20,10 @@ Page({
     hasMore: true,
     loading: false,
     refreshing: false,
-    showLoginModal: false
+    showLoginModal: false,
+    currentLang: 'zh-CN',
+    titleImage: '',
+    bannerList: []
   },
 
   onLoad() {
@@ -27,9 +32,17 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight || 20;
     const navBarHeight = statusBarHeight + 44;
 
+    // 获取当前语言
+    const currentLang = lang.getCurrentLang();
+    const titleImage = currentLang === 'zh-CN' ? imageConfig.images.titleZhCN : imageConfig.images.titleEn;
+    const bannerList = imageConfig.getBannerList(currentLang);
+
     this.setData({
       statusBarHeight,
-      navBarHeight
+      navBarHeight,
+      currentLang,
+      titleImage,
+      bannerList
     });
 
     // 加载分类和模板
@@ -38,6 +51,11 @@ Page({
   },
 
   onShow() {
+    // 设置tabBar选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 0 });
+    }
+
     // 每次显示时刷新数据
     if (this.data.templates.length > 0) {
       this.refreshTemplates();
@@ -49,12 +67,7 @@ Page({
     try {
       const res = await api.getTemplateCategories();
       if (res.code === 200 && res.data) {
-        // 在最前面添加"全部"分类
-        const categories = [
-          { id: 0, name: '推荐' },
-          ...res.data
-        ];
-        this.setData({ categories });
+        this.setData({ categories: res.data });
       }
     } catch (error) {
       console.error('加载分类失败:', error);
@@ -76,8 +89,10 @@ Page({
         sort: 'use_count'
       };
 
-      // 如果不是"推荐"分类，添加分类筛选
-      if (currentCategory !== 0) {
+      // 如果选中了具体分类（非推荐），添加分类筛选
+      // 推荐分类（第一个分类）显示所有模板
+      const firstCategoryId = this.data.categories[0]?.id;
+      if (currentCategory !== null && currentCategory !== firstCategoryId) {
         params.category_id = currentCategory;
       }
 
@@ -171,6 +186,28 @@ Page({
     });
   },
 
+  // 切换语言
+  switchLanguage(e) {
+    const newLang = e.currentTarget.dataset.lang;
+    if (newLang === this.data.currentLang) return;
+
+    lang.setLang(newLang);
+
+    const titleImage = newLang === 'zh-CN' ? imageConfig.images.titleZhCN : imageConfig.images.titleEn;
+    const bannerList = imageConfig.getBannerList(newLang);
+
+    this.setData({
+      currentLang: newLang,
+      titleImage,
+      bannerList
+    });
+
+    // 通知其他页面语言已切换
+    if (app && app.emit) {
+      app.emit('languageChanged', newLang);
+    }
+  },
+
   // 跳转到模板详情
   goToTemplate(e) {
     const templateId = e.currentTarget.dataset.id;
@@ -189,9 +226,9 @@ Page({
       return;
     }
 
-    // 跳转到场景页，带上模板ID
+    // 跳转到场景页，带上模板ID（使用 template_id 参数名与 scene.js 保持一致）
     wx.navigateTo({
-      url: `/pages/scene/scene?templateId=${templateId}&mode=reference`
+      url: `/pages/scene/scene?template_id=${templateId}`
     });
   },
 

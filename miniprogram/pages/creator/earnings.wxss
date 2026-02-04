@@ -1,1 +1,235 @@
-/* pages/creator/earnings.wxss */
+/* 收益明细页面样式 */
+
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+}
+
+.nav-content {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-back {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.back-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 44px;
+}
+
+/* 页面滚动区域 */
+.page-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+
+/* 收益统计卡片 */
+.earnings-card {
+  margin: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(200, 139, 77, 0.3);
+}
+
+.earnings-total {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.earnings-label {
+  display: block;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.earnings-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.earnings-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.earnings-item {
+  flex: 1;
+  text-align: center;
+}
+
+.item-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.item-label {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 2px;
+}
+
+.earnings-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 收益记录区域 */
+.records-section {
+  margin: 12px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+/* 记录列表 */
+.record-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-title {
+  display: block;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.record-time {
+  display: block;
+  font-size: 12px;
+  color: #999;
+}
+
+.record-amount {
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.record-amount.positive {
+  color: #C68B4D;
+}
+
+.record-amount.negative {
+  color: #999;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  width: 100px;
+  height: 100px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  margin-top: 16px;
+  font-size: 15px;
+  color: #666;
+}
+
+.empty-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+}
+
+/* 加载状态 */
+.loading-more {
+  padding: 20px;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: #999;
+}
+
+.no-more {
+  padding: 20px;
+  text-align: center;
+}
+
+.no-more-text {
+  font-size: 13px;
+  color: #ccc;
+}
+
+/* 底部安全区 */
+.safe-bottom {
+  height: calc(env(safe-area-inset-bottom) + 20px);
+}

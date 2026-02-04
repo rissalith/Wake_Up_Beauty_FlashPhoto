@@ -4,6 +4,8 @@
  */
 
 const BaseAgent = require('./base-agent');
+const { uploadToAssetBucket } = require('../../config/cos');
+const crypto = require('crypto');
 
 // 内容安全约束 - 禁止生成的内容类型
 const CONTENT_SAFETY_CONSTRAINTS = `
@@ -99,13 +101,17 @@ class ImageAgent extends BaseAgent {
       console.log(`[${this.name}] 生成封面图...`);
       const coverPrompt = this.buildCoverPrompt(config, plan);
       const coverResult = await this.callImageLLM(coverPrompt);
-      results.cover_image = coverResult;
+      // 上传到 COS
+      const coverUrl = await this.uploadImageToCOS(coverResult, 'cover');
+      results.cover_image = coverUrl;
 
       // 2. 生成参考图
       console.log(`[${this.name}] 生成参考图...`);
       const referencePrompt = this.buildReferencePrompt(config, plan);
       const referenceResult = await this.callImageLLM(referencePrompt);
-      results.reference_image = referenceResult;
+      // 上传到 COS
+      const referenceUrl = await this.uploadImageToCOS(referenceResult, 'reference');
+      results.reference_image = referenceUrl;
 
       const duration = Date.now() - startTime;
       console.log(`[${this.name}] 图片生成完成, 耗时: ${duration}ms`);
@@ -127,6 +133,31 @@ class ImageAgent extends BaseAgent {
         duration
       };
     }
+  }
+
+  /**
+   * 上传图片到 COS
+   * @param {Object} imageData - 图片数据 { imageData: base64, mimeType }
+   * @param {string} type - 图片类型 (cover/reference)
+   * @returns {Promise<string>} 图片 URL
+   */
+  async uploadImageToCOS(imageData, type) {
+    if (!imageData || !imageData.imageData) {
+      throw new Error('图片数据为空');
+    }
+
+    const buffer = Buffer.from(imageData.imageData, 'base64');
+    const ext = imageData.mimeType === 'image/png' ? 'png' : 'jpg';
+    const timestamp = Date.now();
+    const random = crypto.randomBytes(4).toString('hex');
+    const key = `ai-generated/${type}_${timestamp}_${random}.${ext}`;
+
+    console.log(`[${this.name}] 上传图片到 COS: ${key}`);
+
+    const result = await uploadToAssetBucket(buffer, key, imageData.mimeType);
+    console.log(`[${this.name}] 图片上传成功: ${result.url}`);
+
+    return result.url;
   }
 
   /**
@@ -293,12 +324,15 @@ This reference image will guide the AI to generate similar style photos for user
 
       const result = await this.callImageLLM(prompt, { width, height });
 
+      // 上传到 COS
+      const url = await this.uploadImageToCOS(result, type);
+
       const duration = Date.now() - startTime;
       console.log(`[${this.name}] 单张图片生成完成, 耗时: ${duration}ms`);
 
       return {
         success: true,
-        url: result,
+        url: url,
         duration
       };
 

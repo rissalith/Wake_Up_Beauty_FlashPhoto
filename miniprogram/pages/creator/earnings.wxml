@@ -1,2 +1,73 @@
-<!--pages/creator/earnings.wxml-->
-<text>pages/creator/earnings.wxml</text>
+<!-- 收益明细页面 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-back-white.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">收益明细</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 页面内容 -->
+  <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" bindscrolltolower="onReachBottom">
+    <!-- 收益统计卡片 -->
+    <view class="earnings-card">
+      <view class="earnings-total">
+        <text class="earnings-label">累计收益（醒币）</text>
+        <text class="earnings-value">{{totalEarnings}}</text>
+      </view>
+      <view class="earnings-row">
+        <view class="earnings-item">
+          <text class="item-value">{{monthEarnings}}</text>
+          <text class="item-label">本月收益</text>
+        </view>
+        <view class="earnings-divider"></view>
+        <view class="earnings-item">
+          <text class="item-value">{{withdrawable}}</text>
+          <text class="item-label">可提现</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 收益记录列表 -->
+    <view class="records-section">
+      <view class="section-title">收益记录</view>
+
+      <!-- 记录列表 -->
+      <view class="record-list" wx:if="{{records.length > 0}}">
+        <view class="record-item" wx:for="{{records}}" wx:key="id">
+          <view class="record-info">
+            <text class="record-title">{{item.description || '模板使用收益'}}</text>
+            <text class="record-time">{{item.created_at}}</text>
+          </view>
+          <text class="record-amount {{item.amount >= 0 ? 'positive' : 'negative'}}">
+            {{item.amount >= 0 ? '+' : ''}}{{item.amount}}
+          </text>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{records.length === 0 && !loading}}">
+        <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
+        <text class="empty-text">暂无收益记录</text>
+        <text class="empty-hint">创建模板并被使用后，收益将显示在这里</text>
+      </view>
+
+      <!-- 加载中 -->
+      <view class="loading-more" wx:if="{{loading}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <!-- 没有更多 -->
+      <view class="no-more" wx:if="{{!hasMore && records.length > 0}}">
+        <text class="no-more-text">没有更多了</text>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+</view>

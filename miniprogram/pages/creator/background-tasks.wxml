@@ -1,0 +1,111 @@
+<!-- 后台任务管理页面 -->
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-back-white.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">后台任务</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 页面内容 -->
+  <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+
+    <!-- 加载中 -->
+    <view class="loading-container" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-container" wx:elif="{{tasks.length === 0}}">
+      <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
+      <text class="empty-title">暂无后台任务</text>
+      <text class="empty-desc">使用 AI 智能生成时，可以将任务转入后台运行</text>
+    </view>
+
+    <!-- 任务列表 -->
+    <view class="task-list" wx:else>
+      <view class="task-card {{item.status}}" wx:for="{{tasks}}" wx:key="taskId">
+        <!-- 任务头部 -->
+        <view class="task-header">
+          <view class="task-status-icon {{item.status}}">
+            <text wx:if="{{item.status === 'processing' || item.status === 'loading'}}">🔄</text>
+            <text wx:elif="{{item.status === 'completed'}}">✅</text>
+            <text wx:elif="{{item.status === 'failed'}}">❌</text>
+            <text wx:else>⏳</text>
+          </view>
+          <view class="task-info">
+            <text class="task-title">{{item.description || '未命名任务'}}</text>
+            <text class="task-time">{{item.createdAt}}</text>
+          </view>
+          <view class="task-delete" bindtap="deleteTask" data-taskid="{{item.taskId}}" catchtap="deleteTask">
+            <text>×</text>
+          </view>
+        </view>
+
+        <!-- 任务状态 -->
+        <view class="task-status-row">
+          <!-- 进行中 -->
+          <block wx:if="{{item.status === 'processing' || item.status === 'loading'}}">
+            <text class="status-text processing">{{item.currentStep || '处理中...'}}</text>
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{item.progress}}%;"></view>
+            </view>
+            <text class="progress-text">{{item.progress}}%</text>
+          </block>
+
+          <!-- 已完成 -->
+          <block wx:elif="{{item.status === 'completed'}}">
+            <text class="status-text completed">生成完成</text>
+            <view class="task-result-preview" wx:if="{{item.result && item.result.config}}">
+              <text class="result-item">场景：{{item.result.config.scene.name || '未命名'}}</text>
+              <text class="result-item">步骤：{{item.result.config.steps.length || 0}}个</text>
+              <text class="result-item">评分：{{item.result.score || 0}}分</text>
+            </view>
+          </block>
+
+          <!-- 失败 -->
+          <block wx:elif="{{item.status === 'failed'}}">
+            <text class="status-text failed">生成失败</text>
+            <text class="error-message" wx:if="{{item.errorMessage}}">{{item.errorMessage}}</text>
+          </block>
+
+          <!-- 过期 -->
+          <block wx:elif="{{item.status === 'expired'}}">
+            <text class="status-text expired">任务已过期</text>
+          </block>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="task-actions">
+          <!-- 已完成的操作 -->
+          <block wx:if="{{item.status === 'completed'}}">
+            <view class="action-btn secondary" bindtap="viewResult" data-taskid="{{item.taskId}}">
+              <text>查看结果</text>
+            </view>
+            <view class="action-btn primary" bindtap="continueEdit" data-taskid="{{item.taskId}}" data-templateid="{{item.templateId}}">
+              <text>继续编辑</text>
+            </view>
+          </block>
+
+          <!-- 失败的操作 -->
+          <block wx:elif="{{item.status === 'failed'}}">
+            <view class="action-btn secondary" bindtap="deleteTask" data-taskid="{{item.taskId}}">
+              <text>删除</text>
+            </view>
+            <view class="action-btn primary" bindtap="retryTask" data-taskid="{{item.taskId}}" data-description="{{item.description}}">
+              <text>重试</text>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+</view>

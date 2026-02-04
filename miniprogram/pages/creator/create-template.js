@@ -106,6 +106,11 @@ Page({
       this.loadTemplateDetail(options.id);
     }
 
+    // 如果是从后台任务页面跳转过来，应用 AI 结果
+    if (options.applyResult === 'true') {
+      this.applyPendingAiResult();
+    }
+
     this.checkCanSubmit();
   },
 
@@ -819,6 +824,69 @@ Page({
 
     // 应用后自动保存草稿
     this.autoSaveDraft();
+  },
+
+  // 应用从后台任务页面传递的 AI 结果
+  applyPendingAiResult() {
+    // 从全局变量读取数据（避免 localStorage 大小限制）
+    const app = getApp();
+    const pendingResult = app.globalData?.pendingAiResult;
+    if (!pendingResult || !pendingResult.result) {
+      console.log('[CreateTemplate] 没有待应用的 AI 结果');
+      return;
+    }
+
+    // 清除全局变量
+    app.globalData.pendingAiResult = null;
+
+    const { result, taskId } = pendingResult;
+    console.log('[CreateTemplate] 应用 AI 结果:', JSON.stringify(result, null, 2));
+
+    const config = result.config;
+
+    if (!config || !config.scene) {
+      wx.showToast({ title: '结果格式错误', icon: 'none' });
+      return;
+    }
+
+    // 转换为表单数据格式
+    const scene = config.scene;
+    // images 可能在 result.images 或直接在 result 中
+    const images = result.images || {};
+    console.log('[CreateTemplate] 图片数据:', images);
+
+    const aiResult = {
+      name: scene.name || '',
+      description: scene.description || '',
+      points_cost: scene.points_cost || 50,
+      prompt: scene.prompt_template || '',
+      negative_prompt: scene.negative_prompt || '',
+      steps: config.steps || [],
+      recommended_category_id: scene.category_id,
+      cover_image: images.cover_image || '',
+      reference_image: images.reference_image || ''
+    };
+
+    console.log('[CreateTemplate] 转换后的 aiResult:', aiResult);
+
+    // 设置 AI 结果并应用
+    this.setData({ aiResult });
+
+    // 延迟应用，等待分类加载完成
+    setTimeout(() => {
+      this.applyAiResult();
+
+      // 不要立即移除任务，等用户保存草稿后再移除
+      // 只标记任务已被应用
+      const backgroundTasks = wx.getStorageSync('backgroundAiTasks') || [];
+      const updatedTasks = backgroundTasks.map(t => {
+        if (t.taskId === taskId) {
+          return { ...t, applied: true };
+        }
+        return t;
+      });
+      wx.setStorageSync('backgroundAiTasks', updatedTasks);
+    }, 500);
   },
 
   // 页面卸载时清理

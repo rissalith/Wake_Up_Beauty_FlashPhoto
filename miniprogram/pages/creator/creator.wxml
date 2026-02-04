@@ -3,32 +3,12 @@
   <!-- 自定义导航栏 -->
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-content">
-      <view class="nav-back" bindtap="goBack">
-        <image class="back-icon" src="/images/icon-back.svg" mode="aspectFit"></image>
-      </view>
       <text class="nav-title">创作者中心</text>
-      <view class="nav-placeholder"></view>
     </view>
   </view>
 
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
-    <!-- 开始创作入口 -->
-    <view class="start-create-section" bindtap="goToSceneSelect">
-      <view class="start-create-content">
-        <view class="start-create-icon">
-          <image class="start-icon-img" src="/images/icon-add.svg" mode="aspectFit"></image>
-        </view>
-        <view class="start-create-info">
-          <text class="start-create-title">开始创作</text>
-          <text class="start-create-desc">选择场景，生成专属照片</text>
-        </view>
-      </view>
-      <view class="start-create-arrow">
-        <image class="arrow-icon" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-    </view>
-
     <!-- 创作者信息卡片 -->
     <view class="creator-card">
       <view class="creator-header">
@@ -36,14 +16,11 @@
         <view class="creator-info">
           <view class="creator-name-row">
             <text class="creator-name">{{creator.creator_name || '创作者'}}</text>
-            <view class="level-badge" wx:if="{{creator.level_info}}">
-              <text class="level-text">Lv.{{creator.level}}</text>
+            <view class="level-badge">
+              <text class="level-text">Lv.{{creator.level || 1}}</text>
             </view>
           </view>
           <text class="creator-bio">{{creator.bio || '这个创作者很懒，还没有简介~'}}</text>
-        </view>
-        <view class="edit-btn" bindtap="editProfile">
-          <text class="edit-text">编辑</text>
         </view>
       </view>
 
@@ -63,136 +40,76 @@
         </view>
         <view class="stat-item" bindtap="goToEarnings">
           <text class="stat-value highlight">{{creator.total_earnings || 0}}</text>
-          <text class="stat-label">收益(醒币)</text>
+          <text class="stat-label">收益</text>
         </view>
       </view>
     </view>
 
-    <!-- 等级进度 -->
-    <view class="level-section" wx:if="{{levelInfo.next_level}}">
-      <view class="section-header">
-        <text class="section-title">等级进度</text>
-        <text class="level-name">{{levelInfo.current_level.name}} → {{levelInfo.next_level.name}}</text>
+    <!-- 收益明细入口 -->
+    <view class="earnings-entry" bindtap="goToEarnings">
+      <view class="earnings-icon-wrap">
+        <image class="earnings-icon" src="/images/icon-coin.svg" mode="aspectFit"></image>
       </view>
-      <view class="progress-list">
-        <view class="progress-item">
-          <text class="progress-label">模板数</text>
-          <view class="progress-bar-wrap">
-            <view class="progress-bar" style="width: {{levelInfo.progress.templates.percentage}}%"></view>
-          </view>
-          <text class="progress-text">{{levelInfo.progress.templates.current}}/{{levelInfo.progress.templates.required}}</text>
-        </view>
-        <view class="progress-item">
-          <text class="progress-label">使用次数</text>
-          <view class="progress-bar-wrap">
-            <view class="progress-bar" style="width: {{levelInfo.progress.uses.percentage}}%"></view>
-          </view>
-          <text class="progress-text">{{levelInfo.progress.uses.current}}/{{levelInfo.progress.uses.required}}</text>
-        </view>
-        <view class="progress-item">
-          <text class="progress-label">获赞数</text>
-          <view class="progress-bar-wrap">
-            <view class="progress-bar" style="width: {{levelInfo.progress.likes.percentage}}%"></view>
-          </view>
-          <text class="progress-text">{{levelInfo.progress.likes.current}}/{{levelInfo.progress.likes.required}}</text>
-        </view>
-      </view>
-      <view class="level-tip">
-        <text class="tip-text">升级后分成比例提升至 {{levelInfo.next_level.revenue_share}}%</text>
-      </view>
+      <text class="earnings-text">收益明细</text>
+      <image class="earnings-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
     </view>
 
-    <!-- 功能入口 -->
-    <view class="menu-section">
-      <!-- 场景相关 -->
-      <view class="menu-group-title">场景创作</view>
-      <view class="menu-item" bindtap="createScene">
-        <view class="menu-icon-wrap create">
-          <image class="menu-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">创建场景</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-      <view class="menu-item" bindtap="goToMyScenes">
-        <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-scene.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">我的场景</text>
-        <text class="menu-badge" wx:if="{{sceneStats.pending > 0}}">{{sceneStats.pending}}待审核</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-
-      <!-- 模板相关 -->
-      <view class="menu-group-title">模板创作</view>
-      <view class="menu-item" bindtap="createTemplate">
-        <view class="menu-icon-wrap create">
-          <image class="menu-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">创建模板</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-      <view class="menu-item" bindtap="goToMyTemplates">
-        <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-template.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">我的模板</text>
-        <text class="menu-badge" wx:if="{{templateStats.pending > 0}}">{{templateStats.pending}}待审核</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-
-      <!-- 其他功能 -->
-      <view class="menu-group-title">其他</view>
-      <view class="menu-item" bindtap="goToEarnings">
-        <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-coin.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">收益明细</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-      <view class="menu-item" bindtap="goToFavorites">
-        <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/images/icon-favorite.svg" mode="aspectFit"></image>
-        </view>
-        <text class="menu-text">我的收藏</text>
-        <image class="menu-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
-      </view>
-    </view>
-
-    <!-- 我的模板列表 -->
+    <!-- 我的模板（融合创建入口） -->
     <view class="templates-section">
       <view class="section-header">
         <text class="section-title">我的模板</text>
-        <view class="view-all" bindtap="goToMyTemplates">
+        <view class="view-all" bindtap="goToMyTemplates" wx:if="{{templates.length > 0 || backgroundTasks.length > 0}}">
           <text class="view-all-text">查看全部</text>
           <image class="view-all-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
         </view>
       </view>
 
-      <!-- 模板列表 -->
-      <view class="template-list" wx:if="{{templates.length > 0}}">
-        <view class="template-item" wx:for="{{templates}}" wx:key="id" bindtap="goToTemplateDetail" data-id="{{item.id}}">
-          <image class="template-cover" src="{{item.cover_image}}" mode="aspectFill"></image>
-          <view class="template-info">
-            <text class="template-name">{{item.name}}</text>
-            <view class="template-stats">
-              <text class="template-stat">{{item.use_count || 0}}次使用</text>
-              <text class="template-stat">{{item.like_count || 0}}赞</text>
+      <!-- 横向滚动模板列表 -->
+      <scroll-view class="template-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="template-list-horizontal">
+          <!-- 创建模板入口卡片 -->
+          <view class="template-card create-card" bindtap="createTemplate">
+            <view class="create-placeholder">
+              <view class="create-icon-circle">
+                <text class="create-icon">+</text>
+              </view>
+              <text class="create-text">创建模板</text>
             </view>
-            <view class="template-status {{item.status}}">
-              <text class="status-text">{{statusMap[item.status] || item.status}}</text>
+          </view>
+
+          <!-- 后台任务卡片 -->
+          <view class="template-card task-card {{item.status}}" wx:for="{{backgroundTasks}}" wx:key="taskId" bindtap="onTaskCardTap" data-task="{{item}}">
+            <view class="task-card-content">
+              <view class="task-status-icon">
+                <text wx:if="{{item.status === 'processing' || item.status === 'loading'}}">🔄</text>
+                <text wx:elif="{{item.status === 'completed'}}">✅</text>
+                <text wx:elif="{{item.status === 'failed'}}">❌</text>
+                <text wx:else>⏳</text>
+              </view>
+              <text class="task-title">{{item.description || 'AI生成中'}}</text>
+              <view class="task-progress-wrap" wx:if="{{item.status === 'processing' || item.status === 'loading'}}">
+                <view class="task-progress-bar">
+                  <view class="task-progress-fill" style="width: {{item.progress || 0}}%;"></view>
+                </view>
+                <text class="task-progress-text">{{item.progress || 0}}%</text>
+              </view>
+              <text class="task-status-text completed" wx:elif="{{item.status === 'completed'}}">点击应用</text>
+              <text class="task-status-text failed" wx:elif="{{item.status === 'failed'}}">生成失败</text>
+            </view>
+          </view>
+
+          <!-- 模板卡片列表 -->
+          <view class="template-card" wx:for="{{templates}}" wx:key="id" bindtap="goToTemplateDetail" data-id="{{item.id}}">
+            <image class="template-cover" src="{{item.cover_image}}" mode="aspectFill"></image>
+            <view class="template-card-info">
+              <text class="template-name">{{item.name}}</text>
+              <view class="template-status {{item.status}}">
+                <text class="status-text">{{statusMap[item.status] || item.status}}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
-
-      <!-- 空状态 -->
-      <view class="empty-templates" wx:if="{{templates.length === 0 && !loading}}">
-        <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
-        <text class="empty-text">还没有创建模板</text>
-        <view class="empty-btn" bindtap="createTemplate">
-          <text class="empty-btn-text">立即创建</text>
-        </view>
-      </view>
+      </scroll-view>
     </view>
 
     <!-- 底部安全区 -->
