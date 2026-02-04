@@ -184,6 +184,7 @@ Page({
     });
 
     this.checkCanSubmit();
+    this.scheduleAutoSave();  // 触发自动保存
   },
 
   // 选择分类
@@ -197,6 +198,7 @@ Page({
     });
 
     this.checkCanSubmit();
+    this.scheduleAutoSave();
   },
 
   // 选择价格
@@ -208,12 +210,14 @@ Page({
       priceIndex: index,
       'formData.points_cost': price
     });
+    this.scheduleAutoSave();
   },
 
   // 选择性别
   selectGender(e) {
     const gender = e.currentTarget.dataset.gender;
     this.setData({ 'formData.gender': gender });
+    this.scheduleAutoSave();
   },
 
   // 切换高级 Prompt 模式
@@ -292,6 +296,40 @@ Page({
     await this.saveTemplate(false);
   },
 
+  // 自动保存草稿（防抖）
+  scheduleAutoSave() {
+    // 清除之前的定时器
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+
+    // 设置新的定时器，2秒后自动保存
+    this.autoSaveTimer = setTimeout(() => {
+      this.autoSaveDraft();
+    }, 2000);
+  },
+
+  // 执行自动保存
+  async autoSaveDraft() {
+    const { formData } = this.data;
+
+    // 至少有名称或描述才保存
+    if (!formData.name.trim() && !formData.description.trim()) {
+      return;
+    }
+
+    const userId = wx.getStorageSync('userId');
+    if (!userId) return;
+
+    try {
+      // 静默保存，不显示 loading
+      await this.saveTemplate(false, true);
+      console.log('[AutoSave] 草稿已自动保存');
+    } catch (error) {
+      console.error('[AutoSave] 自动保存失败:', error);
+    }
+  },
+
   // 提交审核
   async submitTemplate() {
     if (!this.data.canSubmit) {
@@ -312,16 +350,20 @@ Page({
   },
 
   // 保存模板
-  async saveTemplate(submitReview = false) {
+  async saveTemplate(submitReview = false, silent = false) {
     const userId = wx.getStorageSync('userId');
     if (!userId) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
+      if (!silent) {
+        wx.showToast({ title: '请先登录', icon: 'none' });
+      }
       return;
     }
 
     const { formData, isEdit, templateId } = this.data;
 
-    wx.showLoading({ title: submitReview ? '提交中...' : '保存中...' });
+    if (!silent) {
+      wx.showLoading({ title: submitReview ? '提交中...' : '保存中...' });
+    }
 
     try {
       let savedTemplateId = templateId;
@@ -376,24 +418,38 @@ Page({
         }
       }
 
-      wx.hideLoading();
-      wx.showToast({
-        title: submitReview ? '已提交审核' : '保存成功',
-        icon: 'success'
-      });
+      // 更新本地状态（如果是新建，保存 templateId）
+      if (!isEdit && savedTemplateId) {
+        this.setData({
+          isEdit: true,
+          templateId: savedTemplateId
+        });
+      }
 
-      // 返回上一页
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
+      if (!silent) {
+        wx.hideLoading();
+        wx.showToast({
+          title: submitReview ? '已提交审核' : '保存成功',
+          icon: 'success'
+        });
+
+        // 提交审核后返回上一页
+        if (submitReview) {
+          setTimeout(() => {
+            wx.navigateBack();
+          }, 1500);
+        }
+      }
 
     } catch (error) {
       console.error('保存模板失败:', error);
-      wx.hideLoading();
-      wx.showToast({
-        title: error.message || '保存失败',
-        icon: 'none'
-      });
+      if (!silent) {
+        wx.hideLoading();
+        wx.showToast({
+          title: error.message || '保存失败',
+          icon: 'none'
+        });
+      }
     }
   },
 
@@ -669,6 +725,38 @@ Page({
     });
   },
 
+  // 后台运行 AI 生成
+  runInBackground() {
+    // 保存当前任务 ID
+    const { aiTaskId } = this.data;
+    if (aiTaskId) {
+      // 存储到本地，以便后续查询
+      const backgroundTasks = wx.getStorageSync('backgroundAiTasks') || [];
+      backgroundTasks.push({
+        taskId: aiTaskId,
+        description: this.data.aiDescription,
+        templateId: this.data.templateId,
+        createdAt: Date.now()
+      });
+      wx.setStorageSync('backgroundAiTasks', backgroundTasks);
+    }
+
+    // 关闭弹窗但保持任务运行
+    this.clearAiPollTimer();
+    this.setData({
+      showAiModal: false,
+      aiGenerating: false
+    });
+
+    wx.showToast({
+      title: '任务已转入后台',
+      icon: 'success'
+    });
+
+    // 先保存草稿
+    this.autoSaveDraft();
+  },
+
   // 重新生成
   retryAiGenerate() {
     this.setData({ aiResult: null });
@@ -680,6 +768,9 @@ Page({
     const { aiResult } = this.data;
     if (!aiResult) return;
 
+    // 计算价格索引
+    const priceIndex = PRICE_OPTIONS.indexOf(aiResult.points_cost);
+
     // 应用到表单
     const updates = {
       'formData.name': aiResult.name,
@@ -688,6 +779,7 @@ Page({
       'formData.prompt_template': aiResult.prompt,
       'formData.negative_prompt': aiResult.negative_prompt,
       'formData.steps': aiResult.steps || [],
+      priceIndex: priceIndex >= 0 ? priceIndex : 9,
       showAiModal: false
     };
 
@@ -703,11 +795,18 @@ Page({
     this.checkCanSubmit();
 
     wx.showToast({ title: '已应用配置', icon: 'success' });
+
+    // 应用后自动保存草稿
+    this.autoSaveDraft();
   },
 
   // 页面卸载时清理
   onUnload() {
     this.clearAiPollTimer();
+    // 清理自动保存定时器
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
   },
 
   // ==================== AI 图片生成相关 ====================

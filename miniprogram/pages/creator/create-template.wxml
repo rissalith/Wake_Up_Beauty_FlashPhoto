@@ -415,11 +415,16 @@
       </view>
 
       <view class="ai-modal-footer">
-        <view wx:if="{{!aiGenerating && !aiResult}}" class="ai-btn-generate {{aiDescription.length > 5 ? '' : 'disabled'}}" bindtap="startAiGenerate">
+        <view wx:if="{{!aiGenerating && !aiResult}}" class="ai-btn-generate {{aiDescription.length > 0 ? '' : 'disabled'}}" bindtap="startAiGenerate">
           <text>开始生成</text>
         </view>
-        <view wx:if="{{aiGenerating}}" class="ai-btn-cancel" bindtap="cancelAiGenerate">
-          <text>取消</text>
+        <view wx:if="{{aiGenerating}}" class="ai-btn-row">
+          <view class="ai-btn-background" bindtap="runInBackground">
+            <text>后台运行</text>
+          </view>
+          <view class="ai-btn-cancel" bindtap="cancelAiGenerate">
+            <text>取消</text>
+          </view>
         </view>
         <view wx:if="{{aiResult}}" class="ai-btn-group">
           <view class="ai-btn-retry" bindtap="retryAiGenerate">
