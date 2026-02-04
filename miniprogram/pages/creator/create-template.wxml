@@ -25,7 +25,7 @@
           <text class="ai-desc">{{isEdit ? '重新生成完整配置，将覆盖当前内容' : '描述你想要的模板，AI 自动生成完整配置'}}</text>
         </view>
         <view class="ai-arrow">
-          <text>›</text>
+          <image class="ai-arrow-icon" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
         </view>
       </view>
     </view>
@@ -34,6 +34,13 @@
     <view class="section-card">
       <view class="section-header">
         <text class="section-title">基本信息</text>
+        <view class="section-header-right">
+          <!-- AI修改按钮 -->
+          <view class="ai-modify-btn" wx:if="{{formData.name || formData.description}}" bindtap="showBasicInfoModifyModal">
+            <image class="ai-modify-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+            <text>AI修改</text>
+          </view>
+        </view>
       </view>
 
       <view class="form-item">
@@ -275,7 +282,7 @@
         </view>
 
         <view class="advanced-warning">
-          <text class="warning-icon">⚠️</text>
+          <image class="warning-icon" src="/images/icon-warning.svg" mode="aspectFit"></image>
           <text class="warning-text">手动修改可能影响生成效果，建议使用 AI 优化</text>
         </view>
       </view>
@@ -324,20 +331,20 @@
             </view>
             <view class="ai-option-row">
               <view class="ai-checkbox {{aiGenerateCover ? 'checked' : ''}}" bindtap="toggleAiGenerateCover">
-                <text class="checkbox-icon">{{aiGenerateCover ? '✓' : ''}}</text>
+                <image wx:if="{{aiGenerateCover}}" class="checkbox-icon" src="/images/icon-check.svg" mode="aspectFit"></image>
               </view>
               <text class="ai-option-text">封面图 (1:1)</text>
             </view>
             <view class="ai-option-row">
               <view class="ai-checkbox {{aiGenerateReference ? 'checked' : ''}}" bindtap="toggleAiGenerateReference">
-                <text class="checkbox-icon">{{aiGenerateReference ? '✓' : ''}}</text>
+                <image wx:if="{{aiGenerateReference}}" class="checkbox-icon" src="/images/icon-check.svg" mode="aspectFit"></image>
               </view>
               <text class="ai-option-text">参考样式图</text>
               <view class="ai-ratio-picker" wx:if="{{aiGenerateReference}}">
                 <picker mode="selector" range="{{ratioOptions}}" range-key="label" value="{{aiReferenceRatioIndex}}" bindchange="onAiRatioChange">
                   <view class="ratio-picker-btn">
                     <text>{{ratioOptions[aiReferenceRatioIndex].label}}</text>
-                    <text class="ratio-arrow">▼</text>
+                    <image class="ratio-arrow-icon" src="/images/icon-arrow-down-small.svg" mode="aspectFit"></image>
                   </view>
                 </picker>
               </view>
@@ -371,7 +378,7 @@
               <!-- 时间线节点 -->
               <view class="ai-timeline-node">
                 <view class="ai-timeline-dot {{item.status}}">
-                  <text wx:if="{{item.status === 'completed'}}">✓</text>
+                  <image wx:if="{{item.status === 'completed'}}" class="timeline-check-icon" src="/images/icon-check.svg" mode="aspectFit"></image>
                 </view>
                 <view class="ai-timeline-line" wx:if="{{index < aiSteps.length - 1}}"></view>
               </view>
@@ -498,7 +505,7 @@
   <view class="ai-modify-modal-mask" wx:if="{{showModifyModal}}" bindtap="hideModifyModal">
     <view class="ai-modify-modal" catchtap="preventBubble">
       <view class="ai-modify-modal-header">
-        <text class="ai-modify-modal-title">AI 修改{{modifyTarget === 'steps' ? '操作步骤' : '生成效果'}}</text>
+        <text class="ai-modify-modal-title">AI 修改{{modifyTarget === 'steps' ? '操作步骤' : modifyTarget === 'basicInfo' ? '基本信息' : '生成效果'}}</text>
         <view class="ai-modify-modal-close" bindtap="hideModifyModal">×</view>
       </view>
 
@@ -506,6 +513,17 @@
         <!-- 当前配置预览 -->
         <view class="current-config-preview">
           <text class="preview-label">当前配置：</text>
+          <!-- 基本信息预览 -->
+          <view class="preview-content basic-info-preview" wx:if="{{modifyTarget === 'basicInfo'}}">
+            <view class="preview-item">
+              <text class="preview-item-label">名称：</text>
+              <text class="preview-item-value">{{formData.name}}</text>
+            </view>
+            <view class="preview-item">
+              <text class="preview-item-label">描述：</text>
+              <text class="preview-item-value">{{formData.description || '暂无描述'}}</text>
+            </view>
+          </view>
           <!-- 步骤预览 -->
           <view class="preview-content" wx:if="{{modifyTarget === 'steps'}}">
             <view class="preview-step" wx:for="{{formData.steps}}" wx:key="step_key">
@@ -525,7 +543,7 @@
           <text class="modify-input-label">告诉 AI 你想怎么修改：</text>
           <textarea
             class="modify-input-textarea"
-            placeholder="{{modifyTarget === 'steps' ? '例如：添加一个背景颜色选择步骤、删除第2个步骤...' : '例如：背景更梦幻一些、增加光影效果...'}}"
+            placeholder="{{modifyTarget === 'steps' ? '例如：添加一个背景颜色选择步骤、删除第2个步骤...' : modifyTarget === 'basicInfo' ? '例如：名称更简洁一些、描述更吸引人...' : '例如：背景更梦幻一些、增加光影效果...'}}"
             value="{{modifyInstruction}}"
             bindinput="onModifyInstructionInput"
             maxlength="200"
@@ -536,6 +554,11 @@
         <!-- 快捷指令 -->
         <view class="quick-instructions">
           <text class="quick-title">快捷指令：</text>
+          <view class="quick-tags" wx:if="{{modifyTarget === 'basicInfo'}}">
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="名称更简洁吸引人">优化名称</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="描述更详细，突出卖点">优化描述</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="整体更有创意和吸引力">更有创意</text>
+          </view>
           <view class="quick-tags" wx:if="{{modifyTarget === 'steps'}}">
             <text class="quick-tag" bindtap="useQuickInstruction" data-text="添加一个背景选择步骤">+背景选择</text>
             <text class="quick-tag" bindtap="useQuickInstruction" data-text="添加一个服装风格选择步骤">+服装风格</text>

@@ -1066,6 +1066,15 @@ Page({
     });
   },
 
+  // 显示基本信息修改弹窗
+  showBasicInfoModifyModal() {
+    this.setData({
+      showModifyModal: true,
+      modifyTarget: 'basicInfo',
+      modifyInstruction: ''
+    });
+  },
+
   // 隐藏修改弹窗
   hideModifyModal() {
     this.setData({
@@ -1129,6 +1138,16 @@ Page({
           }
           this.setData(updates);
           console.log('[PartialModify] Prompt已更新:', res.data);
+        } else if (modifyTarget === 'basicInfo') {
+          const updates = {};
+          if (res.data.name) {
+            updates['formData.name'] = res.data.name;
+          }
+          if (res.data.description) {
+            updates['formData.description'] = res.data.description;
+          }
+          this.setData(updates);
+          console.log('[PartialModify] 基本信息已更新:', res.data);
         }
 
         wx.showToast({ title: '修改成功', icon: 'success' });

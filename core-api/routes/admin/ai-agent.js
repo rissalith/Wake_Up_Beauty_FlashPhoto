@@ -577,10 +577,10 @@ router.post('/partial-modify', async (req, res) => {
       });
     }
 
-    if (!['steps', 'prompt'].includes(target)) {
+    if (!['steps', 'prompt', 'basicInfo'].includes(target)) {
       return res.status(400).json({
         code: 400,
-        message: '不支持的修改目标，仅支持 steps 或 prompt'
+        message: '不支持的修改目标，仅支持 steps、prompt 或 basicInfo'
       });
     }
 
@@ -695,6 +695,56 @@ ${JSON.stringify(globalContext.steps || [], null, 2)}
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AI_API_KEY}`
+          },
+          timeout: 30000
+        }
+      );
+
+      const parts = response.data.candidates?.[0]?.content?.parts || [];
+      const textParts = parts.filter(p => p.text && !p.thought);
+      if (textParts.length === 0) {
+        throw new Error('AI 返回内容为空');
+      }
+
+      const responseText = textParts[textParts.length - 1].text;
+      result = parseJsonResponse(responseText);
+    } else if (target === 'basicInfo') {
+      // 修改基本信息配置
+      const modifyBasicInfoPrompt = `你是一个模板配置专家。用户想要修改模板的基本信息。
+
+当前模板基本信息：
+- 模板名称：${globalContext.name || '未命名'}
+- 模板描述：${globalContext.description || '无'}
+
+用户的修改指令：${instruction}
+
+请根据用户的指令修改基本信息。
+
+注意：
+1. 模板名称应简洁有吸引力，不超过20个字符
+2. 模板描述应清晰描述模板的特点和适用场景，不超过100个字符
+3. 只针对用户提到的问题进行修改，不要大幅改动
+4. 保持内容的专业性和吸引力
+
+请返回 JSON 格式：
+{
+  "name": "修改后的模板名称",
+  "description": "修改后的模板描述"
+}`;
+
+      const response = await axios.post(
+        `${AI_API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`,
+        {
+          contents: [{ parts: [{ text: modifyBasicInfoPrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
           }
         },
         {
