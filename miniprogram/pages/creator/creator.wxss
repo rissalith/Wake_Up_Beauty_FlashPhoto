@@ -327,7 +327,8 @@
   color: #999;
 }
 
-.template-status.pending {
+.template-status.pending,
+.template-status.reviewing {
   background: #FFF3E0;
   color: #FF9800;
 }
@@ -385,13 +386,21 @@
 }
 
 .task-status-icon {
-  font-size: 32px;
+  width: 32px;
+  height: 32px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.task-card.processing .task-status-icon,
-.task-card.loading .task-status-icon {
-  animation: spin 2s linear infinite;
+.task-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.task-icon.spinning {
+  animation: spin 1.5s linear infinite;
 }
 
 @keyframes spin {

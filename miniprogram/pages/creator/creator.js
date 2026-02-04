@@ -16,6 +16,7 @@ Page({
     statusMap: {
       draft: '草稿',
       pending: '审核中',
+      reviewing: '审核中',
       active: '已上架',
       approved: '已上架',
       rejected: '已拒绝',
@@ -278,12 +279,21 @@ Page({
     });
   },
 
-  // 查看模板详情
+  // 查看/编辑模板
   goToTemplateDetail(e) {
     const templateId = e.currentTarget.dataset.id;
-    wx.navigateTo({
-      url: `/pages/creator/template-detail?id=${templateId}`
-    });
+    const template = this.data.templates.find(t => t.id === templateId);
+
+    // 草稿状态跳转到编辑页面，其他状态跳转到场景编辑器
+    if (template && template.status === 'draft') {
+      wx.navigateTo({
+        url: `/pages/creator/create-template?id=${templateId}`
+      });
+    } else {
+      wx.navigateTo({
+        url: `/pages/creator/scene-editor/scene-editor?id=${templateId}`
+      });
+    }
   },
 
   // 登录弹窗关闭
