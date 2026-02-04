@@ -359,9 +359,15 @@ router.post('/generate-image', async (req, res) => {
 
       // 记录积分变动
       db.prepare(`
-        INSERT INTO points_records (user_id, type, amount, balance, description, created_at)
-        VALUES (?, 'consume', ?, ?, ?, datetime('now'))
-      `).run(userId, -IMAGE_COST, user.points - IMAGE_COST, `AI生成${type === 'cover' ? '封面图' : '参考图'}`);
+        INSERT INTO points_records (id, user_id, type, amount, balance_after, description, created_at)
+        VALUES (?, ?, 'consume', ?, ?, ?, datetime('now'))
+      `).run(
+        `pr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId,
+        -IMAGE_COST,
+        user.points - IMAGE_COST,
+        `AI生成${type === 'cover' ? '封面图' : '参考图'}`
+      );
     }
 
     // 根据类型和比例确定尺寸
@@ -391,10 +397,17 @@ router.post('/generate-image', async (req, res) => {
       if (userId) {
         const db = require('../../config/database').getDb();
         db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(IMAGE_COST, userId);
+        const updatedUser = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
         db.prepare(`
-          INSERT INTO points_records (user_id, type, amount, balance, description, created_at)
-          VALUES (?, 'refund', ?, (SELECT points FROM users WHERE id = ?), ?, datetime('now'))
-        `).run(userId, IMAGE_COST, userId, 'AI生成图片失败退款');
+          INSERT INTO points_records (id, user_id, type, amount, balance_after, description, created_at)
+          VALUES (?, ?, 'refund', ?, ?, ?, datetime('now'))
+        `).run(
+          `pr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId,
+          IMAGE_COST,
+          updatedUser.points,
+          'AI生成图片失败退款'
+        );
       }
 
       throw new Error(imageResult.error || '图片生成失败');
