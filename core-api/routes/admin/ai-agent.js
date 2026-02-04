@@ -561,6 +561,199 @@ ${userFeedback}
   }
 });
 
+/**
+ * 局部修改配置
+ * POST /api/admin/ai-agent/partial-modify
+ * 支持修改步骤配置或 Prompt 配置
+ */
+router.post('/partial-modify', async (req, res) => {
+  try {
+    const { target, instruction, globalContext } = req.body;
+
+    if (!target || !instruction || !globalContext) {
+      return res.status(400).json({
+        code: 400,
+        message: '缺少必要参数: target, instruction, globalContext'
+      });
+    }
+
+    if (!['steps', 'prompt'].includes(target)) {
+      return res.status(400).json({
+        code: 400,
+        message: '不支持的修改目标，仅支持 steps 或 prompt'
+      });
+    }
+
+    // 内容安全检查
+    const safetyCheck = checkContentSafety(instruction);
+    if (!safetyCheck.safe) {
+      return res.status(400).json({
+        code: 400,
+        message: safetyCheck.message
+      });
+    }
+
+    console.log('[AI Agent API] 局部修改请求:', { target, instruction: instruction.substring(0, 50) });
+
+    const axios = require('axios');
+    const AI_API_KEY = process.env.AI_API_KEY || '';
+    const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
+
+    let result;
+
+    if (target === 'steps') {
+      // 修改步骤配置
+      const modifyStepsPrompt = `你是一个模板配置专家。用户想要修改模板的操作步骤配置。
+
+当前模板全局配置：
+- 模板名称：${globalContext.name || '未命名'}
+- 模板描述：${globalContext.description || '无'}
+- 当前步骤配置：
+${JSON.stringify(globalContext.steps || [], null, 2)}
+- 当前 Prompt 模板：${globalContext.prompt_template || '无'}
+
+用户的修改指令：${instruction}
+
+请根据用户的指令修改步骤配置，返回修改后的完整步骤数组。
+
+注意：
+1. 保持步骤结构的完整性
+2. 每个步骤必须包含以下字段：
+   - step_key: 唯一标识（英文，如 upload_photo, select_background）
+   - title: 步骤标题（中文）
+   - component_type: 组件类型，可选值：image_upload, gender_select, tags, image_tags, dice_roll
+   - is_required: 是否必填（布尔值）
+3. 如果组件类型是 tags 或 image_tags，需要包含 options 数组，每个选项包含 label 和 value
+4. 如果是添加新步骤，请确保 step_key 唯一且有意义
+5. 如果修改涉及到 Prompt 中的变量引用，请在返回中说明
+
+请直接返回 JSON 格式：
+{
+  "steps": [步骤数组],
+  "prompt_variables_changed": ["如果有变量变化，列出变化的变量名"]
+}`;
+
+      const response = await axios.post(
+        `${AI_API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`,
+        {
+          contents: [{ parts: [{ text: modifyStepsPrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4096
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AI_API_KEY}`
+          },
+          timeout: 30000
+        }
+      );
+
+      const parts = response.data.candidates?.[0]?.content?.parts || [];
+      const textParts = parts.filter(p => p.text && !p.thought);
+      if (textParts.length === 0) {
+        throw new Error('AI 返回内容为空');
+      }
+
+      const responseText = textParts[textParts.length - 1].text;
+      result = parseJsonResponse(responseText);
+
+    } else if (target === 'prompt') {
+      // 修改 Prompt 配置
+      const modifyPromptPrompt = `你是一个 AI 图片生成 Prompt 专家。用户想要修改模板的 Prompt 配置。
+
+当前模板全局配置：
+- 模板名称：${globalContext.name || '未命名'}
+- 模板描述：${globalContext.description || '无'}
+- 操作步骤：
+${JSON.stringify(globalContext.steps || [], null, 2)}
+- 当前 Prompt 模板：${globalContext.prompt_template || '无'}
+- 当前负面提示词：${globalContext.negative_prompt || '无'}
+
+用户的修改指令：${instruction}
+
+请根据用户的指令修改 Prompt 配置。
+
+注意：
+1. 保持 Prompt 中的变量引用格式 {{变量名}}，变量名应与步骤中的 step_key 对应
+2. 只针对用户提到的问题进行局部优化，不要大幅改动
+3. 保持 Prompt 的专业性和有效性
+4. 负面提示词用于排除不想要的效果
+
+请返回 JSON 格式：
+{
+  "prompt_template": "修改后的 Prompt 模板",
+  "negative_prompt": "修改后的负面提示词"
+}`;
+
+      const response = await axios.post(
+        `${AI_API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`,
+        {
+          contents: [{ parts: [{ text: modifyPromptPrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AI_API_KEY}`
+          },
+          timeout: 30000
+        }
+      );
+
+      const parts = response.data.candidates?.[0]?.content?.parts || [];
+      const textParts = parts.filter(p => p.text && !p.thought);
+      if (textParts.length === 0) {
+        throw new Error('AI 返回内容为空');
+      }
+
+      const responseText = textParts[textParts.length - 1].text;
+      result = parseJsonResponse(responseText);
+    }
+
+    console.log('[AI Agent API] 局部修改成功:', target);
+
+    res.json({
+      code: 200,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('[AI Agent API] 局部修改失败:', error.message);
+    res.status(500).json({
+      code: 500,
+      message: '修改失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * 解析 JSON 响应的辅助函数
+ */
+function parseJsonResponse(responseText) {
+  try {
+    // 尝试直接解析
+    return JSON.parse(responseText);
+  } catch (e) {
+    // 尝试提取 JSON 块
+    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[1]);
+    }
+    // 尝试提取花括号内容
+    const braceMatch = responseText.match(/\{[\s\S]*\}/);
+    if (braceMatch) {
+      return JSON.parse(braceMatch[0]);
+    }
+    throw new Error('无法解析 AI 响应');
+  }
+}
+
 // ============================================
 // 知识库管理 API
 // ============================================

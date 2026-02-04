@@ -14,15 +14,15 @@
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 
-    <!-- AI 智能生成入口 -->
-    <view class="ai-generate-section" wx:if="{{!isEdit}}">
+    <!-- AI 智能生成入口 - 始终显示 -->
+    <view class="ai-generate-section">
       <view class="ai-generate-card" bindtap="showAiGenerateModal">
         <view class="ai-icon-wrapper">
           <image class="ai-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
         </view>
         <view class="ai-text-wrapper">
-          <text class="ai-title">AI 智能生成</text>
-          <text class="ai-desc">描述你想要的模板，AI 自动生成完整配置</text>
+          <text class="ai-title">{{isEdit ? 'AI 重新生成' : 'AI 智能生成'}}</text>
+          <text class="ai-desc">{{isEdit ? '重新生成完整配置，将覆盖当前内容' : '描述你想要的模板，AI 自动生成完整配置'}}</text>
         </view>
         <view class="ai-arrow">
           <text>›</text>
@@ -167,7 +167,14 @@
     <view class="section-card">
       <view class="section-header">
         <text class="section-title">用户操作步骤</text>
-        <text class="section-hint">{{formData.steps.length > 0 ? formData.steps.length + '个步骤' : '用户生成时需要完成的配置'}}</text>
+        <view class="section-header-right">
+          <text class="section-hint">{{formData.steps.length > 0 ? formData.steps.length + '个步骤' : '用户生成时需要完成的配置'}}</text>
+          <!-- AI修改按钮 -->
+          <view class="ai-modify-btn" wx:if="{{formData.steps.length > 0}}" bindtap="showStepsModifyModal">
+            <image class="ai-modify-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+            <text>AI修改</text>
+          </view>
+        </view>
       </view>
 
       <!-- 有步骤时显示 -->
@@ -196,8 +203,15 @@
     <view class="section-card">
       <view class="section-header">
         <text class="section-title">生成效果配置</text>
-        <view class="section-toggle" bindtap="toggleAdvancedPrompt">
-          <text class="toggle-text">{{showAdvancedPrompt ? '收起' : '高级'}}</text>
+        <view class="section-header-right">
+          <!-- AI修改按钮 -->
+          <view class="ai-modify-btn" wx:if="{{formData.prompt_template}}" bindtap="showPromptModifyModal">
+            <image class="ai-modify-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+            <text>AI修改</text>
+          </view>
+          <view class="section-toggle" bindtap="toggleAdvancedPrompt">
+            <text class="toggle-text">{{showAdvancedPrompt ? '收起' : '高级'}}</text>
+          </view>
         </view>
       </view>
 
@@ -475,6 +489,73 @@
       <view class="ratio-modal-footer">
         <view class="ratio-btn-generate" bindtap="confirmGenerateReference">
           <text>开始生成</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 局部AI修改弹窗 -->
+  <view class="ai-modify-modal-mask" wx:if="{{showModifyModal}}" bindtap="hideModifyModal">
+    <view class="ai-modify-modal" catchtap="preventBubble">
+      <view class="ai-modify-modal-header">
+        <text class="ai-modify-modal-title">AI 修改{{modifyTarget === 'steps' ? '操作步骤' : '生成效果'}}</text>
+        <view class="ai-modify-modal-close" bindtap="hideModifyModal">×</view>
+      </view>
+
+      <view class="ai-modify-modal-body">
+        <!-- 当前配置预览 -->
+        <view class="current-config-preview">
+          <text class="preview-label">当前配置：</text>
+          <!-- 步骤预览 -->
+          <view class="preview-content" wx:if="{{modifyTarget === 'steps'}}">
+            <view class="preview-step" wx:for="{{formData.steps}}" wx:key="step_key">
+              <text class="step-num">{{index + 1}}.</text>
+              <text class="step-name">{{item.title}}</text>
+              <text class="step-type-badge">{{item.component_type === 'image_upload' ? '图片上传' : item.component_type === 'gender_select' ? '性别选择' : item.component_type === 'tags' ? '标签选择' : item.component_type === 'image_tags' ? '图片标签' : item.component_type === 'dice_roll' ? '摇骰子' : item.component_type}}</text>
+            </view>
+          </view>
+          <!-- Prompt预览 -->
+          <view class="preview-content prompt-preview" wx:if="{{modifyTarget === 'prompt'}}">
+            <text class="prompt-text">{{formData.prompt_template}}</text>
+          </view>
+        </view>
+
+        <!-- 修改指令输入 -->
+        <view class="modify-input-section">
+          <text class="modify-input-label">告诉 AI 你想怎么修改：</text>
+          <textarea
+            class="modify-input-textarea"
+            placeholder="{{modifyTarget === 'steps' ? '例如：添加一个背景颜色选择步骤、删除第2个步骤...' : '例如：背景更梦幻一些、增加光影效果...'}}"
+            value="{{modifyInstruction}}"
+            bindinput="onModifyInstructionInput"
+            maxlength="200"
+          />
+          <text class="modify-input-count">{{modifyInstruction.length || 0}}/200</text>
+        </view>
+
+        <!-- 快捷指令 -->
+        <view class="quick-instructions">
+          <text class="quick-title">快捷指令：</text>
+          <view class="quick-tags" wx:if="{{modifyTarget === 'steps'}}">
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="添加一个背景选择步骤">+背景选择</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="添加一个服装风格选择步骤">+服装风格</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="简化步骤，只保留必要的">简化步骤</text>
+          </view>
+          <view class="quick-tags" wx:if="{{modifyTarget === 'prompt'}}">
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="背景更梦幻一些">更梦幻</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="增加光影效果">加光影</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="人物更清晰">更清晰</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="ai-modify-modal-footer">
+        <view class="ai-modify-btn-cancel" bindtap="hideModifyModal">
+          <text>取消</text>
+        </view>
+        <view class="ai-modify-btn-confirm {{modifyInstruction ? '' : 'disabled'}}" bindtap="startPartialModify">
+          <view class="loading-spinner small" wx:if="{{partialModifying}}"></view>
+          <text>{{partialModifying ? '修改中...' : '开始修改'}}</text>
         </view>
       </view>
     </view>

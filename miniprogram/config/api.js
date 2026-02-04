@@ -833,6 +833,16 @@ const api = {
       data,
       timeout: 120000  // 图片生成需要较长时间
     });
+  },
+
+  // AI 局部修改配置（步骤或 Prompt）
+  aiPartialModify(data) {
+    return request({
+      url: '/admin/ai-agent/partial-modify',
+      method: 'POST',
+      data,
+      timeout: 60000  // AI 修改需要一定时间
+    });
   }
 };
 

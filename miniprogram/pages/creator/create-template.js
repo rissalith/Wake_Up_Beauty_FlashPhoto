@@ -80,7 +80,13 @@ Page({
     // Prompt 配置相关
     showAdvancedPrompt: false,  // 是否显示高级模式
     promptOptimizeText: '',     // AI 优化输入
-    optimizingPrompt: false     // 是否正在优化
+    optimizingPrompt: false,    // 是否正在优化
+
+    // 局部AI修改相关
+    showModifyModal: false,     // 是否显示修改弹窗
+    modifyTarget: '',           // 修改目标：'steps' 或 'prompt'
+    modifyInstruction: '',      // 修改指令
+    partialModifying: false     // 是否正在修改中
   },
 
   onLoad(options) {
@@ -851,16 +857,20 @@ Page({
 
     // 转换为表单数据格式
     const scene = config.scene;
+    // prompt_template 是独立字段，不在 scene 里面
+    const promptTemplate = config.prompt_template || {};
     // images 可能在 result.images 或直接在 result 中
     const images = result.images || {};
     console.log('[CreateTemplate] 图片数据:', images);
+    console.log('[CreateTemplate] Prompt模板:', promptTemplate);
 
     const aiResult = {
       name: scene.name || '',
       description: scene.description || '',
       points_cost: scene.points_cost || 50,
-      prompt: scene.prompt_template || '',
-      negative_prompt: scene.negative_prompt || '',
+      // prompt_template 是独立字段
+      prompt: promptTemplate.template || promptTemplate.base_prompt || '',
+      negative_prompt: promptTemplate.negative_prompt || '',
       steps: config.steps || [],
       recommended_category_id: scene.category_id,
       cover_image: images.cover_image || '',
@@ -1034,5 +1044,104 @@ Page({
       title: `${type === 'cover' ? '封面图' : '参考图'}加载失败`,
       icon: 'none'
     });
+  },
+
+  // ==================== 局部AI修改相关方法 ====================
+
+  // 显示步骤修改弹窗
+  showStepsModifyModal() {
+    this.setData({
+      showModifyModal: true,
+      modifyTarget: 'steps',
+      modifyInstruction: ''
+    });
+  },
+
+  // 显示Prompt修改弹窗
+  showPromptModifyModal() {
+    this.setData({
+      showModifyModal: true,
+      modifyTarget: 'prompt',
+      modifyInstruction: ''
+    });
+  },
+
+  // 隐藏修改弹窗
+  hideModifyModal() {
+    this.setData({
+      showModifyModal: false,
+      modifyTarget: '',
+      modifyInstruction: ''
+    });
+  },
+
+  // 修改指令输入
+  onModifyInstructionInput(e) {
+    this.setData({ modifyInstruction: e.detail.value });
+  },
+
+  // 使用快捷指令
+  useQuickInstruction(e) {
+    const text = e.currentTarget.dataset.text;
+    this.setData({ modifyInstruction: text });
+  },
+
+  // 开始局部修改
+  async startPartialModify() {
+    const { modifyTarget, modifyInstruction, formData, partialModifying } = this.data;
+
+    if (partialModifying) return;
+
+    if (!modifyInstruction.trim()) {
+      wx.showToast({ title: '请输入修改指令', icon: 'none' });
+      return;
+    }
+
+    this.setData({ partialModifying: true });
+
+    try {
+      // 构建全局上下文
+      const globalContext = {
+        name: formData.name,
+        description: formData.description,
+        steps: formData.steps,
+        prompt_template: formData.prompt_template,
+        negative_prompt: formData.negative_prompt
+      };
+
+      const res = await api.aiPartialModify({
+        target: modifyTarget,
+        instruction: modifyInstruction,
+        globalContext: globalContext
+      });
+
+      if (res.code === 200 && res.data) {
+        // 应用修改结果
+        if (modifyTarget === 'steps') {
+          this.setData({ 'formData.steps': res.data.steps });
+          console.log('[PartialModify] 步骤已更新:', res.data.steps);
+        } else if (modifyTarget === 'prompt') {
+          const updates = {
+            'formData.prompt_template': res.data.prompt_template
+          };
+          if (res.data.negative_prompt) {
+            updates['formData.negative_prompt'] = res.data.negative_prompt;
+          }
+          this.setData(updates);
+          console.log('[PartialModify] Prompt已更新:', res.data);
+        }
+
+        wx.showToast({ title: '修改成功', icon: 'success' });
+        this.hideModifyModal();
+        this.checkCanSubmit();
+      } else {
+        wx.showToast({ title: res.message || '修改失败', icon: 'none' });
+      }
+    } catch (error) {
+      console.error('[PartialModify] 修改失败:', error);
+      wx.showToast({ title: '修改失败，请重试', icon: 'none' });
+    } finally {
+      this.setData({ partialModifying: false });
+    }
   }
 });

@@ -1415,3 +1415,244 @@
   font-size: 12px;
   color: #996600;
 }
+
+/* ==================== AI 修改按钮和弹窗 ==================== */
+
+/* section-header-right 布局 */
+.section-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* AI修改按钮 */
+.ai-modify-btn {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+}
+
+.ai-modify-btn .ai-modify-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
+.ai-modify-btn text {
+  font-size: 11px;
+  color: #fff;
+}
+
+/* 局部修改弹窗样式 */
+.ai-modify-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-modify-modal {
+  width: 90%;
+  max-width: 340px;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ai-modify-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ai-modify-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ai-modify-modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #999;
+}
+
+.ai-modify-modal-body {
+  padding: 16px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* 当前配置预览 */
+.current-config-preview {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.preview-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.preview-content {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.preview-step {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.preview-step:last-child {
+  border-bottom: none;
+}
+
+.preview-step .step-num {
+  font-size: 12px;
+  color: #999;
+  margin-right: 8px;
+  width: 20px;
+}
+
+.preview-step .step-name {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+}
+
+.preview-step .step-type-badge {
+  font-size: 10px;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.prompt-preview {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.prompt-preview .prompt-text {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* 修改指令输入 */
+.modify-input-section {
+  margin-bottom: 14px;
+}
+
+.modify-input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.modify-input-textarea {
+  width: 100%;
+  height: 80px;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.modify-input-count {
+  display: block;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* 快捷指令 */
+.quick-instructions {
+  margin-top: 12px;
+}
+
+.quick-title {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-tag {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border-radius: 14px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* 弹窗底部按钮 */
+.ai-modify-modal-footer {
+  display: flex;
+  padding: 14px 16px;
+  border-top: 1px solid #f0f0f0;
+  gap: 12px;
+}
+
+.ai-modify-btn-cancel {
+  flex: 1;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 21px;
+  font-size: 14px;
+  color: #666;
+}
+
+.ai-modify-btn-confirm {
+  flex: 1.5;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 21px;
+  font-size: 14px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.ai-modify-btn-confirm.disabled {
+  opacity: 0.5;
+}
