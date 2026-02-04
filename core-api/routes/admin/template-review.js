@@ -594,13 +594,13 @@ function ensureOfficialCreator(db) {
     if (!systemUser) {
       db.prepare(`
         INSERT INTO users (id, openid, nickname, avatar_url, points, status, created_at)
-        VALUES ('system', 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo.png', 0, 'active', datetime('now'))
+        VALUES ('system', 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg', 0, 'active', datetime('now'))
       `).run();
     }
     // 创建官方创作者
     db.prepare(`
       INSERT INTO creators (id, user_id, creator_name, creator_avatar, bio, level, status, created_at)
-      VALUES (?, 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo.png', '醒美闪图官方出品', 5, 'active', datetime('now'))
+      VALUES (?, 'system', '醒美官方', 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg', '醒美闪图官方出品', 5, 'active', datetime('now'))
     `).run(OFFICIAL_CREATOR_ID);
   }
   return OFFICIAL_CREATOR_ID;
