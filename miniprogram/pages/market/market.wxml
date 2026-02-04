@@ -69,11 +69,23 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
+            <view class="like-badge">
+              <image class="like-badge-icon" src="/images/icon-heart.svg" mode="aspectFit"></image>
+              <text class="like-badge-count">{{item.like_count || 0}}</text>
+            </view>
           </view>
           <view class="card-bottom">
             <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
-            <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
-              <text class="action-text">{{i18n.text('✦ 做同款', '✦ Try', currentLang)}}</text>
+            <view class="card-meta-row">
+              <view class="creator-info">
+                <image class="creator-avatar" src="{{item.creator.avatar}}" mode="aspectFill" wx:if="{{item.creator.avatar}}"></image>
+                <image class="creator-avatar" src="https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg" mode="aspectFill" wx:else></image>
+                <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
+              </view>
+              <view class="price-info">
+                <text class="price-text" wx:if="{{item.points_cost > 0}}">{{item.points_cost}}{{i18n.text('醒币', 'coins', currentLang)}}</text>
+                <text class="price-text free" wx:else>{{i18n.text('免费', 'Free', currentLang)}}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -95,11 +107,23 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
+            <view class="like-badge">
+              <image class="like-badge-icon" src="/images/icon-heart.svg" mode="aspectFit"></image>
+              <text class="like-badge-count">{{item.like_count || 0}}</text>
+            </view>
           </view>
           <view class="card-bottom">
             <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
-            <view class="action-btn" catchtap="doSame" data-id="{{item.id}}">
-              <text class="action-text">{{i18n.text('✦ 做同款', '✦ Try', currentLang)}}</text>
+            <view class="card-meta-row">
+              <view class="creator-info">
+                <image class="creator-avatar" src="{{item.creator.avatar}}" mode="aspectFill" wx:if="{{item.creator.avatar}}"></image>
+                <image class="creator-avatar" src="https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg" mode="aspectFill" wx:else></image>
+                <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
+              </view>
+              <view class="price-info">
+                <text class="price-text" wx:if="{{item.points_cost > 0}}">{{item.points_cost}}{{i18n.text('醒币', 'coins', currentLang)}}</text>
+                <text class="price-text free" wx:else>{{i18n.text('免费', 'Free', currentLang)}}</text>
+              </view>
             </view>
           </view>
         </view>

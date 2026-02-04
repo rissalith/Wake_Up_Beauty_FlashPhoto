@@ -50,13 +50,14 @@ function formatBeijingTime(timestamp, format = 'full') {
 
   let date;
   if (typeof timestamp === 'string') {
-    // 处理 ISO 字符串或其他格式
-    // 先尝试直接解析，如果失败再用兼容方式
-    date = new Date(timestamp);
-    if (isNaN(date.getTime())) {
-      // 兼容 iOS: 将 - 替换为 /
-      date = new Date(timestamp.replace(/-/g, '/').replace('T', ' ').replace(/\+.*$/, ''));
-    }
+    // iOS 兼容：先将日期字符串转换为 iOS 支持的格式
+    // iOS 支持: "yyyy/MM/dd"、"yyyy/MM/dd HH:mm:ss"、"yyyy-MM-dd"、"yyyy-MM-ddTHH:mm:ss"
+    let normalizedStr = timestamp
+      .replace(/-/g, '/')  // 将 - 替换为 /
+      .replace('T', ' ')   // 将 T 替换为空格
+      .replace(/\+.*$/, ''); // 移除时区信息
+
+    date = new Date(normalizedStr);
   } else {
     date = new Date(timestamp);
   }

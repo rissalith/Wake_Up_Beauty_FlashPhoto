@@ -23,7 +23,8 @@ Page({
     showLoginModal: false,
     currentLang: 'zh-CN',
     titleImage: '',
-    bannerList: []
+    bannerList: [],
+    officialAvatar: '' // 官方头像
   },
 
   onLoad() {
@@ -42,7 +43,8 @@ Page({
       navBarHeight,
       currentLang,
       titleImage,
-      bannerList
+      bannerList,
+      officialAvatar: imageConfig.images.logoMain
     });
 
     // 加载分类和模板
@@ -208,11 +210,19 @@ Page({
     }
   },
 
-  // 跳转到模板详情
+  // 跳转到制作页面（直接做同款）
   goToTemplate(e) {
     const templateId = e.currentTarget.dataset.id;
+    const userId = wx.getStorageSync('userId');
+
+    if (!userId) {
+      this.setData({ showLoginModal: true });
+      return;
+    }
+
+    // 直接跳转到场景页制作
     wx.navigateTo({
-      url: `/pages/template-detail/template-detail?id=${templateId}`
+      url: `/pages/scene/scene?template_id=${templateId}`
     });
   },
 

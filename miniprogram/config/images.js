@@ -7,7 +7,8 @@ const CDN_BASE = 'https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com'
 // 图片资源映射（不带版本号，使用 COS 默认缓存策略）
 const images = {
   // 通用资源
-  logo: `${CDN_BASE}/logo.png`,
+  logo: `${CDN_BASE}/logo/logo-main.jpg`, // 主 Logo
+  logoMain: `${CDN_BASE}/logo/logo-main.jpg`, // 主 Logo（官方头像）
   shareCover: `${CDN_BASE}/share-cover.png`,
   scanCode: `${CDN_BASE}/scan-code.png`,
 

@@ -45,8 +45,22 @@ function text(zhText, enText, lang) {
   return zhText || '';
 }
 
+/**
+ * 获取创作者头像，如果没有则返回默认头像
+ * @param {Object} creator - 创作者对象
+ * @param {String} defaultAvatar - 默认头像URL
+ * @returns {String} 头像URL
+ */
+function getAvatar(creator, defaultAvatar) {
+  if (creator && creator.avatar && creator.avatar.length > 0) {
+    return creator.avatar;
+  }
+  return defaultAvatar || '';
+}
+
 module.exports = {
   getName: getName,
   getDesc: getDesc,
-  text: text
+  text: text,
+  getAvatar: getAvatar
 };
