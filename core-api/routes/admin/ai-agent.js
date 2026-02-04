@@ -432,6 +432,135 @@ router.post('/generate-image', async (req, res) => {
   }
 });
 
+/**
+ * AI 优化 Prompt
+ * POST /api/admin/ai-agent/optimize-prompt
+ */
+router.post('/optimize-prompt', async (req, res) => {
+  try {
+    const { currentPrompt, negativePrompt, userFeedback, templateName, templateDescription } = req.body;
+
+    if (!currentPrompt) {
+      return res.status(400).json({
+        code: 400,
+        message: '请提供当前 Prompt'
+      });
+    }
+
+    if (!userFeedback) {
+      return res.status(400).json({
+        code: 400,
+        message: '请提供优化建议'
+      });
+    }
+
+    // 内容安全检查
+    const safetyCheck = checkContentSafety(userFeedback);
+    if (!safetyCheck.safe) {
+      return res.status(400).json({
+        code: 400,
+        message: safetyCheck.message
+      });
+    }
+
+    // 调用 AI 优化 Prompt
+    const axios = require('axios');
+    const AI_API_KEY = process.env.AI_API_KEY || '';
+    const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
+
+    const optimizePrompt = `你是一个专业的 AI 图片生成 Prompt 优化专家。
+
+当前模板信息：
+- 模板名称：${templateName || '未命名'}
+- 模板描述：${templateDescription || '无'}
+
+当前 Prompt 模板：
+${currentPrompt}
+
+当前负面提示词：
+${negativePrompt || '无'}
+
+用户反馈/优化需求：
+${userFeedback}
+
+请根据用户的反馈优化 Prompt，注意：
+1. 保留原有的变量引用格式 {{变量名}}，不要修改变量名
+2. 只针对用户提到的问题进行局部优化，不要大幅改动
+3. 保持 Prompt 的专业性和有效性
+4. 如果用户的需求不合理或可能导致不良结果，请适当调整
+
+请以 JSON 格式返回优化后的结果：
+{
+  "prompt_template": "优化后的 Prompt 模板",
+  "negative_prompt": "优化后的负面提示词",
+  "changes_summary": "简要说明做了哪些修改"
+}`;
+
+    const response = await axios.post(
+      `${AI_API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`,
+      {
+        contents: [{ parts: [{ text: optimizePrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048
+        }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${AI_API_KEY}`
+        },
+        timeout: 30000
+      }
+    );
+
+    // 解析响应
+    const parts = response.data.candidates?.[0]?.content?.parts || [];
+    const textParts = parts.filter(p => p.text && !p.thought);
+    if (textParts.length === 0) {
+      throw new Error('AI 返回内容为空');
+    }
+
+    const responseText = textParts[textParts.length - 1].text;
+
+    // 尝试解析 JSON
+    let result;
+    try {
+      // 尝试直接解析
+      result = JSON.parse(responseText);
+    } catch (e) {
+      // 尝试提取 JSON 块
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[1]);
+      } else {
+        const braceMatch = responseText.match(/\{[\s\S]*\}/);
+        if (braceMatch) {
+          result = JSON.parse(braceMatch[0]);
+        } else {
+          throw new Error('无法解析 AI 响应');
+        }
+      }
+    }
+
+    res.json({
+      code: 200,
+      data: {
+        prompt_template: result.prompt_template || currentPrompt,
+        negative_prompt: result.negative_prompt || negativePrompt,
+        changes_summary: result.changes_summary || '已优化'
+      }
+    });
+
+  } catch (error) {
+    console.error('[AI Agent API] Prompt 优化失败:', error.message);
+    res.status(500).json({
+      code: 500,
+      message: error.message
+    });
+  }
+});
+
 // ============================================
 // 知识库管理 API
 // ============================================

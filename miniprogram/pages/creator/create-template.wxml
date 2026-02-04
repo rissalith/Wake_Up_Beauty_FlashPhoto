@@ -182,36 +182,78 @@
       </view>
     </view>
 
-    <!-- 区块4：Prompt 配置 -->
+    <!-- 区块4：Prompt 配置（简化版） -->
     <view class="section-card">
       <view class="section-header">
-        <text class="section-title">Prompt 配置</text>
+        <text class="section-title">生成效果配置</text>
+        <view class="section-toggle" bindtap="toggleAdvancedPrompt">
+          <text class="toggle-text">{{showAdvancedPrompt ? '收起' : '高级'}}</text>
+        </view>
       </view>
 
-      <view class="form-item">
-        <text class="form-label required">Prompt 模板</text>
-        <text class="form-hint">描述 AI 如何生成图片，使用 {{'{{'}}变量{{'}}'}} 引用步骤</text>
-        <textarea
-          class="form-textarea large"
-          placeholder="例如：基于参考图生成{{gender}}的照片，{{background}}背景..."
-          value="{{formData.prompt_template}}"
-          bindinput="onInputChange"
-          data-field="prompt_template"
-          maxlength="500"
-        />
-        <text class="form-count">{{formData.prompt_template.length || 0}}/500</text>
+      <!-- 简化模式：显示 AI 生成状态 -->
+      <view class="prompt-simple-mode" wx:if="{{!showAdvancedPrompt}}">
+        <view class="prompt-status {{formData.prompt_template ? 'has-content' : ''}}">
+          <image class="prompt-status-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+          <view class="prompt-status-text">
+            <text class="status-title">{{formData.prompt_template ? 'AI 已生成配置' : '暂无配置'}}</text>
+            <text class="status-desc">{{formData.prompt_template ? '点击「AI 优化」可调整效果' : '使用「AI 智能生成」自动创建'}}</text>
+          </view>
+        </view>
+
+        <!-- AI 优化入口 -->
+        <view class="prompt-optimize-section" wx:if="{{formData.prompt_template}}">
+          <view class="optimize-input-wrapper">
+            <input
+              class="optimize-input"
+              placeholder="告诉 AI 你想调整什么，如：背景更梦幻一些"
+              value="{{promptOptimizeText}}"
+              bindinput="onPromptOptimizeInput"
+              maxlength="100"
+            />
+            <view class="optimize-btn {{promptOptimizeText ? '' : 'disabled'}}" bindtap="optimizePromptWithAI">
+              <text>AI 优化</text>
+            </view>
+          </view>
+          <view class="optimize-loading" wx:if="{{optimizingPrompt}}">
+            <view class="loading-spinner small"></view>
+            <text>AI 正在优化...</text>
+          </view>
+        </view>
       </view>
 
-      <view class="form-item">
-        <text class="form-label">负面提示词</text>
-        <textarea
-          class="form-textarea"
-          placeholder="描述不希望出现的内容，如：模糊、变形、低质量..."
-          value="{{formData.negative_prompt}}"
-          bindinput="onInputChange"
-          data-field="negative_prompt"
-          maxlength="200"
-        />
+      <!-- 高级模式：显示原始 Prompt -->
+      <view class="prompt-advanced-mode" wx:if="{{showAdvancedPrompt}}">
+        <view class="form-item">
+          <text class="form-label required">Prompt 模板</text>
+          <text class="form-hint">描述 AI 如何生成图片，使用 {{'{{'}}变量{{'}}'}} 引用步骤</text>
+          <textarea
+            class="form-textarea large"
+            placeholder="例如：基于参考图生成{{gender}}的照片，{{background}}背景..."
+            value="{{formData.prompt_template}}"
+            bindinput="onInputChange"
+            data-field="prompt_template"
+            maxlength="500"
+          />
+          <text class="form-count">{{formData.prompt_template.length || 0}}/500</text>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">负面提示词</text>
+          <textarea
+            class="form-textarea"
+            placeholder="描述不希望出现的内容，如：模糊、变形、低质量..."
+            value="{{formData.negative_prompt}}"
+            bindinput="onInputChange"
+            data-field="negative_prompt"
+            maxlength="200"
+          />
+        </view>
+
+        <view class="advanced-warning">
+          <text class="warning-icon">⚠️</text>
+          <text class="warning-text">手动修改可能影响生成效果，建议使用 AI 优化</text>
+        </view>
       </view>
     </view>
 

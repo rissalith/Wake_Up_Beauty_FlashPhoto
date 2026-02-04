@@ -70,7 +70,12 @@ Page({
       ...s,
       status: 'pending',
       output: null
-    }))
+    })),
+
+    // Prompt 配置相关
+    showAdvancedPrompt: false,  // 是否显示高级模式
+    promptOptimizeText: '',     // AI 优化输入
+    optimizingPrompt: false     // 是否正在优化
   },
 
   onLoad(options) {
@@ -189,6 +194,65 @@ Page({
   selectGender(e) {
     const gender = e.currentTarget.dataset.gender;
     this.setData({ 'formData.gender': gender });
+  },
+
+  // 切换高级 Prompt 模式
+  toggleAdvancedPrompt() {
+    this.setData({
+      showAdvancedPrompt: !this.data.showAdvancedPrompt
+    });
+  },
+
+  // Prompt 优化输入
+  onPromptOptimizeInput(e) {
+    this.setData({
+      promptOptimizeText: e.detail.value
+    });
+  },
+
+  // AI 优化 Prompt
+  async optimizePromptWithAI() {
+    const { promptOptimizeText, formData } = this.data;
+
+    if (!promptOptimizeText.trim()) {
+      wx.showToast({ title: '请输入优化建议', icon: 'none' });
+      return;
+    }
+
+    if (!formData.prompt_template) {
+      wx.showToast({ title: '暂无 Prompt 可优化', icon: 'none' });
+      return;
+    }
+
+    this.setData({ optimizingPrompt: true });
+
+    try {
+      const res = await api.post('/admin/ai-agent/optimize-prompt', {
+        currentPrompt: formData.prompt_template,
+        negativePrompt: formData.negative_prompt,
+        userFeedback: promptOptimizeText,
+        templateName: formData.name,
+        templateDescription: formData.description
+      });
+
+      if (res.code === 200 && res.data) {
+        this.setData({
+          'formData.prompt_template': res.data.prompt_template || formData.prompt_template,
+          'formData.negative_prompt': res.data.negative_prompt || formData.negative_prompt,
+          promptOptimizeText: ''
+        });
+
+        wx.showToast({ title: '优化成功', icon: 'success' });
+        this.checkCanSubmit();
+      } else {
+        throw new Error(res.message || '优化失败');
+      }
+    } catch (error) {
+      console.error('AI 优化 Prompt 失败:', error);
+      wx.showToast({ title: error.message || '优化失败', icon: 'none' });
+    } finally {
+      this.setData({ optimizingPrompt: false });
+    }
   },
 
   // 检查是否可以提交
