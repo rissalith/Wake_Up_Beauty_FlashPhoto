@@ -1,4 +1,4 @@
-/* 创建模板页面样式 */
+/* 创建模板页面样式 - 单页布局 */
 
 .page-container {
   min-height: 100vh;
@@ -51,98 +51,122 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 100rpx;
+  bottom: 70px;
   overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
-/* 步骤指示器 */
-.step-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 32px;
-  background: #fff;
+/* AI 智能生成入口 */
+.ai-generate-section {
   margin-bottom: 12px;
 }
 
-.step-item {
+.ai-generate-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.step-num {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #e0e0e0;
-  color: #999;
-  font-size: 14px;
-  font-weight: 600;
+.ai-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 12px;
 }
 
-.step-item.active .step-num {
-  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+.ai-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.ai-text-wrapper {
+  flex: 1;
+}
+
+.ai-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
   color: #fff;
+  margin-bottom: 2px;
 }
 
-.step-item.done .step-num {
-  background: #4CAF50;
-  color: #fff;
+.ai-desc {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.step-text {
-  margin-top: 6px;
+.ai-arrow {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 区块卡片 */
+.section-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.section-hint {
   font-size: 12px;
   color: #999;
 }
 
-.step-item.active .step-text {
-  color: #C68B4D;
-  font-weight: 500;
-}
-
-.step-line {
-  width: 40px;
-  height: 2px;
-  background: #e0e0e0;
-  margin: 0 12px;
-  margin-bottom: 20px;
-}
-
-.step-line.active {
-  background: linear-gradient(90deg, #E8B686 0%, #D4A574 100%);
-}
-
-/* 步骤内容 */
-.step-content {
-  padding: 0 12px;
-}
-
-/* 表单区域 */
-.form-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-}
-
+/* 表单项 */
 .form-item {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .form-item:last-child {
   margin-bottom: 0;
 }
 
+.form-item.half {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-item {
+  margin-bottom: 0;
+}
+
 .form-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .form-label.required::after {
@@ -153,7 +177,7 @@
 
 .form-input {
   width: 100%;
-  height: 44px;
+  height: 40px;
   padding: 0 12px;
   background: #f5f5f5;
   border-radius: 8px;
@@ -164,8 +188,8 @@
 
 .form-textarea {
   width: 100%;
-  height: 80px;
-  padding: 12px;
+  height: 70px;
+  padding: 10px 12px;
   background: #f5f5f5;
   border-radius: 8px;
   font-size: 14px;
@@ -174,22 +198,22 @@
 }
 
 .form-textarea.large {
-  height: 120px;
+  height: 100px;
 }
 
 .form-count {
   display: block;
   text-align: right;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
   margin-top: 4px;
 }
 
 .form-hint {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
 /* 选择器 */
@@ -197,7 +221,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
+  height: 40px;
   padding: 0 12px;
   background: #f5f5f5;
   border-radius: 8px;
@@ -205,9 +229,12 @@
 }
 
 .picker-text {
+  flex: 1;
   font-size: 14px;
   color: #333;
-  line-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .picker-text.placeholder {
@@ -215,26 +242,26 @@
 }
 
 .picker-arrow {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   opacity: 0.5;
 }
 
 /* 性别选择 */
 .gender-options {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .gender-option {
   flex: 1;
-  height: 40px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f5f5f5;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
   border: 2px solid transparent;
 }
@@ -245,27 +272,22 @@
   color: #C68B4D;
 }
 
-/* 上传区域 */
-.upload-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
+/* 图片上传区域 */
+.upload-row {
+  display: flex;
+  gap: 12px;
 }
 
-.upload-item {
-  margin-bottom: 24px;
-}
-
-.upload-item:last-child {
-  margin-bottom: 0;
+.upload-item-compact {
+  flex: 1;
 }
 
 .upload-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .upload-label.required::after {
@@ -274,18 +296,11 @@
   margin-left: 4px;
 }
 
-.upload-hint {
-  display: block;
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 12px;
-}
-
-.upload-area {
+.upload-area-small {
   width: 100%;
-  height: 200px;
+  height: 120px;
   background: #f5f5f5;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 2px dashed #ddd;
   overflow: hidden;
 }
@@ -305,97 +320,117 @@
 }
 
 .upload-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   opacity: 0.5;
 }
 
 .upload-text {
-  margin-top: 12px;
-  font-size: 14px;
+  margin-top: 6px;
+  font-size: 12px;
   color: #999;
 }
 
-/* 提示区域 */
-.tips-section {
-  margin-top: 12px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
+.upload-tips {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 8px;
+  line-height: 1.4;
 }
 
-.tips-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.tips-list {
+/* 步骤列表 */
+.step-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.tips-item {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.5;
-}
-
-/* Prompt 区域 */
-.prompt-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-/* 预览区域 */
-.preview-section {
-  margin-top: 12px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.preview-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.preview-card {
+.step-card {
   display: flex;
-  background: #f9f9f9;
-  border-radius: 12px;
-  overflow: hidden;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #f8f8f8;
+  border-radius: 8px;
 }
 
-.preview-cover {
-  width: 100px;
-  height: 133px;
+.step-order {
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
   flex-shrink: 0;
+  margin-right: 10px;
 }
 
-.preview-info {
+.step-info {
   flex: 1;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  min-width: 0;
 }
 
-.preview-name {
-  font-size: 15px;
+.step-title {
+  display: block;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
 }
 
-.preview-price {
+.step-type {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.step-options {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 32px;
+}
+
+.option-tag {
+  padding: 2px 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #666;
+}
+
+/* 无步骤提示 */
+.no-steps-hint {
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.hint-text {
+  display: block;
   font-size: 14px;
-  color: #C68B4D;
-  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.hint-subtext {
+  display: block;
+  font-size: 12px;
+  color: #999;
 }
 
 /* 底部按钮栏 */
@@ -406,44 +441,9 @@
   bottom: 0;
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   background: #fff;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.btn-prev {
-  flex: 1;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  border-radius: 22px;
-}
-
-.btn-prev .btn-text {
-  font-size: 15px;
-  color: #666;
-}
-
-.btn-next {
-  flex: 2;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
-  border-radius: 22px;
-}
-
-.btn-next .btn-text {
-  font-size: 15px;
-  color: #fff;
-  font-weight: 500;
-}
-
-.btn-next.disabled {
-  opacity: 0.5;
 }
 
 .btn-draft {
@@ -461,64 +461,33 @@
   color: #666;
 }
 
-/* 底部安全区 */
-.safe-bottom {
-  height: 120rpx;
-}
-
-/* AI 智能生成入口 */
-.ai-generate-section {
-  margin-bottom: 12px;
-}
-
-.ai-generate-card {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.ai-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+.btn-submit {
+  flex: 2;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
+  border-radius: 22px;
 }
 
-.ai-icon {
-  font-size: 24px;
-}
-
-.ai-text-wrapper {
-  flex: 1;
-}
-
-.ai-title {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
+.btn-submit .btn-text {
+  font-size: 15px;
   color: #fff;
-  margin-bottom: 4px;
+  font-weight: 500;
 }
 
-.ai-desc {
-  display: block;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+.btn-submit.disabled {
+  opacity: 0.5;
 }
 
-.ai-arrow {
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.6);
+/* 底部安全区 */
+.safe-bottom {
+  height: 20px;
 }
 
-/* AI 生成弹窗 */
+/* ==================== AI 生成弹窗 ==================== */
+
 .ai-modal-mask {
   position: fixed;
   top: 0;
@@ -544,12 +513,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .ai-modal-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
 }
@@ -566,7 +535,7 @@
 
 .ai-modal-body {
   padding: 16px;
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -581,8 +550,8 @@
 
 .ai-input-textarea {
   width: 100%;
-  height: 100px;
-  padding: 12px;
+  height: 90px;
+  padding: 10px 12px;
   background: #f5f5f5;
   border-radius: 8px;
   font-size: 14px;
@@ -593,19 +562,19 @@
 .ai-input-count {
   display: block;
   text-align: right;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
   margin-top: 4px;
 }
 
 /* AI 示例 */
 .ai-examples {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .ai-examples-title {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
   margin-bottom: 8px;
 }
@@ -624,15 +593,14 @@
   color: #666;
 }
 
-/* AI 生成中 */
+/* AI 生成中 - Timeline */
 .ai-generating-section {
   text-align: left;
-  padding: 16px 0;
+  padding: 8px 0;
 }
 
-/* Timeline 头部 */
 .ai-timeline-header {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .ai-timeline-title {
@@ -641,7 +609,6 @@
   color: #333;
 }
 
-/* Timeline 容器 */
 .ai-timeline {
   padding: 0;
 }
@@ -651,18 +618,17 @@
   padding-bottom: 0;
 }
 
-/* 时间线节点 */
 .ai-timeline-node {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 24px;
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .ai-timeline-dot {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -689,7 +655,7 @@
 .ai-timeline-line {
   width: 2px;
   flex: 1;
-  min-height: 24px;
+  min-height: 20px;
   background: #e0e0e0;
   margin-top: 4px;
 }
@@ -698,19 +664,18 @@
   background: #4CAF50;
 }
 
-/* 步骤内容 */
 .ai-timeline-content {
   flex: 1;
-  padding-bottom: 16px;
-  min-height: 44px;
+  padding-bottom: 12px;
+  min-height: 36px;
 }
 
 .ai-step-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
   display: block;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .ai-timeline-item.pending .ai-step-title {
@@ -723,23 +688,22 @@
 }
 
 .ai-step-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
   display: block;
   margin-top: 2px;
 }
 
 .ai-step-output {
-  font-size: 11px;
+  font-size: 10px;
   color: #4CAF50;
   display: block;
   margin-top: 4px;
-  padding: 4px 8px;
+  padding: 3px 6px;
   background: rgba(76, 175, 80, 0.1);
   border-radius: 4px;
 }
 
-/* 脉冲动画 */
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
@@ -753,48 +717,9 @@
 
 /* 总进度 */
 .ai-total-progress {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid #f0f0f0;
-}
-
-.ai-loading-animation {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.ai-loading-dot {
-  width: 12px;
-  height: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  animation: aiLoadingBounce 1.4s ease-in-out infinite both;
-}
-
-.ai-loading-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.ai-loading-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes aiLoadingBounce {
-  0%, 80%, 100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-.ai-generating-text {
-  display: block;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 16px;
 }
 
 .ai-progress-bar {
@@ -814,9 +739,9 @@
 
 .ai-progress-text {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 /* AI 结果 */
@@ -828,63 +753,133 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .ai-result-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
 }
 
 .ai-result-score {
-  font-size: 13px;
+  font-size: 12px;
   color: #4CAF50;
   font-weight: 500;
 }
 
 .ai-result-item {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .ai-result-label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
   margin-bottom: 4px;
 }
 
 .ai-result-value {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: #333;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .ai-result-value.prompt {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   background: #f5f5f5;
   padding: 8px;
   border-radius: 6px;
-  max-height: 80px;
+  max-height: 70px;
   overflow-y: auto;
+}
+
+/* AI 结果中的步骤预览 */
+.ai-steps-preview {
+  margin-top: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.ai-step-item {
+  background: #f8f8f8;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.ai-step-item:last-child {
+  margin-bottom: 0;
+}
+
+.ai-step-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-step-num {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ai-step-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ai-step-type-tag {
+  font-size: 10px;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ai-step-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding-left: 24px;
+}
+
+.ai-option-tag {
+  padding: 2px 6px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #666;
 }
 
 /* AI 弹窗底部按钮 */
 .ai-modal-footer {
-  padding: 16px;
+  padding: 14px 16px;
   border-top: 1px solid #f0f0f0;
 }
 
 .ai-btn-generate {
   width: 100%;
-  height: 44px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 22px;
+  border-radius: 21px;
   font-size: 15px;
   color: #fff;
   font-weight: 500;
@@ -896,12 +891,12 @@
 
 .ai-btn-cancel {
   width: 100%;
-  height: 44px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f5f5f5;
-  border-radius: 22px;
+  border-radius: 21px;
   font-size: 15px;
   color: #666;
 }
@@ -913,128 +908,334 @@
 
 .ai-btn-retry {
   flex: 1;
-  height: 44px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f5f5f5;
-  border-radius: 22px;
-  font-size: 15px;
+  border-radius: 21px;
+  font-size: 14px;
   color: #666;
 }
 
 .ai-btn-apply {
   flex: 1;
-  height: 44px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 22px;
-  font-size: 15px;
+  border-radius: 21px;
+  font-size: 14px;
   color: #fff;
   font-weight: 500;
 }
 
-/* 步骤配置区域 */
-.steps-section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
+/* ==================== AI 图片生成选项 ==================== */
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.section-hint {
-  font-size: 12px;
-  color: #999;
-}
-
-.step-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.step-card {
-  display: flex;
-  align-items: flex-start;
+.ai-image-options {
+  margin-top: 14px;
   padding: 12px;
   background: #f8f8f8;
   border-radius: 8px;
 }
 
-.step-order {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
-  border-radius: 50%;
+.ai-options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ai-options-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ai-options-cost {
+  font-size: 12px;
+  color: #ff6b00;
+  font-weight: 500;
+}
+
+.ai-option-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ai-option-row:last-child {
+  margin-bottom: 0;
+}
+
+.ai-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  background: #fff;
+}
+
+.ai-checkbox.checked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+.checkbox-icon {
+  font-size: 12px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.ai-option-text {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+.ai-ratio-picker {
+  margin-left: auto;
+}
+
+.ratio-picker-btn {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.ratio-arrow {
+  font-size: 8px;
+  margin-left: 4px;
+  color: #999;
+}
+
+/* ==================== 图片上传操作按钮 ==================== */
+
+.upload-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.action-btn.ai-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
-  flex-shrink: 0;
-  margin-right: 10px;
 }
 
-.step-info {
-  flex: 1;
-  min-width: 0;
+.action-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
 }
 
-.step-title {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
+/* 费用提示 */
+.upload-cost-hint {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #ff6b00;
+}
+
+/* 空状态样式 */
+.upload-area-small.empty {
+  border-color: #667eea;
+  border-style: dashed;
+  background: #f8f6ff;
+}
+
+.upload-area-small.empty .upload-placeholder {
+  color: #667eea;
+}
+
+.upload-area-small.empty .upload-icon {
+  opacity: 0.8;
+}
+
+.upload-area-small.empty .upload-text {
+  color: #667eea;
+}
+
+/* 上传加载中遮罩 */
+.upload-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 11px;
+  color: #fff;
+  margin-top: 6px;
+}
+
+.upload-area-small {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  border: 2px dashed #ddd;
+  overflow: hidden;
+}
+
+/* ==================== 比例选择弹窗 ==================== */
+
+.ratio-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ratio-modal {
+  width: 85%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ratio-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ratio-modal-title {
+  font-size: 16px;
+  font-weight: 600;
   color: #333;
-  margin-bottom: 4px;
 }
 
-.step-type {
-  display: block;
-  font-size: 12px;
+.ratio-modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   color: #999;
 }
 
-.step-options {
+.ratio-modal-body {
+  padding: 16px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 12px;
 }
 
-.option-tag {
-  padding: 2px 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-size: 11px;
-  color: #666;
-}
-
-.no-steps-hint {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px 16px;
-  margin-bottom: 16px;
+.ratio-option {
+  width: calc(50% - 6px);
+  padding: 12px;
+  background: #f8f8f8;
+  border-radius: 10px;
+  border: 2px solid transparent;
   text-align: center;
 }
 
-.hint-text {
-  font-size: 14px;
+.ratio-option.active {
+  background: #f0e6ff;
+  border-color: #667eea;
+}
+
+.ratio-preview {
+  width: 100%;
+  max-width: 60px;
+  max-height: 60px;
+  margin: 0 auto 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ratio-option.active .ratio-preview {
+  background: #d0c0f0;
+}
+
+.ratio-icon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
+}
+
+.ratio-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.ratio-desc {
+  display: block;
+  font-size: 11px;
   color: #999;
+}
+
+.ratio-modal-footer {
+  padding: 14px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ratio-btn-generate {
+  width: 100%;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 21px;
+  font-size: 15px;
+  color: #fff;
+  font-weight: 500;
 }

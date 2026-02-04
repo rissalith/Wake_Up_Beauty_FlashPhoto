@@ -19,6 +19,49 @@ const {
   KNOWLEDGE_CATEGORIES
 } = require('../../lib/knowledge-base');
 
+// 敏感词列表 - 用于输入内容安全检测
+const SENSITIVE_KEYWORDS = [
+  // 版权相关
+  'disney', 'mickey', 'marvel', 'avengers', 'dc comics', 'batman', 'superman',
+  'pokemon', 'pikachu', 'naruto', 'one piece', 'dragon ball', 'anime character',
+  'celebrity', 'famous person', 'movie star', 'singer', 'politician',
+  '迪士尼', '漫威', '皮卡丘', '海贼王', '火影', '龙珠', '明星', '名人',
+  // 色情相关
+  'nude', 'naked', 'sexy', 'erotic', 'porn', 'nsfw', 'adult content',
+  '裸体', '色情', '性感', '成人', '暴露', '情色',
+  // 暴力相关
+  'gore', 'blood', 'violent', 'weapon', 'gun', 'knife', 'murder', 'kill',
+  '暴力', '血腥', '武器', '枪', '刀', '杀', '死亡',
+  // 儿童相关敏感
+  'child abuse', 'minor', 'underage',
+  '虐童', '未成年',
+  // 其他敏感
+  'hate', 'racist', 'nazi', 'terrorist', 'drug', 'illegal',
+  '仇恨', '种族', '恐怖', '毒品', '非法', '政治'
+];
+
+/**
+ * 内容安全检查
+ * @param {string} text - 要检查的文本
+ * @returns {Object} { safe: boolean, message: string }
+ */
+function checkContentSafety(text) {
+  if (!text) return { safe: true };
+
+  const lowerText = text.toLowerCase();
+
+  for (const keyword of SENSITIVE_KEYWORDS) {
+    if (lowerText.includes(keyword.toLowerCase())) {
+      return {
+        safe: false,
+        message: `内容包含敏感词"${keyword}"，请修改后重试。为保护版权和遵守法规，不支持生成涉及版权角色、真实名人、色情、暴力等内容的图片。`
+      };
+    }
+  }
+
+  return { safe: true };
+}
+
 // 创建 Orchestrator 实例
 const orchestrator = new AgentOrchestrator({
   maxIterations: 3,
@@ -42,6 +85,15 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({
         code: 400,
         message: '请提供有效的场景描述（至少5个字符）'
+      });
+    }
+
+    // 内容安全审核
+    const safetyCheck = checkContentSafety(description);
+    if (!safetyCheck.safe) {
+      return res.status(400).json({
+        code: 400,
+        message: safetyCheck.message
       });
     }
 
@@ -238,6 +290,128 @@ router.post('/generate-images', async (req, res) => {
 
   } catch (error) {
     console.error('[AI Agent API] 图片生成失败:', error.message);
+    res.status(500).json({
+      code: 500,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * 生成模板图片（封面图/参考图）- 需要扣费
+ * POST /api/admin/ai-agent/generate-image
+ */
+router.post('/generate-image', async (req, res) => {
+  try {
+    const { description, type, ratio, templateName, templateDescription, userId } = req.body;
+
+    if (!description && !templateName) {
+      return res.status(400).json({
+        code: 400,
+        message: '请提供模板描述'
+      });
+    }
+
+    if (!type || !['cover', 'reference'].includes(type)) {
+      return res.status(400).json({
+        code: 400,
+        message: '请指定图片类型 (cover 或 reference)'
+      });
+    }
+
+    // 内容安全审核 - 检查敏感词
+    const fullDescription = templateDescription
+      ? `${templateName || '模板'}：${templateDescription}`
+      : (templateName || description);
+
+    const contentCheckResult = checkContentSafety(fullDescription);
+    if (!contentCheckResult.safe) {
+      return res.status(400).json({
+        code: 400,
+        message: contentCheckResult.message || '内容包含敏感信息，请修改后重试'
+      });
+    }
+
+    // 图片生成费用
+    const IMAGE_COST = 5;
+
+    // 如果有 userId，检查并扣除积分
+    if (userId) {
+      const db = require('../../config/database').getDb();
+      const user = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+
+      if (!user) {
+        return res.status(404).json({
+          code: 404,
+          message: '用户不存在'
+        });
+      }
+
+      if (user.points < IMAGE_COST) {
+        return res.status(400).json({
+          code: 400,
+          message: `醒币不足，生成图片需要 ${IMAGE_COST} 醒币`
+        });
+      }
+
+      // 扣除积分
+      db.prepare('UPDATE users SET points = points - ? WHERE id = ?').run(IMAGE_COST, userId);
+
+      // 记录积分变动
+      db.prepare(`
+        INSERT INTO points_records (user_id, type, amount, balance, description, created_at)
+        VALUES (?, 'consume', ?, ?, ?, datetime('now'))
+      `).run(userId, -IMAGE_COST, user.points - IMAGE_COST, `AI生成${type === 'cover' ? '封面图' : '参考图'}`);
+    }
+
+    // 根据类型和比例确定尺寸
+    const sizeMap = {
+      '1:1': { width: 1024, height: 1024 },
+      '3:4': { width: 768, height: 1024 },
+      '4:3': { width: 1024, height: 768 },
+      '9:16': { width: 576, height: 1024 },
+      '16:9': { width: 1024, height: 576 }
+    };
+    const size = sizeMap[ratio] || sizeMap['1:1'];
+
+    // 调用图片生成 Agent
+    const ImageAgent = require('../../lib/agents/image-agent');
+    const imageAgent = new ImageAgent();
+
+    const imageResult = await imageAgent.generateSingleImage({
+      description: fullDescription,
+      type,
+      width: size.width,
+      height: size.height,
+      style: type === 'cover' ? 'cover_art' : 'reference_style'
+    });
+
+    if (!imageResult.success) {
+      // 如果生成失败，退还积分
+      if (userId) {
+        const db = require('../../config/database').getDb();
+        db.prepare('UPDATE users SET points = points + ? WHERE id = ?').run(IMAGE_COST, userId);
+        db.prepare(`
+          INSERT INTO points_records (user_id, type, amount, balance, description, created_at)
+          VALUES (?, 'refund', ?, (SELECT points FROM users WHERE id = ?), ?, datetime('now'))
+        `).run(userId, IMAGE_COST, userId, 'AI生成图片失败退款');
+      }
+
+      throw new Error(imageResult.error || '图片生成失败');
+    }
+
+    res.json({
+      code: 200,
+      data: {
+        url: imageResult.url,
+        type,
+        ratio,
+        cost: IMAGE_COST
+      }
+    });
+
+  } catch (error) {
+    console.error('[AI Agent API] 模板图片生成失败:', error.message);
     res.status(500).json({
       code: 500,
       message: error.message

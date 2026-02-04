@@ -1,5 +1,5 @@
 /**
- * 创建/编辑模板页面
+ * 创建/编辑模板页面 - 单页布局
  */
 const { api } = require('../../config/api');
 
@@ -12,11 +12,19 @@ const AI_STEPS = [
   { key: 'done', title: '完成', desc: '生成完成' }
 ];
 
+// 图片比例选项
+const RATIO_OPTIONS = [
+  { label: '1:1 正方形', value: '1:1', width: 1, height: 1, desc: '适合头像、封面' },
+  { label: '3:4 竖版', value: '3:4', width: 3, height: 4, desc: '适合人像、证件照' },
+  { label: '4:3 横版', value: '4:3', width: 4, height: 3, desc: '适合风景、场景' },
+  { label: '9:16 长竖版', value: '9:16', width: 9, height: 16, desc: '适合手机壁纸' },
+  { label: '16:9 宽屏', value: '16:9', width: 16, height: 9, desc: '适合横幅、背景' }
+];
+
 Page({
   data: {
     statusBarHeight: 20,
     navBarHeight: 64,
-    currentStep: 1,
     isEdit: false,
     templateId: null,
     categories: [],
@@ -34,8 +42,15 @@ Page({
       negative_prompt: '',
       steps: []  // 步骤配置
     },
-    canNext: false,
+    canSubmit: false,
     uploading: false,
+    generatingCover: false,      // 封面图生成中
+    generatingReference: false,  // 参考图生成中
+
+    // 比例选择相关
+    ratioOptions: RATIO_OPTIONS,
+    showRatioModal: false,
+    referenceRatioIndex: 1,  // 默认 3:4
 
     // AI 生成相关
     showAiModal: false,
@@ -46,7 +61,11 @@ Page({
     aiResult: null,
     aiTaskId: null,
     aiPollTimer: null,
-    // 新增：AI 步骤状态
+    // AI 图片生成选项
+    aiGenerateCover: false,
+    aiGenerateReference: false,
+    aiReferenceRatioIndex: 1,  // 默认 3:4
+    // AI 步骤状态
     aiSteps: AI_STEPS.map(s => ({
       ...s,
       status: 'pending',
@@ -77,7 +96,7 @@ Page({
       this.loadTemplateDetail(options.id);
     }
 
-    this.checkCanNext();
+    this.checkCanSubmit();
   },
 
   // 加载分类列表
@@ -121,11 +140,12 @@ Page({
             cover_image: template.cover_image || '',
             reference_image: template.reference_image || '',
             prompt_template: template.prompt?.template || '',
-            negative_prompt: template.prompt?.negative_prompt || ''
+            negative_prompt: template.prompt?.negative_prompt || '',
+            steps: template.steps || []
           }
         });
 
-        this.checkCanNext();
+        this.checkCanSubmit();
       }
     } catch (error) {
       console.error('加载模板详情失败:', error);
@@ -149,7 +169,7 @@ Page({
       [`formData.${field}`]: value
     });
 
-    this.checkCanNext();
+    this.checkCanSubmit();
   },
 
   // 选择分类
@@ -162,7 +182,7 @@ Page({
       'formData.category_id': category ? category.id : null
     });
 
-    this.checkCanNext();
+    this.checkCanSubmit();
   },
 
   // 选择性别
@@ -171,106 +191,16 @@ Page({
     this.setData({ 'formData.gender': gender });
   },
 
-  // 选择封面图
-  chooseCoverImage() {
-    this.chooseAndUploadImage('cover_image');
-  },
+  // 检查是否可以提交
+  checkCanSubmit() {
+    const { formData } = this.data;
+    const canSubmit = formData.name.trim().length > 0 &&
+                      formData.points_cost > 0 &&
+                      formData.cover_image &&
+                      formData.reference_image &&
+                      formData.prompt_template.trim().length > 0;
 
-  // 选择参考图
-  chooseReferenceImage() {
-    this.chooseAndUploadImage('reference_image');
-  },
-
-  // 选择并上传图片
-  async chooseAndUploadImage(field) {
-    if (this.data.uploading) return;
-
-    try {
-      const res = await wx.chooseMedia({
-        count: 1,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed']
-      });
-
-      if (res.tempFiles && res.tempFiles.length > 0) {
-        const tempFilePath = res.tempFiles[0].tempFilePath;
-        this.setData({ uploading: true });
-
-        wx.showLoading({ title: '上传中...' });
-
-        // 读取图片为 base64
-        const fileManager = wx.getFileSystemManager();
-        const base64 = fileManager.readFileSync(tempFilePath, 'base64');
-        const imageData = `data:image/jpeg;base64,${base64}`;
-
-        // 上传到服务器
-        const userId = wx.getStorageSync('userId');
-        const uploadRes = await api.uploadImage({
-          userId,
-          imageData,
-          type: 'template'
-        });
-
-        if (uploadRes.code === 200 && uploadRes.data) {
-          this.setData({
-            [`formData.${field}`]: uploadRes.data.url
-          });
-          this.checkCanNext();
-        } else {
-          throw new Error(uploadRes.msg || '上传失败');
-        }
-      }
-    } catch (error) {
-      console.error('上传图片失败:', error);
-      wx.showToast({ title: '上传失败', icon: 'none' });
-    } finally {
-      this.setData({ uploading: false });
-      wx.hideLoading();
-    }
-  },
-
-  // 检查是否可以进入下一步
-  checkCanNext() {
-    const { currentStep, formData } = this.data;
-    let canNext = false;
-
-    switch (currentStep) {
-      case 1:
-        canNext = formData.name.trim().length > 0 && formData.points_cost > 0;
-        break;
-      case 2:
-        canNext = formData.cover_image && formData.reference_image;
-        break;
-      case 3:
-        canNext = formData.prompt_template.trim().length > 0;
-        break;
-    }
-
-    this.setData({ canNext });
-  },
-
-  // 上一步
-  prevStep() {
-    if (this.data.currentStep > 1) {
-      this.setData({ currentStep: this.data.currentStep - 1 });
-      this.checkCanNext();
-    }
-  },
-
-  // 下一步
-  async nextStep() {
-    if (!this.data.canNext) return;
-
-    const { currentStep } = this.data;
-
-    if (currentStep < 3) {
-      this.setData({ currentStep: currentStep + 1 });
-      this.checkCanNext();
-    } else {
-      // 最后一步，提交审核
-      await this.submitTemplate();
-    }
+    this.setData({ canSubmit });
   },
 
   // 保存草稿
@@ -280,6 +210,20 @@ Page({
 
   // 提交审核
   async submitTemplate() {
+    if (!this.data.canSubmit) {
+      // 提示缺少哪些必填项
+      const { formData } = this.data;
+      if (!formData.name.trim()) {
+        wx.showToast({ title: '请输入模板名称', icon: 'none' });
+      } else if (!formData.cover_image) {
+        wx.showToast({ title: '请上传封面图', icon: 'none' });
+      } else if (!formData.reference_image) {
+        wx.showToast({ title: '请上传参考图', icon: 'none' });
+      } else if (!formData.prompt_template.trim()) {
+        wx.showToast({ title: '请填写 Prompt 模板', icon: 'none' });
+      }
+      return;
+    }
     await this.saveTemplate(true);
   },
 
@@ -292,24 +236,6 @@ Page({
     }
 
     const { formData, isEdit, templateId } = this.data;
-
-    // 验证必填项
-    if (!formData.name.trim()) {
-      wx.showToast({ title: '请输入模板名称', icon: 'none' });
-      return;
-    }
-    if (!formData.cover_image) {
-      wx.showToast({ title: '请上传封面图', icon: 'none' });
-      return;
-    }
-    if (!formData.reference_image) {
-      wx.showToast({ title: '请上传参考图', icon: 'none' });
-      return;
-    }
-    if (submitReview && !formData.prompt_template.trim()) {
-      wx.showToast({ title: '请填写 Prompt 模板', icon: 'none' });
-      return;
-    }
 
     wx.showLoading({ title: submitReview ? '提交中...' : '保存中...' });
 
@@ -326,7 +252,8 @@ Page({
         gender: formData.gender,
         points_cost: parseInt(formData.points_cost) || 50,
         cover_image: formData.cover_image,
-        reference_image: formData.reference_image
+        reference_image: formData.reference_image,
+        steps: formData.steps  // 包含步骤配置
       };
 
       if (isEdit && templateId) {
@@ -404,6 +331,10 @@ Page({
       aiGenerating: false,
       aiResult: null,
       aiProgress: 0,
+      // 默认勾选图片生成选项
+      aiGenerateCover: true,
+      aiGenerateReference: true,
+      aiReferenceRatioIndex: 1,
       // 重置步骤状态
       aiSteps: AI_STEPS.map(s => ({
         ...s,
@@ -439,7 +370,7 @@ Page({
 
   // 开始 AI 生成
   async startAiGenerate() {
-    const { aiDescription } = this.data;
+    const { aiDescription, aiGenerateCover, aiGenerateReference, aiReferenceRatioIndex, ratioOptions } = this.data;
     if (aiDescription.length < 5) {
       wx.showToast({ title: '请输入更详细的描述', icon: 'none' });
       return;
@@ -453,12 +384,24 @@ Page({
     });
 
     try {
+      // 构建图片生成选项
+      const imageOptions = {};
+      if (aiGenerateCover) {
+        imageOptions.generateCover = true;
+        imageOptions.coverRatio = '1:1';
+      }
+      if (aiGenerateReference) {
+        imageOptions.generateReference = true;
+        imageOptions.referenceRatio = ratioOptions[aiReferenceRatioIndex].value;
+      }
+
       // 调用 AI Agent API
       const res = await api.aiAgentGenerate({
         description: aiDescription,
         options: {
           async: true,
-          generateImages: false
+          generateImages: aiGenerateCover || aiGenerateReference,
+          ...imageOptions
         }
       });
 
@@ -598,13 +541,20 @@ Page({
   // AI 生成成功
   handleAiGenerateSuccess(task) {
     const config = task.config_result;
+    const images = task.images_result;
+    console.log('[AI Generate] task:', JSON.stringify(task));
+    console.log('[AI Generate] config_result:', JSON.stringify(config));
+    console.log('[AI Generate] images_result:', JSON.stringify(images));
+
     if (!config) {
       wx.showToast({ title: '生成结果为空', icon: 'none' });
       this.setData({ aiGenerating: false });
       return;
     }
 
-    // 提取结果，包括步骤配置
+    console.log('[AI Generate] config.steps:', JSON.stringify(config.steps));
+
+    // 提取结果，包括步骤配置和图片
     const result = {
       name: config.scene?.name || '',
       description: config.scene?.description || '',
@@ -612,8 +562,13 @@ Page({
       prompt: config.prompt_template?.template || '',
       negative_prompt: config.prompt_template?.negative_prompt || '',
       score: task.review_score || 0,
-      steps: config.steps || []  // 保存步骤配置
+      steps: config.steps || [],
+      // 图片
+      cover_image: images?.cover || null,
+      reference_image: images?.reference || null
     };
+
+    console.log('[AI Generate] result:', JSON.stringify(result));
 
     this.setData({
       aiGenerating: false,
@@ -642,17 +597,26 @@ Page({
     if (!aiResult) return;
 
     // 应用到表单
-    this.setData({
+    const updates = {
       'formData.name': aiResult.name,
       'formData.description': aiResult.description,
       'formData.points_cost': aiResult.points_cost,
       'formData.prompt_template': aiResult.prompt,
       'formData.negative_prompt': aiResult.negative_prompt,
-      'formData.steps': aiResult.steps || [],  // 应用步骤配置
+      'formData.steps': aiResult.steps || [],
       showAiModal: false
-    });
+    };
 
-    this.checkCanNext();
+    // 如果有生成的图片，也应用
+    if (aiResult.cover_image) {
+      updates['formData.cover_image'] = aiResult.cover_image;
+    }
+    if (aiResult.reference_image) {
+      updates['formData.reference_image'] = aiResult.reference_image;
+    }
+
+    this.setData(updates);
+    this.checkCanSubmit();
 
     wx.showToast({ title: '已应用配置', icon: 'success' });
   },
@@ -660,5 +624,108 @@ Page({
   // 页面卸载时清理
   onUnload() {
     this.clearAiPollTimer();
+  },
+
+  // ==================== AI 图片生成相关 ====================
+
+  // 切换生成封面图选项
+  toggleAiGenerateCover() {
+    this.setData({ aiGenerateCover: !this.data.aiGenerateCover });
+  },
+
+  // 切换生成参考图选项
+  toggleAiGenerateReference() {
+    this.setData({ aiGenerateReference: !this.data.aiGenerateReference });
+  },
+
+  // AI 弹窗中选择参考图比例
+  onAiRatioChange(e) {
+    this.setData({ aiReferenceRatioIndex: parseInt(e.detail.value) });
+  },
+
+  // 显示参考图比例选择弹窗
+  showReferenceRatioModal() {
+    // 检查是否有模板名称或描述
+    if (!this.data.formData.name.trim() && !this.data.formData.description.trim()) {
+      wx.showToast({ title: '请先填写模板名称或描述', icon: 'none' });
+      return;
+    }
+    this.setData({ showRatioModal: true });
+  },
+
+  // 隐藏比例选择弹窗
+  hideRatioModal() {
+    this.setData({ showRatioModal: false });
+  },
+
+  // 选择参考图比例
+  selectReferenceRatio(e) {
+    const index = e.currentTarget.dataset.index;
+    this.setData({ referenceRatioIndex: index });
+  },
+
+  // 确认生成参考图
+  confirmGenerateReference() {
+    this.hideRatioModal();
+    const ratio = this.data.ratioOptions[this.data.referenceRatioIndex];
+    this.generateImage('reference', ratio.value);
+  },
+
+  // 生成封面图（固定 1:1）
+  generateCoverImage() {
+    // 检查是否有模板名称或描述
+    if (!this.data.formData.name.trim() && !this.data.formData.description.trim()) {
+      wx.showToast({ title: '请先填写模板名称或描述', icon: 'none' });
+      return;
+    }
+    this.generateImage('cover', '1:1');
+  },
+
+  // 生成图片
+  async generateImage(type, ratio) {
+    const { formData } = this.data;
+    const loadingKey = type === 'cover' ? 'generatingCover' : 'generatingReference';
+    const userId = wx.getStorageSync('userId');
+
+    // 检查是否登录
+    if (!userId) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+
+    // 设置加载状态
+    this.setData({ [loadingKey]: true });
+
+    try {
+      // 构建描述
+      const description = `${formData.name || '模板'}${formData.description ? '：' + formData.description : ''}`;
+
+      // 调用 AI 生成图片 API
+      const res = await api.generateTemplateImage({
+        description,
+        type,  // cover 或 reference
+        ratio,
+        templateName: formData.name,
+        templateDescription: formData.description,
+        userId  // 传递用户ID用于扣费
+      });
+
+      if (res.code === 200 && res.data && res.data.url) {
+        // 更新图片
+        const field = type === 'cover' ? 'cover_image' : 'reference_image';
+        this.setData({
+          [`formData.${field}`]: res.data.url
+        });
+        this.checkCanSubmit();
+        wx.showToast({ title: '生成成功', icon: 'success' });
+      } else {
+        throw new Error(res.msg || res.message || '生成失败');
+      }
+    } catch (error) {
+      console.error('生成图片失败:', error);
+      wx.showToast({ title: error.message || '生成失败', icon: 'none' });
+    } finally {
+      this.setData({ [loadingKey]: false });
+    }
   }
 });

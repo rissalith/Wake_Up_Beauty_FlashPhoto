@@ -1,4 +1,4 @@
-<!-- 创建模板页面 -->
+<!-- 创建模板页面 - 单页布局 -->
 <view class="page-container">
   <!-- 自定义导航栏 -->
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
@@ -13,214 +13,205 @@
 
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
-    <!-- 步骤指示器 -->
-    <view class="step-indicator">
-      <view class="step-item {{currentStep >= 1 ? 'active' : ''}} {{currentStep > 1 ? 'done' : ''}}">
-        <view class="step-num">1</view>
-        <text class="step-text">基本信息</text>
-      </view>
-      <view class="step-line {{currentStep > 1 ? 'active' : ''}}"></view>
-      <view class="step-item {{currentStep >= 2 ? 'active' : ''}} {{currentStep > 2 ? 'done' : ''}}">
-        <view class="step-num">2</view>
-        <text class="step-text">上传图片</text>
-      </view>
-      <view class="step-line {{currentStep > 2 ? 'active' : ''}}"></view>
-      <view class="step-item {{currentStep >= 3 ? 'active' : ''}}">
-        <view class="step-num">3</view>
-        <text class="step-text">设置参数</text>
+
+    <!-- AI 智能生成入口 -->
+    <view class="ai-generate-section" wx:if="{{!isEdit}}">
+      <view class="ai-generate-card" bindtap="showAiGenerateModal">
+        <view class="ai-icon-wrapper">
+          <image class="ai-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+        </view>
+        <view class="ai-text-wrapper">
+          <text class="ai-title">AI 智能生成</text>
+          <text class="ai-desc">描述你想要的模板，AI 自动生成完整配置</text>
+        </view>
+        <view class="ai-arrow">
+          <text>›</text>
+        </view>
       </view>
     </view>
 
-    <!-- 步骤1：基本信息 -->
-    <view class="step-content" wx:if="{{currentStep === 1}}">
-      <!-- AI 智能生成入口 -->
-      <view class="ai-generate-section" wx:if="{{!isEdit}}">
-        <view class="ai-generate-card" bindtap="showAiGenerateModal">
-          <view class="ai-icon-wrapper">
-            <text class="ai-icon">✨</text>
-          </view>
-          <view class="ai-text-wrapper">
-            <text class="ai-title">AI 智能生成</text>
-            <text class="ai-desc">描述你想要的模板，AI 自动生成配置</text>
-          </view>
-          <view class="ai-arrow">
-            <text>›</text>
-          </view>
-        </view>
+    <!-- 区块1：基本信息 -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">基本信息</text>
       </view>
 
-      <view class="form-section">
-        <view class="form-item">
-          <text class="form-label required">模板名称</text>
-          <input
-            class="form-input"
-            placeholder="给模板起个名字"
-            value="{{formData.name}}"
-            bindinput="onInputChange"
-            data-field="name"
-            maxlength="20"
-          />
-          <text class="form-count">{{formData.name.length || 0}}/20</text>
-        </view>
+      <view class="form-item">
+        <text class="form-label required">模板名称</text>
+        <input
+          class="form-input"
+          placeholder="给模板起个名字"
+          value="{{formData.name}}"
+          bindinput="onInputChange"
+          data-field="name"
+          maxlength="20"
+        />
+        <text class="form-count">{{formData.name.length || 0}}/20</text>
+      </view>
 
-        <view class="form-item">
-          <text class="form-label">模板描述</text>
-          <textarea
-            class="form-textarea"
-            placeholder="描述一下这个模板的特点和适用场景"
-            value="{{formData.description}}"
-            bindinput="onInputChange"
-            data-field="description"
-            maxlength="100"
-          />
-          <text class="form-count">{{formData.description.length || 0}}/100</text>
-        </view>
+      <view class="form-item">
+        <text class="form-label">模板描述</text>
+        <textarea
+          class="form-textarea"
+          placeholder="描述一下这个模板的特点和适用场景"
+          value="{{formData.description}}"
+          bindinput="onInputChange"
+          data-field="description"
+          maxlength="100"
+        />
+        <text class="form-count">{{formData.description.length || 0}}/100</text>
+      </view>
 
-        <view class="form-item">
+      <view class="form-row">
+        <view class="form-item half">
           <text class="form-label">选择分类</text>
           <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange">
             <view class="form-picker">
-              <text class="picker-text {{categoryIndex >= 0 ? '' : 'placeholder'}}">
-                {{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择分类'}}
-              </text>
+              <view class="picker-text {{categoryIndex >= 0 ? '' : 'placeholder'}}">
+                {{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择'}}
+              </view>
               <image class="picker-arrow" src="/images/icon-arrow-down.svg" mode="aspectFit"></image>
             </view>
           </picker>
         </view>
 
-        <view class="form-item">
-          <text class="form-label">适用性别</text>
-          <view class="gender-options">
-            <view class="gender-option {{formData.gender === 'all' ? 'active' : ''}}" bindtap="selectGender" data-gender="all">
-              <text>不限</text>
-            </view>
-            <view class="gender-option {{formData.gender === 'male' ? 'active' : ''}}" bindtap="selectGender" data-gender="male">
-              <text>男</text>
-            </view>
-            <view class="gender-option {{formData.gender === 'female' ? 'active' : ''}}" bindtap="selectGender" data-gender="female">
-              <text>女</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="form-item">
+        <view class="form-item half">
           <text class="form-label required">定价（醒币）</text>
           <input
             class="form-input"
             type="number"
-            placeholder="设置使用价格"
+            placeholder="50"
             value="{{formData.points_cost}}"
             bindinput="onInputChange"
             data-field="points_cost"
           />
-          <text class="form-hint">建议定价 30-100 醒币</text>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">适用性别</text>
+        <view class="gender-options">
+          <view class="gender-option {{formData.gender === 'all' ? 'active' : ''}}" bindtap="selectGender" data-gender="all">
+            <text>不限</text>
+          </view>
+          <view class="gender-option {{formData.gender === 'male' ? 'active' : ''}}" bindtap="selectGender" data-gender="male">
+            <text>男</text>
+          </view>
+          <view class="gender-option {{formData.gender === 'female' ? 'active' : ''}}" bindtap="selectGender" data-gender="female">
+            <text>女</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 步骤2：上传图片 -->
-    <view class="step-content" wx:if="{{currentStep === 2}}">
-      <view class="upload-section">
-        <view class="upload-item">
-          <text class="upload-label required">封面图</text>
-          <text class="upload-hint">展示在市场列表中，建议尺寸 3:4</text>
-          <view class="upload-area" bindtap="chooseCoverImage">
+    <!-- 区块2：图片素材（仅支持AI生成） -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">图片素材</text>
+        <text class="section-hint">仅支持AI生成，确保版权合规</text>
+      </view>
+
+      <view class="upload-row">
+        <view class="upload-item-compact">
+          <text class="upload-label required">封面图 (1:1)</text>
+          <view class="upload-area-small {{formData.cover_image ? '' : 'empty'}}" bindtap="generateCoverImage">
             <image wx:if="{{formData.cover_image}}" class="upload-preview" src="{{formData.cover_image}}" mode="aspectFill"></image>
             <view wx:else class="upload-placeholder">
-              <image class="upload-icon" src="/images/icon-add-image.svg" mode="aspectFit"></image>
-              <text class="upload-text">点击上传封面图</text>
+              <image class="upload-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text class="upload-text">点击AI生成</text>
             </view>
+            <!-- 加载中遮罩 -->
+            <view class="upload-loading" wx:if="{{generatingCover}}">
+              <view class="loading-spinner"></view>
+              <text class="loading-text">生成中...</text>
+            </view>
+          </view>
+          <view class="upload-cost-hint">
+            <text>5醒币/张</text>
           </view>
         </view>
 
-        <view class="upload-item">
+        <view class="upload-item-compact">
           <text class="upload-label required">参考样式图</text>
-          <text class="upload-hint">AI 将基于此图生成，用户的脸会替换到这张图中</text>
-          <view class="upload-area" bindtap="chooseReferenceImage">
+          <view class="upload-area-small {{formData.reference_image ? '' : 'empty'}}" bindtap="showReferenceRatioModal">
             <image wx:if="{{formData.reference_image}}" class="upload-preview" src="{{formData.reference_image}}" mode="aspectFill"></image>
             <view wx:else class="upload-placeholder">
-              <image class="upload-icon" src="/images/icon-add-image.svg" mode="aspectFit"></image>
-              <text class="upload-text">点击上传参考图</text>
+              <image class="upload-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text class="upload-text">点击AI生成</text>
             </view>
+            <!-- 加载中遮罩 -->
+            <view class="upload-loading" wx:if="{{generatingReference}}">
+              <view class="loading-spinner"></view>
+              <text class="loading-text">生成中...</text>
+            </view>
+          </view>
+          <view class="upload-cost-hint">
+            <text>5醒币/张</text>
+          </view>
+        </view>
+      </view>
+      <text class="upload-tips">参考图：AI 将基于此图生成，用户的脸会替换到这张图中</text>
+    </view>
+
+    <!-- 区块3：用户操作步骤（插槽配置） -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">用户操作步骤</text>
+        <text class="section-hint">{{formData.steps.length > 0 ? formData.steps.length + '个步骤' : '用户生成时需要完成的配置'}}</text>
+      </view>
+
+      <!-- 有步骤时显示 -->
+      <view class="step-list" wx:if="{{formData.steps.length > 0}}">
+        <view class="step-card" wx:for="{{formData.steps}}" wx:key="step_key">
+          <view class="step-order">{{index + 1}}</view>
+          <view class="step-info">
+            <text class="step-title">{{item.title}}</text>
+            <text class="step-type">{{item.component_type === 'image_upload' ? '图片上传' : item.component_type === 'gender_select' ? '性别选择' : item.component_type === 'tags' ? '标签选择' : item.component_type === 'image_tags' ? '图片标签' : item.component_type === 'dice_roll' ? '摇骰子' : item.component_type}}</text>
+          </view>
+          <view class="step-options" wx:if="{{item.options && item.options.length > 0}}">
+            <text class="option-tag" wx:for="{{item.options}}" wx:for-item="opt" wx:key="value">{{opt.label}}</text>
           </view>
         </view>
       </view>
 
-      <view class="tips-section">
-        <text class="tips-title">参考图要求</text>
-        <view class="tips-list">
-          <text class="tips-item">1. 图片中需要有清晰的人物面部</text>
-          <text class="tips-item">2. 建议使用高质量、高清晰度的图片</text>
-          <text class="tips-item">3. 避免使用版权图片或他人肖像</text>
-          <text class="tips-item">4. 不得包含违规内容</text>
-        </view>
+      <!-- 无步骤时显示 -->
+      <view class="no-steps-hint" wx:if="{{formData.steps.length === 0}}">
+        <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
+        <text class="hint-text">暂无步骤配置</text>
+        <text class="hint-subtext">使用上方「AI 智能生成」自动创建步骤</text>
       </view>
     </view>
 
-    <!-- 步骤3：设置参数 -->
-    <view class="step-content" wx:if="{{currentStep === 3}}">
-      <!-- 步骤配置区域 -->
-      <view class="steps-section" wx:if="{{formData.steps.length > 0}}">
-        <view class="section-header">
-          <text class="section-title">用户操作步骤</text>
-          <text class="section-hint">共 {{formData.steps.length}} 个步骤</text>
-        </view>
-        <view class="step-list">
-          <view class="step-card" wx:for="{{formData.steps}}" wx:key="step_key">
-            <view class="step-order">{{index + 1}}</view>
-            <view class="step-info">
-              <text class="step-title">{{item.title}}</text>
-              <text class="step-type">{{item.component_type}}</text>
-            </view>
-            <view class="step-options" wx:if="{{item.options.length > 0}}">
-              <text class="option-tag" wx:for="{{item.options}}" wx:for-item="opt" wx:key="value">{{opt.label}}</text>
-            </view>
-          </view>
-        </view>
+    <!-- 区块4：Prompt 配置 -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">Prompt 配置</text>
       </view>
 
-      <!-- 无步骤提示 -->
-      <view class="no-steps-hint" wx:if="{{formData.steps.length === 0}}">
-        <text class="hint-text">暂无步骤配置，请使用 AI 智能生成或手动添加</text>
+      <view class="form-item">
+        <text class="form-label required">Prompt 模板</text>
+        <text class="form-hint">描述 AI 如何生成图片，使用 {{'{{'}}变量{{'}}'}} 引用步骤</text>
+        <textarea
+          class="form-textarea large"
+          placeholder="例如：基于参考图生成{{gender}}的照片，{{background}}背景..."
+          value="{{formData.prompt_template}}"
+          bindinput="onInputChange"
+          data-field="prompt_template"
+          maxlength="500"
+        />
+        <text class="form-count">{{formData.prompt_template.length || 0}}/500</text>
       </view>
 
-      <view class="prompt-section">
-        <view class="form-item">
-          <text class="form-label required">Prompt 模板</text>
-          <text class="form-hint">描述 AI 如何生成图片，可使用变量如 {{expression}}</text>
-          <textarea
-            class="form-textarea large"
-            placeholder="例如：基于参考图生成{{expression}}表情的照片，保持整体风格不变..."
-            value="{{formData.prompt_template}}"
-            bindinput="onInputChange"
-            data-field="prompt_template"
-            maxlength="500"
-          />
-          <text class="form-count">{{formData.prompt_template.length || 0}}/500</text>
-        </view>
-
-        <view class="form-item">
-          <text class="form-label">负面提示词</text>
-          <textarea
-            class="form-textarea"
-            placeholder="描述不希望出现的内容"
-            value="{{formData.negative_prompt}}"
-            bindinput="onInputChange"
-            data-field="negative_prompt"
-            maxlength="200"
-          />
-        </view>
-      </view>
-
-      <view class="preview-section">
-        <text class="preview-title">模板预览</text>
-        <view class="preview-card">
-          <image class="preview-cover" src="{{formData.cover_image || '/images/placeholder.svg'}}" mode="aspectFill"></image>
-          <view class="preview-info">
-            <text class="preview-name">{{formData.name || '模板名称'}}</text>
-            <text class="preview-price">{{formData.points_cost || 50}} 醒币</text>
-          </view>
-        </view>
+      <view class="form-item">
+        <text class="form-label">负面提示词</text>
+        <textarea
+          class="form-textarea"
+          placeholder="描述不希望出现的内容，如：模糊、变形、低质量..."
+          value="{{formData.negative_prompt}}"
+          bindinput="onInputChange"
+          data-field="negative_prompt"
+          maxlength="200"
+        />
       </view>
     </view>
 
@@ -230,14 +221,11 @@
 
   <!-- 底部按钮 -->
   <view class="bottom-bar" style="padding-bottom: env(safe-area-inset-bottom);">
-    <view class="btn-prev" wx:if="{{currentStep > 1}}" bindtap="prevStep">
-      <text class="btn-text">上一步</text>
-    </view>
-    <view class="btn-next {{canNext ? '' : 'disabled'}}" bindtap="nextStep">
-      <text class="btn-text">{{currentStep === 3 ? '提交审核' : '下一步'}}</text>
-    </view>
-    <view class="btn-draft" wx:if="{{currentStep === 3}}" bindtap="saveDraft">
+    <view class="btn-draft" bindtap="saveDraft">
       <text class="btn-text">保存草稿</text>
+    </view>
+    <view class="btn-submit {{canSubmit ? '' : 'disabled'}}" bindtap="submitTemplate">
+      <text class="btn-text">提交审核</text>
     </view>
   </view>
 
@@ -261,6 +249,34 @@
             maxlength="200"
           />
           <text class="ai-input-count">{{aiDescription.length || 0}}/200</text>
+
+          <!-- 图片生成选项 -->
+          <view class="ai-image-options">
+            <view class="ai-options-header">
+              <text class="ai-options-title">同时生成图片素材</text>
+              <text class="ai-options-cost">5醒币/张</text>
+            </view>
+            <view class="ai-option-row">
+              <view class="ai-checkbox {{aiGenerateCover ? 'checked' : ''}}" bindtap="toggleAiGenerateCover">
+                <text class="checkbox-icon">{{aiGenerateCover ? '✓' : ''}}</text>
+              </view>
+              <text class="ai-option-text">封面图 (1:1)</text>
+            </view>
+            <view class="ai-option-row">
+              <view class="ai-checkbox {{aiGenerateReference ? 'checked' : ''}}" bindtap="toggleAiGenerateReference">
+                <text class="checkbox-icon">{{aiGenerateReference ? '✓' : ''}}</text>
+              </view>
+              <text class="ai-option-text">参考样式图</text>
+              <view class="ai-ratio-picker" wx:if="{{aiGenerateReference}}">
+                <picker mode="selector" range="{{ratioOptions}}" range-key="label" value="{{aiReferenceRatioIndex}}" bindchange="onAiRatioChange">
+                  <view class="ratio-picker-btn">
+                    <text>{{ratioOptions[aiReferenceRatioIndex].label}}</text>
+                    <text class="ratio-arrow">▼</text>
+                  </view>
+                </picker>
+              </view>
+            </view>
+          </view>
 
           <!-- 示例 -->
           <view class="ai-examples">
@@ -329,6 +345,23 @@
             <text class="ai-result-value">{{aiResult.description}}</text>
           </view>
 
+          <!-- 步骤配置展示 -->
+          <view class="ai-result-item" wx:if="{{aiResult.steps && aiResult.steps.length > 0}}">
+            <text class="ai-result-label">用户操作步骤 ({{aiResult.steps.length}}个)</text>
+            <view class="ai-steps-preview">
+              <view class="ai-step-item" wx:for="{{aiResult.steps}}" wx:key="step_key">
+                <view class="ai-step-header">
+                  <text class="ai-step-num">{{index + 1}}</text>
+                  <text class="ai-step-name">{{item.title}}</text>
+                  <text class="ai-step-type-tag">{{item.component_type === 'image_upload' ? '图片上传' : item.component_type === 'gender_select' ? '性别选择' : item.component_type === 'tags' ? '标签选择' : item.component_type === 'image_tags' ? '图片标签' : item.component_type === 'dice_roll' ? '摇骰子' : item.component_type}}</text>
+                </view>
+                <view class="ai-step-options" wx:if="{{item.options && item.options.length > 0}}">
+                  <text class="ai-option-tag" wx:for="{{item.options}}" wx:for-item="opt" wx:key="value">{{opt.label}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
           <view class="ai-result-item">
             <text class="ai-result-label">Prompt 模板</text>
             <text class="ai-result-value prompt">{{aiResult.prompt}}</text>
@@ -355,6 +388,36 @@
           <view class="ai-btn-apply" bindtap="applyAiResult">
             <text>应用配置</text>
           </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 参考图比例选择弹窗 -->
+  <view class="ratio-modal-mask" wx:if="{{showRatioModal}}" bindtap="hideRatioModal">
+    <view class="ratio-modal" catchtap="preventBubble">
+      <view class="ratio-modal-header">
+        <text class="ratio-modal-title">选择参考图比例</text>
+        <view class="ratio-modal-close" bindtap="hideRatioModal">×</view>
+      </view>
+      <view class="ratio-modal-body">
+        <view
+          class="ratio-option {{referenceRatioIndex === index ? 'active' : ''}}"
+          wx:for="{{ratioOptions}}"
+          wx:key="value"
+          bindtap="selectReferenceRatio"
+          data-index="{{index}}"
+        >
+          <view class="ratio-preview" style="aspect-ratio: {{item.width}}/{{item.height}};">
+            <image class="ratio-icon" src="/images/icon-scene.svg" mode="aspectFit"></image>
+          </view>
+          <text class="ratio-label">{{item.label}}</text>
+          <text class="ratio-desc">{{item.desc}}</text>
+        </view>
+      </view>
+      <view class="ratio-modal-footer">
+        <view class="ratio-btn-generate" bindtap="confirmGenerateReference">
+          <text>开始生成</text>
         </view>
       </view>
     </view>
