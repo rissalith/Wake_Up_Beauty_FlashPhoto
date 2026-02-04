@@ -849,6 +849,8 @@ Page({
     console.log('[CreateTemplate] 应用 AI 结果:', JSON.stringify(result, null, 2));
 
     const config = result.config;
+    console.log('[CreateTemplate] config:', JSON.stringify(config, null, 2));
+    console.log('[CreateTemplate] config.steps:', JSON.stringify(config?.steps, null, 2));
 
     if (!config || !config.scene) {
       wx.showToast({ title: '结果格式错误', icon: 'none' });
@@ -861,8 +863,11 @@ Page({
     const promptTemplate = config.prompt_template || {};
     // images 可能在 result.images 或直接在 result 中
     const images = result.images || {};
+    // steps 可能在 config.steps 或 scene.steps
+    const steps = config.steps || scene.steps || [];
     console.log('[CreateTemplate] 图片数据:', images);
     console.log('[CreateTemplate] Prompt模板:', promptTemplate);
+    console.log('[CreateTemplate] 步骤数据:', steps);
 
     const aiResult = {
       name: scene.name || '',
@@ -871,13 +876,14 @@ Page({
       // prompt_template 是独立字段
       prompt: promptTemplate.template || promptTemplate.base_prompt || '',
       negative_prompt: promptTemplate.negative_prompt || '',
-      steps: config.steps || [],
+      steps: steps,
       recommended_category_id: scene.category_id,
       cover_image: images.cover_image || '',
       reference_image: images.reference_image || ''
     };
 
     console.log('[CreateTemplate] 转换后的 aiResult:', aiResult);
+    console.log('[CreateTemplate] aiResult.steps:', aiResult.steps);
 
     // 设置 AI 结果并应用
     this.setData({ aiResult });
