@@ -482,9 +482,9 @@ Page({
       aiGenerating: false,
       aiResult: null,
       aiProgress: 0,
-      // 默认勾选图片生成选项
-      aiGenerateCover: true,
-      aiGenerateReference: true,
+      // 不再默认勾选图片生成选项，让用户先生成配置再单独生成图片
+      aiGenerateCover: false,
+      aiGenerateReference: false,
       aiReferenceRatioIndex: 1,
       // 重置步骤状态
       aiSteps: AI_STEPS.map(s => ({

@@ -577,6 +577,27 @@
   margin-top: 4px;
 }
 
+/* AI 提示信息 */
+.ai-hint-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8f8f8;
+  border-radius: 8px;
+}
+
+.ai-hint-text {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.ai-hint-subtext {
+  display: block;
+  font-size: 12px;
+  color: #999;
+}
+
 /* AI 示例 */
 .ai-examples {
   margin-top: 14px;

@@ -323,32 +323,10 @@
           />
           <text class="ai-input-count">{{aiDescription.length || 0}}/200</text>
 
-          <!-- 图片生成选项 -->
-          <view class="ai-image-options">
-            <view class="ai-options-header">
-              <text class="ai-options-title">同时生成图片素材</text>
-              <text class="ai-options-cost">5醒币/张</text>
-            </view>
-            <view class="ai-option-row">
-              <view class="ai-checkbox {{aiGenerateCover ? 'checked' : ''}}" bindtap="toggleAiGenerateCover">
-                <image wx:if="{{aiGenerateCover}}" class="checkbox-icon" src="/images/icon-check.svg" mode="aspectFit"></image>
-              </view>
-              <text class="ai-option-text">封面图 (1:1)</text>
-            </view>
-            <view class="ai-option-row">
-              <view class="ai-checkbox {{aiGenerateReference ? 'checked' : ''}}" bindtap="toggleAiGenerateReference">
-                <image wx:if="{{aiGenerateReference}}" class="checkbox-icon" src="/images/icon-check.svg" mode="aspectFit"></image>
-              </view>
-              <text class="ai-option-text">参考样式图</text>
-              <view class="ai-ratio-picker" wx:if="{{aiGenerateReference}}">
-                <picker mode="selector" range="{{ratioOptions}}" range-key="label" value="{{aiReferenceRatioIndex}}" bindchange="onAiRatioChange">
-                  <view class="ratio-picker-btn">
-                    <text>{{ratioOptions[aiReferenceRatioIndex].label}}</text>
-                    <image class="ratio-arrow-icon" src="/images/icon-arrow-down-small.svg" mode="aspectFit"></image>
-                  </view>
-                </picker>
-              </view>
-            </view>
+          <!-- 提示信息 -->
+          <view class="ai-hint-section">
+            <text class="ai-hint-text">AI 将生成模板名称、描述、操作步骤和 Prompt 配置</text>
+            <text class="ai-hint-subtext">图片素材可在生成后单独添加</text>
           </view>
 
           <!-- 示例 -->
