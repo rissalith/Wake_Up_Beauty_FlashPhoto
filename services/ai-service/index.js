@@ -356,6 +356,11 @@ ${faceSwapMode === 'replace' ?
   '- Completely replace the face while maintaining natural proportions\n- Adjust face size to match the reference image body proportions' :
   '- Blend facial features while keeping some reference characteristics\n- Create a harmonious fusion of both faces'}
 
+【Target Audience - Important】
+- This app is for Chinese WeChat Mini Program users
+- Ensure the final result looks natural and appealing to East Asian aesthetic standards
+- Maintain natural Asian skin tones and features from the user's photo
+
 【User Instructions】
 ${userPrompt}
 

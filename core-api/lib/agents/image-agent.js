@@ -22,6 +22,15 @@ CRITICAL SAFETY REQUIREMENTS - You MUST follow these rules:
 10. If the request seems to violate these rules, generate a neutral professional portrait instead
 `;
 
+// 亚洲人形象偏好 - 面向中国微信小程序用户
+const ASIAN_APPEARANCE_PREFERENCE = `
+【人物形象要求 - 重要】
+- The person in the image should have East Asian (Chinese) appearance and features
+- Use Asian facial features: dark hair, brown/black eyes, typical East Asian face shape
+- The appearance should be relatable to Chinese users
+- Natural, authentic Asian beauty standards
+`;
+
 // 敏感词列表 - 用于输入检测
 const SENSITIVE_KEYWORDS = [
   // 版权相关
@@ -171,6 +180,7 @@ class ImageAgent extends BaseAgent {
     const keywords = plan.style_keywords || [];
 
     let prompt = `${CONTENT_SAFETY_CONSTRAINTS}
+${ASIAN_APPEARANCE_PREFERENCE}
 
 Create a professional cover image for a photo generation app feature called "${sceneName}".
 
@@ -184,19 +194,20 @@ Requirements:
 - Square format (1:1 aspect ratio)
 - Modern, polished aesthetic
 - MUST be original content, no copyrighted characters or real celebrities
+- If the image contains a person, they should have East Asian (Chinese) appearance
 
 The image should make users want to try this photo generation feature.`;
 
     // 根据场景类型添加特定指令
     const sceneType = plan.scene_type;
     if (sceneType === 'idphoto') {
-      prompt += '\nShow a professional ID photo example with clean background.';
+      prompt += '\nShow a professional ID photo example with clean background. The person should be East Asian.';
     } else if (sceneType === 'professional') {
-      prompt += '\nShow a confident business professional portrait.';
+      prompt += '\nShow a confident business professional portrait. The person should be East Asian.';
     } else if (sceneType === 'festival') {
-      prompt += '\nInclude festive decorations and warm atmosphere.';
+      prompt += '\nInclude festive decorations and warm atmosphere. If showing people, they should be East Asian.';
     } else if (sceneType === 'wedding') {
-      prompt += '\nShow romantic, elegant wedding photography style.';
+      prompt += '\nShow romantic, elegant wedding photography style. The couple should be East Asian.';
     }
 
     return prompt;
@@ -224,6 +235,7 @@ The image should make users want to try this photo generation feature.`;
     }
 
     let prompt = `${CONTENT_SAFETY_CONSTRAINTS}
+${ASIAN_APPEARANCE_PREFERENCE}
 
 Create a reference image for AI photo generation feature "${sceneName}".
 
@@ -239,6 +251,7 @@ Requirements:
 - Clean, appropriate background
 - Portrait orientation (3:4 aspect ratio)
 - MUST be original content, use a fictional/generic person, no real celebrities
+- The person MUST have East Asian (Chinese) appearance with typical Asian features
 
 This reference image will guide the AI to generate similar style photos for users.`;
 
@@ -287,6 +300,7 @@ Square format, minimal design.`;
       if (type === 'cover') {
         // 封面图 Prompt
         prompt = `${CONTENT_SAFETY_CONSTRAINTS}
+${ASIAN_APPEARANCE_PREFERENCE}
 
 Create a professional cover image for a photo template called "${description}".
 
@@ -299,11 +313,13 @@ Requirements:
 - Modern, polished aesthetic
 - Aspect ratio: ${width}:${height}
 - MUST be original content, no copyrighted characters or real celebrities
+- If the image contains a person, they should have East Asian (Chinese) appearance
 
 The image should make users want to try this photo generation feature.`;
       } else {
         // 参考图 Prompt
         prompt = `${CONTENT_SAFETY_CONSTRAINTS}
+${ASIAN_APPEARANCE_PREFERENCE}
 
 Create a reference image for AI photo generation template "${description}".
 
@@ -318,6 +334,7 @@ Requirements:
 - Aspect ratio: ${width}:${height}
 - Show a person in the scene that matches the template theme
 - MUST be original content, use a fictional/generic person, no real celebrities
+- The person MUST have East Asian (Chinese) appearance with typical Asian features
 
 This reference image will guide the AI to generate similar style photos for users.`;
       }
