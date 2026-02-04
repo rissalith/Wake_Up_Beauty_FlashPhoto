@@ -53,7 +53,12 @@ function text(zhText, enText, lang) {
  */
 function getAvatar(creator, defaultAvatar) {
   if (creator && creator.avatar && creator.avatar.length > 0) {
-    return creator.avatar;
+    // 修复旧数据中的 logo.png 路径问题
+    var avatar = creator.avatar;
+    if (avatar.indexOf('logo/logo.png') !== -1) {
+      avatar = avatar.replace('logo/logo.png', 'logo/logo-main.jpg');
+    }
+    return avatar;
   }
   return defaultAvatar || '';
 }

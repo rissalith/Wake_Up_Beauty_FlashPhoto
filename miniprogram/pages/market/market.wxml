@@ -78,8 +78,7 @@
             <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
             <view class="card-meta-row">
               <view class="creator-info">
-                <image class="creator-avatar" src="{{item.creator.avatar}}" mode="aspectFill" wx:if="{{item.creator.avatar}}"></image>
-                <image class="creator-avatar" src="https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg" mode="aspectFill" wx:else></image>
+                <image class="creator-avatar" src="{{i18n.getAvatar(item.creator, officialAvatar)}}" mode="aspectFill"></image>
                 <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
               </view>
               <view class="price-info">
@@ -116,8 +115,7 @@
             <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
             <view class="card-meta-row">
               <view class="creator-info">
-                <image class="creator-avatar" src="{{item.creator.avatar}}" mode="aspectFill" wx:if="{{item.creator.avatar}}"></image>
-                <image class="creator-avatar" src="https://xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com/logo/logo-main.jpg" mode="aspectFill" wx:else></image>
+                <image class="creator-avatar" src="{{i18n.getAvatar(item.creator, officialAvatar)}}" mode="aspectFill"></image>
                 <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
               </view>
               <view class="price-info">
