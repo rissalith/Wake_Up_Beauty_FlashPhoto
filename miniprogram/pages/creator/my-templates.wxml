@@ -16,152 +16,194 @@ module.exports = {
 </wxs>
 
 <view class="my-templates">
-  <!-- 头部统计 -->
-  <view class="stats-header">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-back" bindtap="goBack">
+        <image class="back-icon" src="/images/icon-arrow-left.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">我的模板</text>
+      <view class="nav-action" bindtap="createTemplate">
+        <image class="add-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计头部 -->
+  <view class="stats-header" style="margin-top: {{statusBarHeight + 44}}px;">
     <view class="stats-item">
-      <text class="stats-value">{{stats.total}}</text>
+      <text class="stats-value">{{stats.total || 0}}</text>
       <text class="stats-label">全部</text>
     </view>
     <view class="stats-item">
-      <text class="stats-value active">{{stats.active}}</text>
+      <text class="stats-value active">{{stats.active || 0}}</text>
       <text class="stats-label">已上架</text>
     </view>
     <view class="stats-item">
-      <text class="stats-value reviewing">{{stats.reviewing + stats.pending}}</text>
+      <text class="stats-value reviewing">{{(stats.reviewing || 0) + (stats.pending || 0)}}</text>
       <text class="stats-label">审核中</text>
     </view>
     <view class="stats-item">
-      <text class="stats-value rejected">{{stats.rejected}}</text>
+      <text class="stats-value rejected">{{stats.rejected || 0}}</text>
       <text class="stats-label">已拒绝</text>
     </view>
   </view>
 
-  <!-- Tab 筛选 -->
-  <view class="tabs">
-    <view class="tab {{currentTab === '' ? 'active' : ''}}" data-tab="" bindtap="onTabChange">
-      全部
-    </view>
-    <view class="tab {{currentTab === 'draft' ? 'active' : ''}}" data-tab="draft" bindtap="onTabChange">
-      草稿
-    </view>
-    <view class="tab {{currentTab === 'reviewing' ? 'active' : ''}}" data-tab="reviewing" bindtap="onTabChange">
-      审核中
-    </view>
-    <view class="tab {{currentTab === 'active' ? 'active' : ''}}" data-tab="active" bindtap="onTabChange">
-      已上架
-    </view>
-    <view class="tab {{currentTab === 'rejected' ? 'active' : ''}}" data-tab="rejected" bindtap="onTabChange">
-      已拒绝
-    </view>
-  </view>
-
-  <!-- 提示信息 -->
-  <view class="drag-tip" wx:if="{{templates.length > 1 && currentTab === ''}}">
-    <text class="tip-icon">💡</text>
-    <text>长按模板可拖拽排序</text>
-  </view>
-
-  <!-- 模板列表 -->
-  <view class="template-list">
-    <view
-      wx:for="{{templates}}"
-      wx:key="id"
-      class="template-card {{isDragging && dragIndex === index ? 'dragging' : ''}}"
-      style="{{isDragging && dragIndex === index ? 'transform: translateY(' + dragOffsetY + 'px);' : ''}}"
-      data-index="{{index}}"
-      bindlongpress="onDragStart"
-      bindtouchmove="onDragMove"
-      bindtouchend="onDragEnd"
-      bindtouchcancel="onDragEnd"
-    >
-      <!-- 拖拽手柄 -->
-      <view class="drag-handle" wx:if="{{currentTab === ''}}">
-        <text class="handle-icon">⋮⋮</text>
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap {{searchFocused ? 'focused' : ''}}">
+      <image class="search-icon" src="/images/icon-search.svg" mode="aspectFit"></image>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="搜索模板名称"
+        placeholder-class="search-placeholder"
+        value="{{searchKeyword}}"
+        bindfocus="onSearchFocus"
+        bindblur="onSearchBlur"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+        confirm-type="search"
+      />
+      <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="onClearSearch">
+        <image class="clear-icon" src="/images/icon-close-circle.svg" mode="aspectFit"></image>
       </view>
+    </view>
+  </view>
 
-      <!-- 模板信息 -->
-      <view class="template-content" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">
-        <image class="template-cover" src="{{item.cover_image}}" mode="aspectFill" />
-        <view class="template-info">
-          <view class="template-name">{{item.name}}</view>
-          <view class="template-desc">{{item.description || '暂无描述'}}</view>
-          <view class="template-meta">
-            <view class="status-tag {{item.status}}">{{utils.getStatusText(item.status)}}</view>
-            <text class="points">{{item.points_cost}} 醒币</text>
-            <text class="use-count" wx:if="{{item.status === 'active'}}">使用 {{item.use_count || 0}}</text>
+  <!-- 状态筛选标签 -->
+  <scroll-view class="status-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <view class="status-list">
+      <view
+        wx:for="{{statusOptions}}"
+        wx:key="value"
+        class="status-item {{currentStatus === item.value ? 'active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="onStatusChange"
+      >
+        <text class="status-name">{{item.label}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 模板网格列表 -->
+  <scroll-view
+    class="template-scroll"
+    scroll-y="{{true}}"
+    enhanced="{{true}}"
+    show-scrollbar="{{false}}"
+    bindscrolltolower="onReachBottom"
+    refresher-enabled="{{true}}"
+    bindrefresherrefresh="onPullDownRefresh"
+  >
+    <view class="template-grid">
+      <view
+        wx:for="{{templates}}"
+        wx:key="id"
+        class="template-card"
+      >
+        <!-- 封面区域 -->
+        <view class="card-cover-wrap" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">
+          <image class="card-cover" src="{{item.cover_image || '/images/placeholder.svg'}}" mode="aspectFill" lazy-load="{{true}}"></image>
+          <!-- 状态标签 -->
+          <view class="card-status {{item.status}}">
+            <text>{{utils.getStatusText(item.status)}}</text>
           </view>
-          <!-- 拒绝原因 -->
-          <view class="reject-reason" wx:if="{{item.status === 'rejected' && item.reject_reason}}">
-            <text class="reason-label">拒绝原因：</text>
-            <text class="reason-text">{{item.reject_reason}}</text>
+          <!-- 使用次数 -->
+          <view class="card-use-count" wx:if="{{item.status === 'active'}}">
+            <image class="use-icon" src="/images/icon-fire.svg" mode="aspectFit"></image>
+            <text>{{item.use_count || 0}}</text>
           </view>
         </view>
-      </view>
 
-      <!-- 操作按钮 -->
-      <view class="template-actions">
-        <!-- 草稿状态 -->
-        <block wx:if="{{item.status === 'draft'}}">
-          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
-          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">提交审核</view>
-          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
-        </block>
+        <!-- 信息区域 -->
+        <view class="card-info">
+          <text class="card-name">{{item.name || '未命名模板'}}</text>
+          <view class="card-meta">
+            <text class="card-price">{{item.points_cost || 0}} 醒币</text>
+          </view>
+        </view>
 
-        <!-- 审核中状态 -->
-        <block wx:elif="{{item.status === 'reviewing' || item.status === 'pending'}}">
-          <view class="action-btn disabled">等待审核结果</view>
-        </block>
+        <!-- 拒绝原因 -->
+        <view class="reject-reason" wx:if="{{item.status === 'rejected' && item.reject_reason}}">
+          <text class="reason-text">拒绝原因：{{item.reject_reason}}</text>
+        </view>
 
-        <!-- 已上架状态 -->
-        <block wx:elif="{{item.status === 'active'}}">
-          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
-          <view class="action-btn offline" bindtap="offlineTemplate" data-id="{{item.id}}">下架</view>
-          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
-        </block>
+        <!-- 操作按钮 -->
+        <view class="card-actions">
+          <!-- 草稿状态 -->
+          <block wx:if="{{item.status === 'draft'}}">
+            <view class="action-btn edit" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+            <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">提交审核</view>
+            <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+          </block>
 
-        <!-- 已拒绝状态 -->
-        <block wx:elif="{{item.status === 'rejected'}}">
-          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">修改</view>
-          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新提交</view>
-          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
-        </block>
+          <!-- 审核中状态 -->
+          <block wx:elif="{{item.status === 'reviewing' || item.status === 'pending'}}">
+            <view class="action-btn disabled full">等待审核结果</view>
+          </block>
 
-        <!-- 已下架状态 -->
-        <block wx:elif="{{item.status === 'offline'}}">
-          <view class="action-btn edit" bindtap="editTemplate" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
-          <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新上架</view>
-          <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
-        </block>
+          <!-- 已上架状态 -->
+          <block wx:elif="{{item.status === 'active'}}">
+            <view class="action-btn edit" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+            <view class="action-btn offline" bindtap="offlineTemplate" data-id="{{item.id}}">下架</view>
+            <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+          </block>
+
+          <!-- 已拒绝状态 -->
+          <block wx:elif="{{item.status === 'rejected'}}">
+            <view class="action-btn edit" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">修改</view>
+            <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新提交</view>
+            <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+          </block>
+
+          <!-- 已下架状态 -->
+          <block wx:elif="{{item.status === 'offline'}}">
+            <view class="action-btn edit" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">编辑</view>
+            <view class="action-btn submit" bindtap="submitForReview" data-id="{{item.id}}">重新上架</view>
+            <view class="action-btn delete" bindtap="deleteTemplate" data-id="{{item.id}}" data-status="{{item.status}}">删除</view>
+          </block>
+        </view>
       </view>
     </view>
 
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{!loading && templates.length === 0}}">
-      <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit" />
-      <text class="empty-text">暂无模板</text>
-      <view class="empty-btn" bindtap="createTemplate">创建第一个模板</view>
+      <image class="empty-icon" src="/images/icon-empty.svg" mode="aspectFit"></image>
+      <text class="empty-text" wx:if="{{searchKeyword}}">未找到相关模板</text>
+      <text class="empty-text" wx:elif="{{currentStatus === 'draft'}}">暂无草稿模板</text>
+      <text class="empty-text" wx:elif="{{currentStatus === 'reviewing'}}">暂无审核中模板</text>
+      <text class="empty-text" wx:elif="{{currentStatus === 'active'}}">暂无已上架模板</text>
+      <text class="empty-text" wx:elif="{{currentStatus === 'rejected'}}">暂无已拒绝模板</text>
+      <text class="empty-text" wx:elif="{{currentStatus === 'offline'}}">暂无已下架模板</text>
+      <text class="empty-text" wx:else>还没有创建模板</text>
+      <view class="empty-btn" wx:if="{{!searchKeyword && !currentStatus}}" bindtap="createTemplate">创建第一个模板</view>
+      <view class="empty-btn secondary" wx:if="{{searchKeyword}}" bindtap="onClearSearch">清除搜索</view>
     </view>
 
     <!-- 加载状态 -->
-    <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-state" wx:if="{{loading && templates.length === 0}}">
       <view class="loading-spinner"></view>
       <text>加载中...</text>
     </view>
 
     <!-- 加载更多 -->
-    <view class="load-more" wx:if="{{!loading && templates.length > 0 && hasMore}}">
-      <text>上拉加载更多</text>
+    <view class="load-more" wx:if="{{loading && templates.length > 0}}">
+      <view class="loading-spinner small"></view>
+      <text>加载更多...</text>
     </view>
 
     <!-- 没有更多 -->
     <view class="no-more" wx:if="{{!loading && templates.length > 0 && !hasMore}}">
-      <text>没有更多了</text>
+      <text>- 已经到底了 -</text>
     </view>
-  </view>
 
-  <!-- 创建按钮 -->
-  <view class="create-btn" bindtap="createTemplate">
-    <text class="create-icon">+</text>
-    <text>创建模板</text>
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <!-- 悬浮创建按钮 -->
+  <view class="float-create-btn" bindtap="createTemplate">
+    <image class="float-icon" src="/images/icon-add.svg" mode="aspectFit"></image>
   </view>
 </view>

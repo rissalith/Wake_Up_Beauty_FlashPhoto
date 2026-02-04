@@ -49,6 +49,10 @@ function baseRequest(options) {
 
   logger.log(`[API ${requestId}] 发起请求:`, fullUrl);
 
+  // 自动添加认证头
+  const userId = wx.getStorageSync('userId');
+  const authHeader = userId ? { 'Authorization': `Bearer ${userId}` } : {};
+
   return new Promise((resolve, reject) => {
     wx.request({
       url: fullUrl,
@@ -57,6 +61,7 @@ function baseRequest(options) {
       timeout: options.timeout || 15000,
       header: {
         'Content-Type': 'application/json',
+        ...authHeader,
         ...options.header
       },
       success: (res) => {

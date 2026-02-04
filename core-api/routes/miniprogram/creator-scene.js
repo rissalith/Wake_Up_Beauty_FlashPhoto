@@ -5,13 +5,14 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../../config/database');
+const { getDb } = require('../../config/database');
 const { authMiddleware } = require('./user');
 const { generateSceneConfig, completeConfig } = require('../../lib/ai-config-generator');
 
 // 验证创作者身份
 const creatorMiddleware = async (req, res, next) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const creator = db.prepare('SELECT * FROM creators WHERE user_id = ? AND status = ?').get(userId, 'approved');
 
@@ -30,6 +31,7 @@ const creatorMiddleware = async (req, res, next) => {
 // 获取我的场景列表
 router.get('/my-list', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const { status, page = 1, pageSize = 20 } = req.query;
 
@@ -78,6 +80,7 @@ router.get('/my-list', authMiddleware, creatorMiddleware, (req, res) => {
 // 创建场景
 router.post('/', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const { name, description, icon, points_cost = 10 } = req.body;
 
@@ -106,6 +109,7 @@ router.post('/', authMiddleware, creatorMiddleware, (req, res) => {
 // 获取场景详情（包含步骤和选项）
 router.get('/:id', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
 
@@ -149,6 +153,7 @@ router.get('/:id', authMiddleware, creatorMiddleware, (req, res) => {
 // 更新场景基本信息
 router.put('/:id', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
     const { name, description, icon, points_cost } = req.body;
@@ -187,6 +192,7 @@ router.put('/:id', authMiddleware, creatorMiddleware, (req, res) => {
 // 删除场景
 router.delete('/:id', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
 
@@ -233,6 +239,7 @@ router.delete('/:id', authMiddleware, creatorMiddleware, (req, res) => {
 // 保存步骤配置
 router.post('/:id/steps', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
     const { steps } = req.body;
@@ -315,6 +322,7 @@ router.post('/:id/steps', authMiddleware, creatorMiddleware, (req, res) => {
 // 保存 Prompt 模板
 router.put('/:id/prompt', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
     const { prompt_template, negative_prompt, model_config } = req.body;
@@ -354,6 +362,7 @@ router.put('/:id/prompt', authMiddleware, creatorMiddleware, (req, res) => {
 // 提交审核
 router.post('/:id/submit', authMiddleware, creatorMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
 
@@ -404,6 +413,7 @@ router.post('/:id/submit', authMiddleware, creatorMiddleware, (req, res) => {
 // 点赞/取消点赞
 router.post('/:id/like', authMiddleware, (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const sceneId = req.params.id;
 
@@ -569,6 +579,7 @@ router.post('/ai-generate', authMiddleware, creatorMiddleware, async (req, res) 
 // AI 生成并直接创建场景
 router.post('/ai-create', authMiddleware, creatorMiddleware, async (req, res) => {
   try {
+    const db = getDb();
     const userId = req.user.userId;
     const { description } = req.body;
 

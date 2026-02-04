@@ -1,6 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "我的模板",
-  "enablePullDownRefresh": true,
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": false,
   "backgroundTextStyle": "dark"
 }

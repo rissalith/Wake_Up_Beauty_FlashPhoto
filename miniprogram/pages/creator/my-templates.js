@@ -1,39 +1,61 @@
 // pages/creator/my-templates.js
-const app = getApp()
+// 我的模板页面 - 展示当前用户创建的模板，支持网格布局、筛选和搜索
+const { api } = require('../../config/api')
 const request = require('../../utils/request')
 
 Page({
   data: {
+    // 模板数据
     templates: [],
+    loading: false,
+    page: 1,
+    pageSize: 20,
+    hasMore: true,
+    total: 0,
+
+    // 统计数据
     stats: {
+      total: 0,
       draft: 0,
       reviewing: 0,
       pending: 0,
       active: 0,
       rejected: 0,
-      offline: 0,
-      total: 0
+      offline: 0
     },
-    currentTab: '', // 空字符串表示全部
-    loading: false,
-    page: 1,
-    pageSize: 20,
-    hasMore: true,
-    // 拖拽排序相关
-    isDragging: false,
-    dragIndex: -1,
-    dragStartY: 0,
-    dragOffsetY: 0,
-    itemHeight: 120 // 每个模板卡片的高度
+
+    // 搜索
+    searchKeyword: '',
+    searchFocused: false,
+
+    // 状态筛选
+    statusOptions: [
+      { value: '', label: '全部' },
+      { value: 'draft', label: '草稿' },
+      { value: 'reviewing', label: '审核中' },
+      { value: 'active', label: '已上架' },
+      { value: 'rejected', label: '已拒绝' },
+      { value: 'offline', label: '已下架' }
+    ],
+    currentStatus: '',
+
+    // 布局
+    statusBarHeight: 20
   },
 
   onLoad() {
+    // 获取系统信息
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    })
+
     this.loadStats()
     this.loadTemplates()
   },
 
   onShow() {
-    // 每次显示页面时刷新数据
+    // 页面显示时刷新数据
     this.loadStats()
     this.refreshTemplates()
   },
@@ -53,7 +75,7 @@ Page({
   // 加载统计数据
   async loadStats() {
     try {
-      const userId = app.globalData.userInfo?.id
+      const userId = wx.getStorageSync('userId')
       if (!userId) return
 
       const res = await request.get('/api/template/creator/stats', { user_id: userId })
@@ -69,23 +91,29 @@ Page({
   async loadTemplates() {
     if (this.data.loading) return
 
+    const userId = wx.getStorageSync('userId')
+    if (!userId) {
+      this.setData({ loading: false })
+      return
+    }
+
     this.setData({ loading: true })
 
     try {
-      const userId = app.globalData.userInfo?.id
-      if (!userId) {
-        this.setData({ loading: false })
-        return
-      }
-
       const params = {
         user_id: userId,
         page: this.data.page,
         pageSize: this.data.pageSize
       }
 
-      if (this.data.currentTab) {
-        params.status = this.data.currentTab
+      // 状态筛选
+      if (this.data.currentStatus) {
+        params.status = this.data.currentStatus
+      }
+
+      // 关键词搜索
+      if (this.data.searchKeyword) {
+        params.keyword = this.data.searchKeyword
       }
 
       const res = await request.get('/api/template/creator/my-templates', params)
@@ -93,7 +121,8 @@ Page({
         const templates = res.data.list || []
         this.setData({
           templates: this.data.page === 1 ? templates : [...this.data.templates, ...templates],
-          hasMore: templates.length >= this.data.pageSize
+          hasMore: templates.length >= this.data.pageSize,
+          total: res.data.total || templates.length
         })
       }
     } catch (error) {
@@ -106,7 +135,7 @@ Page({
 
   // 刷新模板列表
   async refreshTemplates() {
-    this.setData({ page: 1, hasMore: true })
+    this.setData({ page: 1, hasMore: true, templates: [] })
     await this.loadTemplates()
   },
 
@@ -116,11 +145,13 @@ Page({
     await this.loadTemplates()
   },
 
-  // 切换 Tab
-  onTabChange(e) {
-    const tab = e.currentTarget.dataset.tab
+  // 切换状态筛选
+  onStatusChange(e) {
+    const status = e.currentTarget.dataset.value
+    if (status === this.data.currentStatus) return
+
     this.setData({
-      currentTab: tab,
+      currentStatus: status,
       page: 1,
       hasMore: true,
       templates: []
@@ -128,24 +159,51 @@ Page({
     this.loadTemplates()
   },
 
-  // 创建新模板
-  createTemplate() {
-    wx.navigateTo({
-      url: '/pages/creator/create-template'
-    })
+  // 搜索相关
+  onSearchFocus() {
+    this.setData({ searchFocused: true })
   },
 
-  // 编辑模板
-  editTemplate(e) {
-    const { id, status } = e.currentTarget.dataset
-    // 只有草稿、已拒绝、已上架状态可以编辑
-    if (!['draft', 'rejected', 'active'].includes(status)) {
-      wx.showToast({ title: '当前状态不可编辑', icon: 'none' })
-      return
-    }
-    wx.navigateTo({
-      url: `/pages/creator/create-template?id=${id}`
+  onSearchBlur() {
+    this.setData({ searchFocused: false })
+  },
+
+  onSearchInput(e) {
+    this.setData({ searchKeyword: e.detail.value })
+  },
+
+  onSearch() {
+    this.setData({
+      page: 1,
+      hasMore: true,
+      templates: []
     })
+    this.loadTemplates()
+  },
+
+  onClearSearch() {
+    this.setData({
+      searchKeyword: '',
+      page: 1,
+      hasMore: true,
+      templates: []
+    })
+    this.loadTemplates()
+  },
+
+  // 点击模板卡片 - 编辑
+  onTemplateClick(e) {
+    const { id, status } = e.currentTarget.dataset
+    // 草稿状态跳转到编辑页面，其他状态跳转到场景编辑器
+    if (status === 'draft') {
+      wx.navigateTo({
+        url: `/pages/creator/create-template?id=${id}`
+      })
+    } else {
+      wx.navigateTo({
+        url: `/pages/creator/scene-editor/scene-editor?id=${id}`
+      })
+    }
   },
 
   // 提交审核
@@ -159,7 +217,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '提交中...' })
-            const userId = app.globalData.userInfo?.id
+            const userId = wx.getStorageSync('userId')
             const result = await request.post(`/api/template/${id}/submit`, { user_id: userId })
             wx.hideLoading()
 
@@ -191,7 +249,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '删除中...' })
-            const userId = app.globalData.userInfo?.id
+            const userId = wx.getStorageSync('userId')
             const result = await request.delete(`/api/template/creator/${id}`, { user_id: userId })
             wx.hideLoading()
 
@@ -222,7 +280,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '处理中...' })
-            const userId = app.globalData.userInfo?.id
+            const userId = wx.getStorageSync('userId')
             const result = await request.post(`/api/template/${id}/offline`, { user_id: userId })
             wx.hideLoading()
 
@@ -242,116 +300,15 @@ Page({
     })
   },
 
-  // ==================== 拖拽排序相关 ====================
+  // 返回
+  goBack() {
+    wx.navigateBack()
+  },
 
-  // 开始拖拽
-  onDragStart(e) {
-    const index = e.currentTarget.dataset.index
-    const touch = e.touches[0]
-
-    this.setData({
-      isDragging: true,
-      dragIndex: index,
-      dragStartY: touch.clientY,
-      dragOffsetY: 0
+  // 创建模板
+  createTemplate() {
+    wx.navigateTo({
+      url: '/pages/creator/create-template'
     })
-
-    wx.vibrateShort({ type: 'light' })
-  },
-
-  // 拖拽移动
-  onDragMove(e) {
-    if (!this.data.isDragging) return
-
-    const touch = e.touches[0]
-    const offsetY = touch.clientY - this.data.dragStartY
-
-    this.setData({ dragOffsetY: offsetY })
-
-    // 计算目标位置
-    const targetIndex = this.calculateTargetIndex(offsetY)
-    if (targetIndex !== this.data.dragIndex && targetIndex >= 0 && targetIndex < this.data.templates.length) {
-      // 交换位置
-      const templates = [...this.data.templates]
-      const dragItem = templates[this.data.dragIndex]
-      templates.splice(this.data.dragIndex, 1)
-      templates.splice(targetIndex, 0, dragItem)
-
-      this.setData({
-        templates,
-        dragIndex: targetIndex,
-        dragStartY: touch.clientY,
-        dragOffsetY: 0
-      })
-    }
-  },
-
-  // 结束拖拽
-  async onDragEnd() {
-    if (!this.data.isDragging) return
-
-    this.setData({
-      isDragging: false,
-      dragIndex: -1,
-      dragOffsetY: 0
-    })
-
-    // 保存新的排序
-    await this.saveTemplateOrder()
-  },
-
-  // 计算目标位置
-  calculateTargetIndex(offsetY) {
-    const { dragIndex, itemHeight } = this.data
-    const moveCount = Math.round(offsetY / itemHeight)
-    return dragIndex + moveCount
-  },
-
-  // 保存模板排序
-  async saveTemplateOrder() {
-    try {
-      const userId = app.globalData.userInfo?.id
-      if (!userId) return
-
-      const templateOrders = this.data.templates.map((t, index) => ({
-        template_id: t.id,
-        sort_order: this.data.templates.length - index // 倒序，最前面的排序值最大
-      }))
-
-      await request.post('/api/template/creator/reorder', {
-        user_id: userId,
-        template_orders: templateOrders
-      })
-
-      wx.showToast({ title: '排序已保存', icon: 'success' })
-    } catch (error) {
-      console.error('保存排序失败:', error)
-    }
-  },
-
-  // 获取状态文本
-  getStatusText(status) {
-    const map = {
-      draft: '草稿',
-      reviewing: '审核中',
-      pending: '待审核',
-      active: '已上架',
-      rejected: '已拒绝',
-      offline: '已下架'
-    }
-    return map[status] || status
-  },
-
-  // 获取状态样式类
-  getStatusClass(status) {
-    const map = {
-      draft: 'status-draft',
-      reviewing: 'status-reviewing',
-      pending: 'status-pending',
-      active: 'status-active',
-      rejected: 'status-rejected',
-      offline: 'status-offline'
-    }
-    return map[status] || ''
   }
 })
