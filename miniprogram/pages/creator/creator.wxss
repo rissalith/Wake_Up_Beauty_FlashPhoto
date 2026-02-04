@@ -246,7 +246,7 @@
 
 /* 模板卡片 */
 .template-card {
-  width: 140px;
+  width: 160px;
   flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
@@ -254,8 +254,8 @@
 }
 
 .template-card .template-cover {
-  width: 140px;
-  height: 187px;
+  width: 160px;
+  height: 160px;
   display: block;
 }
 
@@ -288,8 +288,8 @@
 }
 
 .create-placeholder {
-  width: 140px;
-  height: 230px;
+  width: 160px;
+  height: 203px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -375,8 +375,8 @@
 }
 
 .task-card-content {
-  width: 140px;
-  height: 230px;
+  width: 160px;
+  height: 203px;
   display: flex;
   flex-direction: column;
   align-items: center;

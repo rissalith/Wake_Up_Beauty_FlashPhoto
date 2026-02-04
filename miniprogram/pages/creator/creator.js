@@ -282,18 +282,10 @@ Page({
   // 查看/编辑模板
   goToTemplateDetail(e) {
     const templateId = e.currentTarget.dataset.id;
-    const template = this.data.templates.find(t => t.id === templateId);
-
-    // 草稿状态跳转到编辑页面，其他状态跳转到场景编辑器
-    if (template && template.status === 'draft') {
-      wx.navigateTo({
-        url: `/pages/creator/create-template?id=${templateId}`
-      });
-    } else {
-      wx.navigateTo({
-        url: `/pages/creator/scene-editor/scene-editor?id=${templateId}`
-      });
-    }
+    // 所有模板都跳转到 create-template 编辑页面
+    wx.navigateTo({
+      url: `/pages/creator/create-template?id=${templateId}`
+    });
   },
 
   // 登录弹窗关闭

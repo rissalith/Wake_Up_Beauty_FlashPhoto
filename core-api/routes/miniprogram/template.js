@@ -314,8 +314,13 @@ router.post('/:id/steps', async (req, res) => {
       return res.status(403).json({ code: 403, msg: '无权修改此模板' });
     }
 
-    if (!['draft', 'rejected'].includes(template.status)) {
+    if (!['draft', 'rejected', 'reviewing'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不允许修改' });
+    }
+
+    // 如果是审核中状态，修改后回退到草稿
+    if (template.status === 'reviewing') {
+      db.prepare(`UPDATE user_templates SET status = 'draft' WHERE id = ?`).run(id);
     }
 
     // 使用事务更新步骤
@@ -415,8 +420,13 @@ router.put('/:id/prompt', async (req, res) => {
       return res.status(403).json({ code: 403, msg: '无权修改此模板' });
     }
 
-    if (!['draft', 'rejected'].includes(template.status)) {
+    if (!['draft', 'rejected', 'reviewing'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不允许修改' });
+    }
+
+    // 如果是审核中状态，修改后回退到草稿
+    if (template.status === 'reviewing') {
+      db.prepare(`UPDATE user_templates SET status = 'draft' WHERE id = ?`).run(id);
     }
 
     // 更新或插入 Prompt

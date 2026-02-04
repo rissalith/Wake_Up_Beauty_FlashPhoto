@@ -33,10 +33,10 @@
         <!-- 任务头部 -->
         <view class="task-header">
           <view class="task-status-icon {{item.status}}">
-            <text wx:if="{{item.status === 'processing' || item.status === 'loading'}}">🔄</text>
-            <text wx:elif="{{item.status === 'completed'}}">✅</text>
-            <text wx:elif="{{item.status === 'failed'}}">❌</text>
-            <text wx:else>⏳</text>
+            <image wx:if="{{item.status === 'processing' || item.status === 'loading'}}" class="status-icon spinning" src="/images/icon-loading.svg" mode="aspectFit"></image>
+            <image wx:elif="{{item.status === 'completed'}}" class="status-icon" src="/images/icon-task-done.svg" mode="aspectFit"></image>
+            <image wx:elif="{{item.status === 'failed'}}" class="status-icon" src="/images/icon-task-error.svg" mode="aspectFit"></image>
+            <image wx:else class="status-icon" src="/images/icon-task-pending.svg" mode="aspectFit"></image>
           </view>
           <view class="task-info">
             <text class="task-title">{{item.description || '未命名任务'}}</text>

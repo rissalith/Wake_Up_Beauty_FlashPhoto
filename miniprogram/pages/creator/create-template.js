@@ -409,6 +409,17 @@ Page({
         }
       }
 
+      // 保存步骤配置
+      if (formData.steps && formData.steps.length > 0) {
+        const stepsRes = await api.configTemplateSteps(savedTemplateId, {
+          user_id: userId,
+          steps: formData.steps
+        });
+        if (stepsRes.code !== 200) {
+          console.warn('保存步骤失败:', stepsRes.msg);
+        }
+      }
+
       // 保存 Prompt 配置
       if (formData.prompt_template.trim()) {
         const promptRes = await api.configTemplatePrompt(savedTemplateId, {

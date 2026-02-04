@@ -54,7 +54,7 @@
       <image class="earnings-arrow" src="/images/icon-arrow-right.svg" mode="aspectFit"></image>
     </view>
 
-    <!-- 我的模板（融合创建入口） -->
+    <!-- 我的模板（横向滚动） -->
     <view class="templates-section">
       <view class="section-header">
         <text class="section-title">我的模板</text>
@@ -81,10 +81,10 @@
           <view class="template-card task-card {{item.status}}" wx:for="{{backgroundTasks}}" wx:key="taskId" bindtap="onTaskCardTap" data-task="{{item}}">
             <view class="task-card-content">
               <view class="task-status-icon">
-                <text wx:if="{{item.status === 'processing' || item.status === 'loading'}}">🔄</text>
-                <text wx:elif="{{item.status === 'completed'}}">✅</text>
-                <text wx:elif="{{item.status === 'failed'}}">❌</text>
-                <text wx:else>⏳</text>
+                <image wx:if="{{item.status === 'processing' || item.status === 'loading'}}" class="task-icon spinning" src="/images/icon-loading.svg" mode="aspectFit"></image>
+                <image wx:elif="{{item.status === 'completed'}}" class="task-icon" src="/images/icon-task-done.svg" mode="aspectFit"></image>
+                <image wx:elif="{{item.status === 'failed'}}" class="task-icon" src="/images/icon-task-error.svg" mode="aspectFit"></image>
+                <image wx:else class="task-icon" src="/images/icon-task-pending.svg" mode="aspectFit"></image>
               </view>
               <text class="task-title">{{item.description || 'AI生成中'}}</text>
               <view class="task-progress-wrap" wx:if="{{item.status === 'processing' || item.status === 'loading'}}">

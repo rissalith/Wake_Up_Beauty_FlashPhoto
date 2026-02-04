@@ -194,16 +194,10 @@ Page({
   // 点击模板卡片 - 编辑
   onTemplateClick(e) {
     const { id, status } = e.currentTarget.dataset
-    // 草稿状态跳转到编辑页面，其他状态跳转到场景编辑器
-    if (status === 'draft') {
-      wx.navigateTo({
-        url: `/pages/creator/create-template?id=${id}`
-      })
-    } else {
-      wx.navigateTo({
-        url: `/pages/creator/scene-editor/scene-editor?id=${id}`
-      })
-    }
+    // 所有状态都跳转到 create-template 编辑页面
+    wx.navigateTo({
+      url: `/pages/creator/create-template?id=${id}`
+    })
   },
 
   // 提交审核

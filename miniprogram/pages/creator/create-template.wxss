@@ -1426,25 +1426,41 @@
   border-top-color: #C68B4D;
 }
 
-/* 高级模式 */
-.prompt-advanced-mode {
+/* 只读展示模式 */
+.prompt-readonly-mode {
   padding: 4px 0;
 }
 
-.advanced-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  background: #fff8e6;
-  border-radius: 8px;
-  margin-top: 12px;
+.prompt-item {
+  margin-bottom: 12px;
 }
 
-.warning-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.prompt-item:last-of-type {
+  margin-bottom: 16px;
+}
+
+.prompt-label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.prompt-content {
+  background: #f8f8f8;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.prompt-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.prompt-text.negative {
+  color: #999;
 }
 
 .warning-text {
@@ -1595,6 +1611,14 @@
   font-size: 12px;
   color: #666;
   line-height: 1.5;
+}
+
+.no-steps-text,
+.no-prompt-text {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  padding: 16px 0;
 }
 
 /* 基本信息预览 */

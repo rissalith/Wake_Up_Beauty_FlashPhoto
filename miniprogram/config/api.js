@@ -73,7 +73,9 @@ function baseRequest(options) {
             reject(res.data);
           }
         } else {
-          reject({ code: -1, msg: '请求失败', statusCode: res.statusCode });
+          // 返回后端的错误信息，如果有的话
+          const errorMsg = res.data?.msg || res.data?.message || '请求失败';
+          reject({ code: res.data?.code || -1, msg: errorMsg, statusCode: res.statusCode, data: res.data });
         }
       },
       fail: (err) => {
