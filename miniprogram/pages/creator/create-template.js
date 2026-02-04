@@ -565,6 +565,9 @@ Page({
 
   // 轮询 AI 任务状态
   pollAiTaskStatus(taskId) {
+    // 重置上次轮询的步骤（用于减少日志输出）
+    this._lastPollStep = null;
+
     // 步骤顺序映射（用于判断步骤是否已完成）
     const stepOrderMap = {
       'init': -1,  // 初始化状态
@@ -591,7 +594,11 @@ Page({
           const currentStep = task.current_step;
           const stepOutputs = task.step_outputs || {};
 
-          console.log('[AI Poll] current_step:', currentStep, 'step_outputs:', stepOutputs);
+          // 只在步骤变化时输出日志
+          if (this._lastPollStep !== currentStep) {
+            console.log('[AI Poll] step changed:', currentStep);
+            this._lastPollStep = currentStep;
+          }
 
           // 更新步骤状态
           const currentOrder = stepOrderMap[currentStep] ?? -1;
@@ -705,7 +712,9 @@ Page({
       steps: config.steps || [],
       // 图片
       cover_image: images?.cover || null,
-      reference_image: images?.reference || null
+      reference_image: images?.reference || null,
+      // 推荐分类
+      recommended_category_id: config.scene?.recommended_category_id || null
     };
 
     console.log('[AI Generate] result:', JSON.stringify(result));
@@ -765,11 +774,17 @@ Page({
 
   // 应用 AI 生成结果
   applyAiResult() {
-    const { aiResult } = this.data;
+    const { aiResult, categories } = this.data;
     if (!aiResult) return;
 
     // 计算价格索引
     const priceIndex = PRICE_OPTIONS.indexOf(aiResult.points_cost);
+
+    // 计算分类索引（如果有推荐分类）
+    let categoryIndex = -1;
+    if (aiResult.recommended_category_id && categories.length > 0) {
+      categoryIndex = categories.findIndex(c => c.id === aiResult.recommended_category_id);
+    }
 
     // 应用到表单
     const updates = {
@@ -782,6 +797,12 @@ Page({
       priceIndex: priceIndex >= 0 ? priceIndex : 9,
       showAiModal: false
     };
+
+    // 如果有推荐分类，也应用
+    if (categoryIndex >= 0) {
+      updates.categoryIndex = categoryIndex;
+      updates['formData.category_id'] = aiResult.recommended_category_id;
+    }
 
     // 如果有生成的图片，也应用
     if (aiResult.cover_image) {
@@ -910,5 +931,40 @@ Page({
     } finally {
       this.setData({ [loadingKey]: false });
     }
+  },
+
+  // 预览图片
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url) {
+      wx.showToast({ title: '图片地址无效', icon: 'none' });
+      return;
+    }
+
+    // 收集所有可预览的图片
+    const urls = [];
+    if (this.data.formData.cover_image) {
+      urls.push(this.data.formData.cover_image);
+    }
+    if (this.data.formData.reference_image) {
+      urls.push(this.data.formData.reference_image);
+    }
+
+    wx.previewImage({
+      current: url,
+      urls: urls.length > 0 ? urls : [url]
+    });
+  },
+
+  // 图片加载错误处理
+  onImageError(e) {
+    const type = e.currentTarget.dataset.type;
+    console.error(`[Image Error] ${type} 图片加载失败:`, e.detail);
+
+    // 显示错误提示
+    wx.showToast({
+      title: `${type === 'cover' ? '封面图' : '参考图'}加载失败`,
+      icon: 'none'
+    });
   }
 });

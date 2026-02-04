@@ -1066,8 +1066,8 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 6px 14px;
+  border-radius: 14px;
 }
 
 .action-btn.ai-btn {

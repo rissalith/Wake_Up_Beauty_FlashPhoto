@@ -4,6 +4,7 @@
  */
 
 const BaseAgent = require('./base-agent');
+const { getDb } = require('../../config/database');
 
 class ConfigAgent extends BaseAgent {
   constructor(options = {}) {
@@ -187,7 +188,7 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
    * @returns {Object} 补全后的配置
    */
   validateAndComplete(config, context) {
-    const { plan } = context;
+    const { plan, userDescription } = context;
 
     // 验证 scene
     if (!config.scene) {
@@ -198,7 +199,9 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
       name_en: config.scene.name_en || plan.scene_name_en || 'Unnamed Scene',
       description: config.scene.description || plan.description || '',
       description_en: config.scene.description_en || '',
-      points_cost: config.scene.points_cost || plan.points_cost || 50
+      points_cost: config.scene.points_cost || plan.points_cost || 50,
+      // 添加推荐分类
+      recommended_category_id: this.recommendCategory(userDescription, config.scene.name, plan)
     };
 
     // 验证 steps
@@ -288,6 +291,88 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
   addFacePreservation(template) {
     const faceInstruction = '【重要】严格保持参考照片中的人脸特征，包括脸型、眼睛、鼻子、嘴巴和肤色，生成的人脸必须与原照片高度一致。';
     return faceInstruction + template;
+  }
+
+  /**
+   * 根据描述推荐分类
+   * @param {string} userDescription - 用户描述
+   * @param {string} sceneName - 场景名称
+   * @param {Object} plan - 规划信息
+   * @returns {number|null} 推荐的分类 ID
+   */
+  recommendCategory(userDescription, sceneName, plan) {
+    try {
+      const db = getDb();
+
+      // 获取所有可见分类
+      const categories = db.prepare(`
+        SELECT id, name, name_en
+        FROM template_categories
+        WHERE is_visible = 1 AND name != '推荐'
+        ORDER BY sort_order ASC
+      `).all();
+
+      if (!categories || categories.length === 0) {
+        return null;
+      }
+
+      // 合并所有文本用于匹配
+      const searchText = `${userDescription || ''} ${sceneName || ''} ${plan?.scene_type || ''} ${(plan?.style_keywords || []).join(' ')}`.toLowerCase();
+
+      // 分类关键词映射
+      const categoryKeywords = {
+        '节日': ['春节', '新年', '元旦', '情人节', '圣诞', '万圣节', '中秋', '端午', '国庆', '元宵', '七夕', '感恩节', '复活节', '节日', 'festival', 'holiday', 'christmas', 'valentine', 'halloween', 'new year'],
+        '职业': ['证件照', '职业', '工作', '商务', '正装', '西装', '简历', '求职', '面试', 'professional', 'business', 'work', 'id photo', 'resume'],
+        '艺术': ['艺术', '油画', '水彩', '素描', '插画', '动漫', '卡通', '漫画', 'art', 'painting', 'cartoon', 'anime', 'illustration'],
+        '生活': ['日常', '生活', '休闲', '旅行', '户外', '自然', '风景', 'daily', 'life', 'travel', 'outdoor', 'nature'],
+        '时尚': ['时尚', '潮流', '穿搭', '服装', '造型', 'fashion', 'style', 'outfit'],
+        '古风': ['古风', '汉服', '古装', '中国风', '传统', 'chinese', 'traditional', 'ancient'],
+        '写真': ['写真', '人像', '肖像', '个人', 'portrait', 'photo'],
+        '婚纱': ['婚纱', '婚礼', '结婚', '新娘', '新郎', 'wedding', 'bride', 'groom'],
+        '毕业': ['毕业', '学士', '硕士', '博士', '学位', '校园', 'graduation', 'graduate', 'university', 'college'],
+        '儿童': ['儿童', '宝宝', '孩子', '亲子', 'kids', 'children', 'baby'],
+        '其他': []
+      };
+
+      // 计算每个分类的匹配分数
+      let bestMatch = null;
+      let bestScore = 0;
+
+      for (const category of categories) {
+        const keywords = categoryKeywords[category.name] || [];
+        let score = 0;
+
+        for (const keyword of keywords) {
+          if (searchText.includes(keyword.toLowerCase())) {
+            score += 1;
+          }
+        }
+
+        // 如果分类名称直接出现在描述中，加分
+        if (searchText.includes(category.name.toLowerCase())) {
+          score += 3;
+        }
+        if (category.name_en && searchText.includes(category.name_en.toLowerCase())) {
+          score += 2;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = category;
+        }
+      }
+
+      // 如果没有匹配到，返回"其他"分类或第一个分类
+      if (!bestMatch || bestScore === 0) {
+        const otherCategory = categories.find(c => c.name === '其他');
+        return otherCategory ? otherCategory.id : categories[0].id;
+      }
+
+      return bestMatch.id;
+    } catch (error) {
+      console.error('[ConfigAgent] 推荐分类失败:', error);
+      return null;
+    }
   }
 }
 

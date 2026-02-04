@@ -53,8 +53,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ code: 400, msg: '缺少用户ID' });
     }
 
-    if (!name || !cover_image || !reference_image) {
-      return res.status(400).json({ code: 400, msg: '缺少必要参数' });
+    // 草稿模式只需要名称，其他字段可选
+    if (!name) {
+      return res.status(400).json({ code: 400, msg: '请输入模板名称' });
     }
 
     const creator = await getOrCreateCreator(user_id);
@@ -72,7 +73,7 @@ router.post('/', async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
     `).run(
       templateId, creator.id, name, name_en || null, description || null, description_en || null,
-      cover_image, reference_image, category_id || null, tags || null, gender, points_cost
+      cover_image || null, reference_image || null, category_id || null, tags || null, gender, points_cost
     );
 
     res.json({

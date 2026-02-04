@@ -112,9 +112,9 @@
       <view class="upload-row">
         <view class="upload-item-compact">
           <text class="upload-label required">封面图 (1:1)</text>
-          <view class="upload-area-small {{formData.cover_image ? '' : 'empty'}}" bindtap="generateCoverImage">
-            <image wx:if="{{formData.cover_image}}" class="upload-preview" src="{{formData.cover_image}}" mode="aspectFill"></image>
-            <view wx:else class="upload-placeholder">
+          <view class="upload-area-small {{formData.cover_image ? '' : 'empty'}}">
+            <image wx:if="{{formData.cover_image}}" class="upload-preview" src="{{formData.cover_image}}" mode="aspectFill" bindtap="previewImage" data-url="{{formData.cover_image}}" binderror="onImageError" data-type="cover"></image>
+            <view wx:else class="upload-placeholder" bindtap="generateCoverImage">
               <image class="upload-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
               <text class="upload-text">点击AI生成</text>
             </view>
@@ -124,16 +124,22 @@
               <text class="loading-text">生成中...</text>
             </view>
           </view>
-          <view class="upload-cost-hint">
+          <view class="upload-actions" wx:if="{{formData.cover_image}}">
+            <view class="action-btn ai-btn" bindtap="generateCoverImage">
+              <image class="action-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text>重新生成</text>
+            </view>
+          </view>
+          <view class="upload-cost-hint" wx:if="{{!formData.cover_image}}">
             <text>5醒币/张</text>
           </view>
         </view>
 
         <view class="upload-item-compact">
           <text class="upload-label required">参考样式图</text>
-          <view class="upload-area-small {{formData.reference_image ? '' : 'empty'}}" bindtap="showReferenceRatioModal">
-            <image wx:if="{{formData.reference_image}}" class="upload-preview" src="{{formData.reference_image}}" mode="aspectFill"></image>
-            <view wx:else class="upload-placeholder">
+          <view class="upload-area-small {{formData.reference_image ? '' : 'empty'}}">
+            <image wx:if="{{formData.reference_image}}" class="upload-preview" src="{{formData.reference_image}}" mode="aspectFill" bindtap="previewImage" data-url="{{formData.reference_image}}" binderror="onImageError" data-type="reference"></image>
+            <view wx:else class="upload-placeholder" bindtap="showReferenceRatioModal">
               <image class="upload-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
               <text class="upload-text">点击AI生成</text>
             </view>
@@ -143,7 +149,13 @@
               <text class="loading-text">生成中...</text>
             </view>
           </view>
-          <view class="upload-cost-hint">
+          <view class="upload-actions" wx:if="{{formData.reference_image}}">
+            <view class="action-btn ai-btn" bindtap="showReferenceRatioModal">
+              <image class="action-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text>重新生成</text>
+            </view>
+          </view>
+          <view class="upload-cost-hint" wx:if="{{!formData.reference_image}}">
             <text>5醒币/张</text>
           </view>
         </view>
