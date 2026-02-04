@@ -77,14 +77,12 @@
 
         <view class="form-item half">
           <text class="form-label required">定价（醒币）</text>
-          <input
-            class="form-input"
-            type="number"
-            placeholder="50"
-            value="{{formData.points_cost}}"
-            bindinput="onInputChange"
-            data-field="points_cost"
-          />
+          <picker mode="selector" range="{{priceOptions}}" value="{{priceIndex}}" bindchange="onPriceChange">
+            <view class="form-picker">
+              <view class="picker-text">{{formData.points_cost}}</view>
+              <image class="picker-arrow" src="/images/icon-arrow-down.svg" mode="aspectFit"></image>
+            </view>
+          </picker>
         </view>
       </view>
 

@@ -81,10 +81,10 @@ router.post('/generate', async (req, res) => {
   try {
     const { description, options = {} } = req.body;
 
-    if (!description || description.trim().length < 5) {
+    if (!description || description.trim().length < 1) {
       return res.status(400).json({
         code: 400,
-        message: '请提供有效的场景描述（至少5个字符）'
+        message: '请提供场景描述'
       });
     }
 

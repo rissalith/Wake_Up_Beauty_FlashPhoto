@@ -21,6 +21,9 @@ const RATIO_OPTIONS = [
   { label: '16:9 宽屏', value: '16:9', width: 16, height: 9, desc: '适合横幅、背景' }
 ];
 
+// 价格选项 (5-100，步长5)
+const PRICE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+
 Page({
   data: {
     statusBarHeight: 20,
@@ -29,6 +32,8 @@ Page({
     templateId: null,
     categories: [],
     categoryIndex: -1,
+    priceOptions: PRICE_OPTIONS,
+    priceIndex: 9,  // 默认 50（索引9）
     formData: {
       name: '',
       description: '',
@@ -132,16 +137,20 @@ Page({
       if (res.code === 200 && res.data) {
         const template = res.data;
         const categoryIndex = this.data.categories.findIndex(c => c.id === template.category_id);
+        // 计算价格索引
+        const pointsCost = template.points_cost || 50;
+        const priceIndex = PRICE_OPTIONS.indexOf(pointsCost);
 
         this.setData({
           categoryIndex,
+          priceIndex: priceIndex >= 0 ? priceIndex : 9,  // 默认索引9（50醒币）
           formData: {
             name: template.name || '',
             description: template.description || '',
             category_id: template.category_id,
             tags: Array.isArray(template.tags) ? template.tags.join(',') : (template.tags || ''),
             gender: template.gender || 'all',
-            points_cost: template.points_cost || 50,
+            points_cost: pointsCost,
             cover_image: template.cover_image || '',
             reference_image: template.reference_image || '',
             prompt_template: template.prompt?.template || '',
@@ -188,6 +197,17 @@ Page({
     });
 
     this.checkCanSubmit();
+  },
+
+  // 选择价格
+  onPriceChange(e) {
+    const index = parseInt(e.detail.value);
+    const price = PRICE_OPTIONS[index];
+
+    this.setData({
+      priceIndex: index,
+      'formData.points_cost': price
+    });
   },
 
   // 选择性别
@@ -435,8 +455,8 @@ Page({
   // 开始 AI 生成
   async startAiGenerate() {
     const { aiDescription, aiGenerateCover, aiGenerateReference, aiReferenceRatioIndex, ratioOptions } = this.data;
-    if (aiDescription.length < 5) {
-      wx.showToast({ title: '请输入更详细的描述', icon: 'none' });
+    if (!aiDescription.trim()) {
+      wx.showToast({ title: '请输入场景描述', icon: 'none' });
       return;
     }
 
