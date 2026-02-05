@@ -363,8 +363,8 @@ router.post('/:id/return-to-draft', (req, res) => {
       return res.status(404).json({ code: 404, msg: '模板不存在' });
     }
 
-    // 只允许 pending 和 reviewing 状态退回草稿
-    if (!['pending', 'reviewing'].includes(template.status)) {
+    // 只允许 pending、reviewing 和 rejected 状态退回草稿
+    if (!['pending', 'reviewing', 'rejected'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不支持退回草稿' });
     }
 
@@ -400,8 +400,8 @@ router.post('/:id/retry-ai-review', async (req, res) => {
       return res.status(404).json({ code: 404, msg: '模板不存在' });
     }
 
-    // 只允许 pending 和 reviewing 状态重新审核
-    if (!['pending', 'reviewing'].includes(template.status)) {
+    // 只允许 pending、reviewing 和 rejected 状态重新审核
+    if (!['pending', 'reviewing', 'rejected'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不支持重新审核' });
     }
 

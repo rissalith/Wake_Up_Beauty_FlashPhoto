@@ -25,8 +25,10 @@
               <el-radio-button label="">全部待处理</el-radio-button>
               <el-radio-button label="reviewing">审核中</el-radio-button>
               <el-radio-button label="pending">待人工复核</el-radio-button>
+              <el-radio-button label="active">已通过</el-radio-button>
+              <el-radio-button label="rejected">已拒绝</el-radio-button>
             </el-radio-group>
-            <span class="count-text">共 {{ reviewTotal }} 个待审核</span>
+            <span class="count-text">共 {{ reviewTotal }} 个{{ getFilterLabel() }}</span>
           </div>
 
           <!-- 审核列表 -->
@@ -85,18 +87,31 @@
               <el-table-column label="操作" width="300" fixed="right">
                 <template #default="{ row }">
                   <div class="action-btns">
-                    <el-button type="success" link size="small" @click="approveTemplate(row)">
-                      通过
-                    </el-button>
-                    <el-button type="danger" link size="small" @click="showRejectDialog(row)">
-                      拒绝
-                    </el-button>
-                    <el-button type="info" link size="small" @click="returnToDraft(row)">
-                      退回草稿
-                    </el-button>
-                    <el-button type="warning" link size="small" @click="retryAIReview(row)">
-                      重新AI审核
-                    </el-button>
+                    <!-- 待审核状态的操作 -->
+                    <template v-if="['reviewing', 'pending'].includes(row.status)">
+                      <el-button type="success" link size="small" @click="approveTemplate(row)">
+                        通过
+                      </el-button>
+                      <el-button type="danger" link size="small" @click="showRejectDialog(row)">
+                        拒绝
+                      </el-button>
+                      <el-button type="info" link size="small" @click="returnToDraft(row)">
+                        退回草稿
+                      </el-button>
+                      <el-button type="warning" link size="small" @click="retryAIReview(row)">
+                        重新AI审核
+                      </el-button>
+                    </template>
+                    <!-- 已拒绝状态的操作 -->
+                    <template v-else-if="row.status === 'rejected'">
+                      <el-button type="info" link size="small" @click="returnToDraft(row)">
+                        退回草稿
+                      </el-button>
+                      <el-button type="warning" link size="small" @click="retryAIReview(row)">
+                        重新AI审核
+                      </el-button>
+                    </template>
+                    <!-- 通用操作 -->
                     <el-button type="primary" link size="small" @click="previewTemplate(row)">
                       预览
                     </el-button>
@@ -722,7 +737,9 @@ const formatReviewDetails = (details) => {
 const getReviewStatusType = (status) => {
   const map = {
     reviewing: 'warning',
-    pending: 'info'
+    pending: 'info',
+    active: 'success',
+    rejected: 'danger'
   }
   return map[status] || 'info'
 }
@@ -731,7 +748,9 @@ const getReviewStatusType = (status) => {
 const getReviewStatusText = (status) => {
   const map = {
     reviewing: 'AI审核中',
-    pending: '待人工复核'
+    pending: '待人工复核',
+    active: '已通过',
+    rejected: '已拒绝'
   }
   return map[status] || status
 }
@@ -756,6 +775,18 @@ const getListStatusText = (status) => {
     draft: '草稿'
   }
   return map[status] || status
+}
+
+// 审核区域筛选标签
+const getFilterLabel = () => {
+  const labels = {
+    '': '待审核',
+    'reviewing': '审核中',
+    'pending': '待复核',
+    'active': '已通过',
+    'rejected': '已拒绝'
+  }
+  return labels[reviewStatusFilter.value] || '模板'
 }
 
 // 初始化
