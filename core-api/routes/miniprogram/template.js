@@ -664,6 +664,58 @@ function sendNotificationToCreator(creatorId, notification) {
   }
 }
 
+// 撤销审核（用户主动撤回到草稿状态）
+router.post('/:id/withdraw', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({ code: 400, msg: '缺少用户ID' });
+    }
+
+    const db = getDb();
+
+    const template = db.prepare(`
+      SELECT t.*, c.user_id as creator_user_id
+      FROM user_templates t
+      LEFT JOIN creators c ON t.creator_id = c.id
+      WHERE t.id = ?
+    `).get(id);
+
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    if (template.creator_user_id !== user_id) {
+      return res.status(403).json({ code: 403, msg: '无权操作此模板' });
+    }
+
+    // 只允许 reviewing 和 pending 状态撤销
+    if (!['reviewing', 'pending'].includes(template.status)) {
+      return res.status(400).json({ code: 400, msg: '当前状态不支持撤销' });
+    }
+
+    // 更新状态为草稿
+    db.prepare(`
+      UPDATE user_templates
+      SET status = 'draft', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(id);
+
+    // 记录日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, reason)
+      VALUES (?, 'withdraw', '创作者撤销审核')
+    `).run(id);
+
+    res.json({ code: 200, msg: '已撤销审核' });
+  } catch (error) {
+    console.error('[Template] 撤销审核失败:', error);
+    res.status(500).json({ code: 500, msg: '撤销失败' });
+  }
+});
+
 // 下架模板
 router.post('/:id/offline', async (req, res) => {
   try {

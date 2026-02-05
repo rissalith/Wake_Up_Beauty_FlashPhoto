@@ -680,6 +680,15 @@ const api = {
     });
   },
 
+  // 撤销审核（撤回到草稿状态）
+  withdrawTemplate(templateId, userId) {
+    return request({
+      url: `/template/${templateId}/withdraw`,
+      method: 'POST',
+      data: { user_id: userId }
+    });
+  },
+
   // 点赞/取消点赞模板
   likeTemplate(templateId, userId) {
     return request({

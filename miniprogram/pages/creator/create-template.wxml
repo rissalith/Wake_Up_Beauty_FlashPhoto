@@ -14,8 +14,14 @@
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 
-    <!-- AI 智能生成入口 - 始终显示 -->
-    <view class="ai-generate-section">
+    <!-- 审核中提示条 -->
+    <view class="review-notice" wx:if="{{!isEditable}}">
+      <image class="notice-icon" src="/images/icon-info.svg" mode="aspectFit"></image>
+      <text class="notice-text">{{templateStatus === 'reviewing' ? '审核中，如需修改请先撤销审核' : '待人工复核，如需修改请先撤销审核'}}</text>
+    </view>
+
+    <!-- AI 智能生成入口 - 仅可编辑时显示 -->
+    <view class="ai-generate-section" wx:if="{{isEditable}}">
       <view class="ai-generate-card" bindtap="showAiGenerateModal">
         <view class="ai-icon-wrapper">
           <image class="ai-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
@@ -46,12 +52,13 @@
       <view class="form-item">
         <text class="form-label required">模板名称</text>
         <input
-          class="form-input"
+          class="form-input {{isEditable ? '' : 'disabled'}}"
           placeholder="给模板起个名字"
           value="{{formData.name}}"
           bindinput="onInputChange"
           data-field="name"
           maxlength="20"
+          disabled="{{!isEditable}}"
         />
         <text class="form-count">{{formData.name.length || 0}}/20</text>
       </view>
@@ -59,12 +66,13 @@
       <view class="form-item">
         <text class="form-label">模板描述</text>
         <textarea
-          class="form-textarea"
+          class="form-textarea {{isEditable ? '' : 'disabled'}}"
           placeholder="描述一下这个模板的特点和适用场景"
           value="{{formData.description}}"
           bindinput="onInputChange"
           data-field="description"
           maxlength="100"
+          disabled="{{!isEditable}}"
         />
         <text class="form-count">{{formData.description.length || 0}}/100</text>
       </view>
@@ -72,7 +80,7 @@
       <view class="form-row">
         <view class="form-item half">
           <text class="form-label">选择分类</text>
-          <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange">
+          <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange" disabled="{{!isEditable}}">
             <view class="form-picker">
               <view class="picker-text {{categoryIndex >= 0 ? '' : 'placeholder'}}">
                 {{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择'}}
@@ -243,12 +251,21 @@
 
   <!-- 底部按钮 -->
   <view class="bottom-bar" style="padding-bottom: env(safe-area-inset-bottom);">
-    <view class="btn-draft" bindtap="saveDraft">
-      <text class="btn-text">保存草稿</text>
-    </view>
-    <view class="btn-submit {{canSubmit ? '' : 'disabled'}}" bindtap="submitTemplate">
-      <text class="btn-text">提交审核</text>
-    </view>
+    <!-- 审核中/待审核状态：显示撤销按钮 -->
+    <block wx:if="{{templateStatus === 'reviewing' || templateStatus === 'pending'}}">
+      <view class="btn-withdraw" bindtap="withdrawReview">
+        <text class="btn-text">撤销审核</text>
+      </view>
+    </block>
+    <!-- 草稿/已拒绝状态：显示保存和提交按钮 -->
+    <block wx:else>
+      <view class="btn-draft" bindtap="saveDraft">
+        <text class="btn-text">保存草稿</text>
+      </view>
+      <view class="btn-submit {{canSubmit ? '' : 'disabled'}}" bindtap="submitTemplate">
+        <text class="btn-text">提交审核</text>
+      </view>
+    </block>
   </view>
 
   <!-- AI 生成弹窗 -->

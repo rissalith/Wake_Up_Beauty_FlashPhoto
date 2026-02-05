@@ -30,6 +30,8 @@ Page({
     navBarHeight: 64,
     isEdit: false,
     templateId: null,
+    templateStatus: 'draft',  // 模板状态：draft, reviewing, pending, active, rejected
+    isEditable: true,  // 是否可编辑（审核中/待审核时不可编辑）
     categories: [],
     categoryIndex: -1,
     priceOptions: PRICE_OPTIONS,
@@ -151,10 +153,14 @@ Page({
         // 计算价格索引
         const pointsCost = template.points_cost || 50;
         const priceIndex = PRICE_OPTIONS.indexOf(pointsCost);
+        const status = template.status || 'draft';
+        const isEditable = ['draft', 'rejected'].includes(status);
 
         this.setData({
           categoryIndex,
           priceIndex: priceIndex >= 0 ? priceIndex : 9,  // 默认索引9（50醒币）
+          templateStatus: status,
+          isEditable,
           formData: {
             name: template.name || '',
             description: template.description || '',
@@ -305,6 +311,41 @@ Page({
   // 保存草稿
   async saveDraft() {
     await this.saveTemplate(false);
+  },
+
+  // 撤销审核
+  async withdrawReview() {
+    const { templateId, templateStatus } = this.data;
+
+    if (!['reviewing', 'pending'].includes(templateStatus)) {
+      wx.showToast({ title: '当前状态不支持撤销', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '撤销审核',
+      content: '确定要撤销审核吗？撤销后模板将变为草稿状态，可以继续编辑。',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '撤销中...' });
+          try {
+            const userId = wx.getStorageSync('userId');
+            const result = await api.withdrawTemplate(templateId, userId);
+            if (result.code === 200) {
+              wx.showToast({ title: '已撤销', icon: 'success' });
+              this.setData({ templateStatus: 'draft', isEditable: true });
+            } else {
+              wx.showToast({ title: result.msg || '撤销失败', icon: 'none' });
+            }
+          } catch (error) {
+            console.error('撤销审核失败:', error);
+            wx.showToast({ title: '撤销失败', icon: 'none' });
+          } finally {
+            wx.hideLoading();
+          }
+        }
+      }
+    });
   },
 
   // 自动保存草稿（防抖）
