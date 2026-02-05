@@ -82,7 +82,7 @@
                   <span v-else class="no-details">等待审核</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="200" fixed="right">
+              <el-table-column label="操作" width="250" fixed="right">
                 <template #default="{ row }">
                   <div class="action-btns">
                     <el-button type="success" link size="small" @click="approveTemplate(row)">
@@ -90,6 +90,9 @@
                     </el-button>
                     <el-button type="danger" link size="small" @click="showRejectDialog(row)">
                       拒绝
+                    </el-button>
+                    <el-button type="warning" link size="small" @click="retryAIReview(row)">
+                      重新AI审核
                     </el-button>
                     <el-button type="primary" link size="small" @click="previewTemplate(row)">
                       预览
@@ -503,6 +506,28 @@ const confirmReject = async () => {
     console.error('拒绝失败:', error)
   } finally {
     rejecting.value = false
+  }
+}
+
+// 重新 AI 审核
+const retryAIReview = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定要重新触发 AI 审核吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const res = await api.post(`/admin/template-review/${row.id}/retry-ai-review`)
+    if (res.code === 200) {
+      ElMessage.success('已触发重新 AI 审核，请稍后刷新查看结果')
+      loadReviewTemplates()
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('重新审核失败:', error)
+      ElMessage.error('重新审核失败')
+    }
   }
 }
 

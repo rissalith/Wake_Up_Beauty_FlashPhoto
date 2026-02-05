@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../../config/database');
+const { reviewTemplate, generateReviewReport, REVIEW_STATUS } = require('../../lib/ai-review');
 
 // ==================== 静态路由（必须在 /:id 之前定义）====================
 
@@ -349,6 +350,155 @@ router.post('/:id/reject', (req, res) => {
     res.status(500).json({ code: 500, msg: '操作失败' });
   }
 });
+
+// 重新 AI 审核
+router.post('/:id/retry-ai-review', async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { admin_id } = req.body;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    // 只允许 pending 和 reviewing 状态重新审核
+    if (!['pending', 'reviewing'].includes(template.status)) {
+      return res.status(400).json({ code: 400, msg: '当前状态不支持重新审核' });
+    }
+
+    // 获取步骤和 Prompt 配置
+    const steps = db.prepare('SELECT * FROM template_steps WHERE template_id = ? ORDER BY step_order').all(id);
+    const prompts = db.prepare('SELECT * FROM template_prompts WHERE template_id = ?').all(id);
+
+    if (!steps || steps.length === 0) {
+      return res.status(400).json({ code: 400, msg: '模板缺少步骤配置' });
+    }
+
+    if (!prompts || prompts.length === 0) {
+      return res.status(400).json({ code: 400, msg: '模板缺少 Prompt 配置' });
+    }
+
+    // 更新状态为审核中
+    db.prepare(`
+      UPDATE user_templates SET status = 'reviewing', updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).run(id);
+
+    // 记录审核日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, admin_id, reason)
+      VALUES (?, 'retry_ai_review', ?, '管理员触发重新 AI 审核')
+    `).run(id, admin_id || null);
+
+    // 异步执行 AI 审核
+    performAIReview(id, template, steps, prompts).catch(err => {
+      console.error('[Admin] 重新 AI 审核异常:', err);
+    });
+
+    res.json({ code: 200, msg: '已触发重新 AI 审核' });
+  } catch (error) {
+    console.error('[Admin] 重新 AI 审核失败:', error);
+    res.status(500).json({ code: 500, msg: '操作失败' });
+  }
+});
+
+/**
+ * 执行 AI 审核（复用自 miniprogram/template.js）
+ */
+async function performAIReview(templateId, template, steps, prompts) {
+  const db = getDb();
+
+  try {
+    console.log(`[AI审核] 开始审核模板: ${template.name} (${templateId})`);
+
+    // 调用 AI 审核
+    const reviewResult = await reviewTemplate(template, steps, prompts);
+    const report = generateReviewReport(reviewResult);
+
+    // 更新审核结果
+    if (reviewResult.status === REVIEW_STATUS.APPROVED) {
+      // 审核通过，直接上架
+      db.prepare(`
+        UPDATE user_templates
+        SET status = 'active',
+            review_score = ?,
+            review_details = ?,
+            reviewed_at = CURRENT_TIMESTAMP,
+            published_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(reviewResult.score, JSON.stringify(reviewResult), templateId);
+
+      // 更新创作者统计
+      db.prepare(`
+        UPDATE creators SET total_templates = total_templates + 1 WHERE id = ?
+      `).run(template.creator_id);
+
+      // 更新分类统计
+      if (template.category_id) {
+        db.prepare(`
+          UPDATE template_categories SET template_count = template_count + 1 WHERE id = ?
+        `).run(template.category_id);
+      }
+
+      // 记录审核日志
+      db.prepare(`
+        INSERT INTO template_reviews (template_id, action, reason, reviewer_id)
+        VALUES (?, 'approve', ?, 'AI')
+      `).run(templateId, 'AI 自动审核通过');
+
+      console.log(`[AI审核] 模板 ${templateId} 审核通过，已自动上架`);
+
+    } else if (reviewResult.status === REVIEW_STATUS.REJECTED) {
+      // 审核不通过
+      const rejectReason = report.details.map(d => d.message).join('；');
+
+      db.prepare(`
+        UPDATE user_templates
+        SET status = 'rejected',
+            reject_reason = ?,
+            review_score = ?,
+            review_details = ?,
+            reviewed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(rejectReason, reviewResult.score, JSON.stringify(reviewResult), templateId);
+
+      // 记录审核日志
+      db.prepare(`
+        INSERT INTO template_reviews (template_id, action, reason, reviewer_id)
+        VALUES (?, 'reject', ?, 'AI')
+      `).run(templateId, rejectReason);
+
+      console.log(`[AI审核] 模板 ${templateId} 审核不通过: ${rejectReason}`);
+
+    } else {
+      // 审核出错，回退到待审核状态
+      db.prepare(`
+        UPDATE user_templates
+        SET status = 'pending',
+            review_details = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(JSON.stringify(reviewResult), templateId);
+
+      console.log(`[AI审核] 模板 ${templateId} 审核出错，等待人工处理`);
+    }
+
+  } catch (error) {
+    console.error(`[AI审核] 模板 ${templateId} 审核异常:`, error);
+
+    // 审核异常，回退到待审核状态
+    db.prepare(`
+      UPDATE user_templates
+      SET status = 'pending',
+          review_details = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(JSON.stringify({ error: error.message }), templateId);
+  }
+}
 
 // 强制下架
 router.post('/:id/force-offline', (req, res) => {
