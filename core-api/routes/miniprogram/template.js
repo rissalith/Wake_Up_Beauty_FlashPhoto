@@ -314,12 +314,12 @@ router.post('/:id/steps', async (req, res) => {
       return res.status(403).json({ code: 403, msg: '无权修改此模板' });
     }
 
-    if (!['draft', 'rejected', 'reviewing'].includes(template.status)) {
+    if (!['draft', 'rejected', 'reviewing', 'pending'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不允许修改' });
     }
 
-    // 如果是审核中状态，修改后回退到草稿
-    if (template.status === 'reviewing') {
+    // 如果是审核中或待审核状态，修改后回退到草稿
+    if (['reviewing', 'pending'].includes(template.status)) {
       db.prepare(`UPDATE user_templates SET status = 'draft' WHERE id = ?`).run(id);
     }
 
@@ -420,12 +420,12 @@ router.put('/:id/prompt', async (req, res) => {
       return res.status(403).json({ code: 403, msg: '无权修改此模板' });
     }
 
-    if (!['draft', 'rejected', 'reviewing'].includes(template.status)) {
+    if (!['draft', 'rejected', 'reviewing', 'pending'].includes(template.status)) {
       return res.status(400).json({ code: 400, msg: '当前状态不允许修改' });
     }
 
-    // 如果是审核中状态，修改后回退到草稿
-    if (template.status === 'reviewing') {
+    // 如果是审核中或待审核状态，修改后回退到草稿
+    if (['reviewing', 'pending'].includes(template.status)) {
       db.prepare(`UPDATE user_templates SET status = 'draft' WHERE id = ?`).run(id);
     }
 
@@ -568,7 +568,7 @@ async function performAIReview(templateId, template, steps, prompts) {
 
       // 记录审核日志
       db.prepare(`
-        INSERT INTO template_reviews (template_id, action, reason, reviewer)
+        INSERT INTO template_reviews (template_id, action, reason, reviewer_id)
         VALUES (?, 'approve', ?, 'AI')
       `).run(templateId, 'AI 自动审核通过');
 
@@ -599,7 +599,7 @@ async function performAIReview(templateId, template, steps, prompts) {
 
       // 记录审核日志
       db.prepare(`
-        INSERT INTO template_reviews (template_id, action, reason, reviewer)
+        INSERT INTO template_reviews (template_id, action, reason, reviewer_id)
         VALUES (?, 'reject', ?, 'AI')
       `).run(templateId, rejectReason);
 
