@@ -82,7 +82,7 @@
                   <span v-else class="no-details">等待审核</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="250" fixed="right">
+              <el-table-column label="操作" width="300" fixed="right">
                 <template #default="{ row }">
                   <div class="action-btns">
                     <el-button type="success" link size="small" @click="approveTemplate(row)">
@@ -90,6 +90,9 @@
                     </el-button>
                     <el-button type="danger" link size="small" @click="showRejectDialog(row)">
                       拒绝
+                    </el-button>
+                    <el-button type="info" link size="small" @click="returnToDraft(row)">
+                      退回草稿
                     </el-button>
                     <el-button type="warning" link size="small" @click="retryAIReview(row)">
                       重新AI审核
@@ -506,6 +509,28 @@ const confirmReject = async () => {
     console.error('拒绝失败:', error)
   } finally {
     rejecting.value = false
+  }
+}
+
+// 退回草稿
+const returnToDraft = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定要将该模板退回草稿状态吗？创作者可以继续编辑后重新提交。', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+
+    const res = await api.post(`/admin/template-review/${row.id}/return-to-draft`)
+    if (res.code === 200) {
+      ElMessage.success('已退回草稿')
+      loadReviewTemplates()
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('退回草稿失败:', error)
+      ElMessage.error('退回草稿失败')
+    }
   }
 }
 

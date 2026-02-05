@@ -351,6 +351,43 @@ router.post('/:id/reject', (req, res) => {
   }
 });
 
+// 退回草稿
+router.post('/:id/return-to-draft', (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const { admin_id, reason } = req.body;
+
+    const template = db.prepare('SELECT * FROM user_templates WHERE id = ?').get(id);
+    if (!template) {
+      return res.status(404).json({ code: 404, msg: '模板不存在' });
+    }
+
+    // 只允许 pending 和 reviewing 状态退回草稿
+    if (!['pending', 'reviewing'].includes(template.status)) {
+      return res.status(400).json({ code: 400, msg: '当前状态不支持退回草稿' });
+    }
+
+    // 更新模板状态为草稿
+    db.prepare(`
+      UPDATE user_templates
+      SET status = 'draft', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(id);
+
+    // 记录审核日志
+    db.prepare(`
+      INSERT INTO template_reviews (template_id, action, admin_id, reason)
+      VALUES (?, 'return_to_draft', ?, ?)
+    `).run(id, admin_id || null, reason || '管理员退回草稿');
+
+    res.json({ code: 200, msg: '已退回草稿' });
+  } catch (error) {
+    console.error('[Admin] 退回草稿失败:', error);
+    res.status(500).json({ code: 500, msg: '操作失败' });
+  }
+});
+
 // 重新 AI 审核
 router.post('/:id/retry-ai-review', async (req, res) => {
   try {
