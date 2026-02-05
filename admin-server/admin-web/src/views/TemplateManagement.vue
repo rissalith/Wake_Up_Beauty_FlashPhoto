@@ -679,7 +679,40 @@ const formatTime = (time) => {
 const formatReviewDetails = (details) => {
   try {
     const obj = typeof details === 'string' ? JSON.parse(details) : details
-    return JSON.stringify(obj, null, 2)
+    if (!obj) return '暂无详情'
+
+    // 格式化 AI 审核结果
+    let result = []
+
+    if (obj.status) {
+      const statusMap = { approved: '通过', rejected: '不通过', error: '审核出错' }
+      result.push(`审核结果: ${statusMap[obj.status] || obj.status}`)
+    }
+
+    if (obj.score !== undefined) {
+      result.push(`综合得分: ${obj.score}`)
+    }
+
+    if (obj.dimensions && Array.isArray(obj.dimensions)) {
+      result.push('\n各维度评分:')
+      obj.dimensions.forEach(d => {
+        const statusIcon = d.passed ? '✓' : '✗'
+        result.push(`  ${statusIcon} ${d.name}: ${d.score}分 - ${d.feedback || ''}`)
+      })
+    }
+
+    if (obj.suggestions && Array.isArray(obj.suggestions) && obj.suggestions.length > 0) {
+      result.push('\n改进建议:')
+      obj.suggestions.forEach((s, i) => {
+        result.push(`  ${i + 1}. ${s}`)
+      })
+    }
+
+    if (obj.error) {
+      result.push(`错误信息: ${obj.error}`)
+    }
+
+    return result.length > 0 ? result.join('\n') : JSON.stringify(obj, null, 2)
   } catch {
     return details
   }
@@ -697,7 +730,7 @@ const getReviewStatusType = (status) => {
 // 审核状态文本
 const getReviewStatusText = (status) => {
   const map = {
-    reviewing: '审核中',
+    reviewing: 'AI审核中',
     pending: '待人工复核'
   }
   return map[status] || status
