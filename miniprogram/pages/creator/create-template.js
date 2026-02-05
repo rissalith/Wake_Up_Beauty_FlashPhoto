@@ -331,6 +331,7 @@ Page({
           try {
             const userId = wx.getStorageSync('userId');
             const result = await api.withdrawTemplate(templateId, userId);
+            wx.hideLoading();
             if (result.code === 200) {
               wx.showToast({ title: '已撤销', icon: 'success' });
               this.setData({ templateStatus: 'draft', isEditable: true });
@@ -338,10 +339,9 @@ Page({
               wx.showToast({ title: result.msg || '撤销失败', icon: 'none' });
             }
           } catch (error) {
+            wx.hideLoading();
             console.error('撤销审核失败:', error);
             wx.showToast({ title: '撤销失败', icon: 'none' });
-          } finally {
-            wx.hideLoading();
           }
         }
       }
