@@ -484,9 +484,6 @@ I18nPage({
         }
       }
 
-      // 获取当前语言
-      const currentLang = getCurrentLang();
-
       // 初始化用户图配置（场景模式使用默认配置）
       const userImageConfig = {
         max_count: 3,
