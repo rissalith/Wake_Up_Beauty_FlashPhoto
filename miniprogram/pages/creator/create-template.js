@@ -24,6 +24,24 @@ const RATIO_OPTIONS = [
 // 价格选项 (5-100，步长5)
 const PRICE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
 
+// 图片用途选项
+const IMAGE_ROLE_OPTIONS = [
+  { value: 'face_source', label: '人脸来源' },
+  { value: 'pose_reference', label: '姿势参考' },
+  { value: 'style_reference', label: '风格参考' },
+  { value: 'background', label: '背景素材' },
+  { value: 'other', label: '其他' }
+];
+
+// 默认用户图配置
+const DEFAULT_USER_IMAGE_CONFIG = {
+  max_count: 1,
+  min_count: 1,  // 最少需要上传的数量
+  slots: [
+    { index: 1, title: '上传照片', description: '请上传清晰的正面照片', required: true, role: 'face_source', roleIndex: 0 }
+  ]
+};
+
 Page({
   data: {
     statusBarHeight: 20,
@@ -88,7 +106,12 @@ Page({
     showModifyModal: false,     // 是否显示修改弹窗
     modifyTarget: '',           // 修改目标：'steps' 或 'prompt'
     modifyInstruction: '',      // 修改指令
-    partialModifying: false     // 是否正在修改中
+    partialModifying: false,    // 是否正在修改中
+
+    // 用户图配置相关
+    userImageConfig: JSON.parse(JSON.stringify(DEFAULT_USER_IMAGE_CONFIG)),
+    imageRoleOptions: IMAGE_ROLE_OPTIONS,
+    minCountOptions: [0, 1]  // 动态计算，最大为 max_count
   },
 
   onLoad(options) {
@@ -156,11 +179,23 @@ Page({
         const status = template.status || 'draft';
         const isEditable = ['draft', 'rejected'].includes(status);
 
+        // 解析用户图配置
+        let userImageConfig = JSON.parse(JSON.stringify(DEFAULT_USER_IMAGE_CONFIG));
+        if (template.userImageConfig) {
+          userImageConfig = template.userImageConfig;
+          // 为每个槽位添加 roleIndex
+          userImageConfig.slots = userImageConfig.slots.map(slot => {
+            const roleIndex = IMAGE_ROLE_OPTIONS.findIndex(r => r.value === slot.role);
+            return { ...slot, roleIndex: roleIndex >= 0 ? roleIndex : 0 };
+          });
+        }
+
         this.setData({
           categoryIndex,
           priceIndex: priceIndex >= 0 ? priceIndex : 9,  // 默认索引9（50醒币）
           templateStatus: status,
           isEditable,
+          userImageConfig,
           formData: {
             name: template.name || '',
             description: template.description || '',
@@ -411,7 +446,7 @@ Page({
       return;
     }
 
-    const { formData, isEdit, templateId } = this.data;
+    const { formData, isEdit, templateId, userImageConfig } = this.data;
 
     if (!silent) {
       wx.showLoading({ title: submitReview ? '提交中...' : '保存中...' });
@@ -431,7 +466,10 @@ Page({
         points_cost: parseInt(formData.points_cost) || 50,
         cover_image: formData.cover_image,
         reference_image: formData.reference_image,
-        steps: formData.steps  // 包含步骤配置
+        steps: formData.steps,  // 包含步骤配置
+        // 用户图配置
+        user_image_count: userImageConfig.max_count,
+        user_image_config: JSON.stringify(userImageConfig)
       };
 
       if (isEdit && templateId) {
@@ -1220,5 +1258,115 @@ Page({
     } finally {
       this.setData({ partialModifying: false });
     }
+  },
+
+  // ==================== 用户图配置相关方法 ====================
+
+  // 设置用户图数量
+  setUserImageCount(e) {
+    const count = e.currentTarget.dataset.count;
+    const { userImageConfig } = this.data;
+
+    // 调整槽位数量
+    const newSlots = [];
+    for (let i = 0; i < count; i++) {
+      if (userImageConfig.slots[i]) {
+        // 保留已有配置
+        newSlots.push({ ...userImageConfig.slots[i], index: i + 1 });
+      } else {
+        // 创建新槽位
+        newSlots.push({
+          index: i + 1,
+          title: `照片${i + 1}`,
+          description: '',
+          required: i === 0,  // 第一张默认必填
+          role: 'face_source',
+          roleIndex: 0
+        });
+      }
+    }
+
+    // 更新最小数量选项（0 到 max_count）
+    const minCountOptions = [];
+    for (let i = 0; i <= count; i++) {
+      minCountOptions.push(i);
+    }
+
+    // 如果当前 min_count 大于新的 max_count，调整它
+    const newMinCount = Math.min(userImageConfig.min_count, count);
+
+    this.setData({
+      'userImageConfig.max_count': count,
+      'userImageConfig.min_count': newMinCount,
+      'userImageConfig.slots': newSlots,
+      minCountOptions
+    });
+    this.scheduleAutoSave();
+  },
+
+  // 设置最少上传数量
+  setMinImageCount(e) {
+    const count = e.currentTarget.dataset.count;
+    this.setData({
+      'userImageConfig.min_count': count
+    });
+    this.scheduleAutoSave();
+  },
+
+  // 切换槽位必填状态
+  toggleSlotRequired(e) {
+    const index = e.currentTarget.dataset.index;
+    const { userImageConfig } = this.data;
+    const newRequired = !userImageConfig.slots[index].required;
+
+    this.setData({
+      [`userImageConfig.slots[${index}].required`]: newRequired
+    });
+
+    // 更新最小数量
+    this.updateMinCount();
+    this.scheduleAutoSave();
+  },
+
+  // 更新最小上传数量
+  updateMinCount() {
+    const { userImageConfig } = this.data;
+    const minCount = userImageConfig.slots.filter(s => s.required).length;
+    this.setData({
+      'userImageConfig.min_count': Math.max(1, minCount)
+    });
+  },
+
+  // 槽位标题输入
+  onSlotTitleInput(e) {
+    const index = e.currentTarget.dataset.index;
+    const value = e.detail.value;
+    this.setData({
+      [`userImageConfig.slots[${index}].title`]: value
+    });
+    this.scheduleAutoSave();
+  },
+
+  // 槽位描述输入
+  onSlotDescInput(e) {
+    const index = e.currentTarget.dataset.index;
+    const value = e.detail.value;
+    this.setData({
+      [`userImageConfig.slots[${index}].description`]: value
+    });
+    this.scheduleAutoSave();
+  },
+
+  // 槽位用途选择
+  onSlotRoleChange(e) {
+    const index = e.currentTarget.dataset.index;
+    const roleIndex = parseInt(e.detail.value);
+    const role = IMAGE_ROLE_OPTIONS[roleIndex].value;
+
+    this.setData({
+      [`userImageConfig.slots[${index}].role`]: role,
+      [`userImageConfig.slots[${index}].roleIndex`]: roleIndex
+    });
+    this.scheduleAutoSave();
   }
 });

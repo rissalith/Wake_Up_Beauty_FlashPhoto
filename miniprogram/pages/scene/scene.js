@@ -1361,8 +1361,15 @@ I18nPage({
 
   // 显示支付弹窗
   showPaymentModal() {
-    if (this.data.uploadedImages.length === 0) {
-      wx.showToast({ title: t('fp_pleaseUpload') || '请先上传照片', icon: 'none' });
+    const { uploadedImages, userImageConfig } = this.data;
+    const minCount = userImageConfig.min_count || 1;
+
+    // 检查最少上传数量
+    if (uploadedImages.length < minCount) {
+      const msg = minCount === 1
+        ? (t('fp_pleaseUpload') || '请先上传照片')
+        : `请至少上传${minCount}张照片`;
+      wx.showToast({ title: msg, icon: 'none' });
       return;
     }
 
@@ -1457,8 +1464,15 @@ I18nPage({
 
   // 生成照片
   async generatePhoto() {
-    if (this.data.uploadedImages.length === 0) {
-      wx.showToast({ title: t('fp_pleaseUpload') || '请先上传照片', icon: 'none' });
+    const { uploadedImages, userImageConfig } = this.data;
+    const minCount = userImageConfig.min_count || 1;
+
+    // 检查最少上传数量
+    if (uploadedImages.length < minCount) {
+      const msg = minCount === 1
+        ? (t('fp_pleaseUpload') || '请先上传照片')
+        : `请至少上传${minCount}张照片`;
+      wx.showToast({ title: msg, icon: 'none' });
       return;
     }
 

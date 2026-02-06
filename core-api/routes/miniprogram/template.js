@@ -46,7 +46,9 @@ router.post('/', async (req, res) => {
       category_id,
       tags,
       gender = 'all',
-      points_cost = 50
+      points_cost = 50,
+      user_image_count = 1,
+      user_image_config
     } = req.body;
 
     if (!user_id) {
@@ -69,11 +71,13 @@ router.post('/', async (req, res) => {
     db.prepare(`
       INSERT INTO user_templates (
         id, creator_id, name, name_en, description, description_en,
-        cover_image, reference_image, category_id, tags, gender, points_cost, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+        cover_image, reference_image, category_id, tags, gender, points_cost,
+        user_image_count, user_image_config, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
     `).run(
       templateId, creator.id, name, name_en || null, description || null, description_en || null,
-      cover_image || null, reference_image || null, category_id || null, tags || null, gender, points_cost
+      cover_image || null, reference_image || null, category_id || null, tags || null, gender, points_cost,
+      user_image_count, user_image_config || null
     );
 
     res.json({
@@ -127,6 +131,16 @@ router.get('/:id', async (req, res) => {
       SELECT * FROM template_prompts WHERE template_id = ? AND is_active = 1 LIMIT 1
     `).get(id);
 
+    // 解析用户图配置
+    let userImageConfig = null;
+    if (template.user_image_config) {
+      try {
+        userImageConfig = JSON.parse(template.user_image_config);
+      } catch (e) {
+        console.error('[Template] 解析用户图配置失败:', e);
+      }
+    }
+
     res.json({
       code: 200,
       data: {
@@ -135,7 +149,8 @@ router.get('/:id', async (req, res) => {
         is_featured: template.is_featured === 1,
         is_official: template.is_official === 1,
         steps,
-        prompt
+        prompt,
+        userImageConfig
       }
     });
   } catch (error) {
@@ -159,7 +174,9 @@ router.put('/:id', async (req, res) => {
       category_id,
       tags,
       gender,
-      points_cost
+      points_cost,
+      user_image_count,
+      user_image_config
     } = req.body;
 
     if (!user_id) {
@@ -201,6 +218,8 @@ router.put('/:id', async (req, res) => {
     if (tags !== undefined) { updates.push('tags = ?'); params.push(tags); }
     if (gender !== undefined) { updates.push('gender = ?'); params.push(gender); }
     if (points_cost !== undefined) { updates.push('points_cost = ?'); params.push(points_cost); }
+    if (user_image_count !== undefined) { updates.push('user_image_count = ?'); params.push(user_image_count); }
+    if (user_image_config !== undefined) { updates.push('user_image_config = ?'); params.push(user_image_config); }
 
     if (updates.length > 0) {
       updates.push('updated_at = CURRENT_TIMESTAMP');

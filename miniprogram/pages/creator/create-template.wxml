@@ -178,7 +178,88 @@
       <text class="upload-tips">参考图：AI 将基于此图生成，用户的脸会替换到这张图中</text>
     </view>
 
-    <!-- 区块3：用户操作步骤（插槽配置） -->
+    <!-- 区块3：用户上传图配置 -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">用户上传图配置</text>
+        <text class="section-hint">配置用户需要上传的照片</text>
+      </view>
+
+      <!-- 图片数量配置 -->
+      <view class="form-item">
+        <text class="form-label">最多上传数量</text>
+        <view class="image-count-options">
+          <view
+            class="count-option {{userImageConfig.max_count === item ? 'active' : ''}}"
+            wx:for="{{[1, 2, 3, 4, 5]}}"
+            wx:key="*this"
+            bindtap="setUserImageCount"
+            data-count="{{item}}"
+          >
+            <text>{{item}}张</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最少上传数量 -->
+      <view class="form-item">
+        <text class="form-label">最少上传数量</text>
+        <view class="min-count-options">
+          <view
+            class="count-option small {{userImageConfig.min_count === item ? 'active' : ''}}"
+            wx:for="{{minCountOptions}}"
+            wx:key="*this"
+            bindtap="setMinImageCount"
+            data-count="{{item}}"
+          >
+            <text>{{item === 0 ? '不限' : item + '张'}}</text>
+          </view>
+        </view>
+        <text class="form-hint">设为0表示用户可以不上传照片</text>
+      </view>
+
+      <!-- 图片槽位配置 -->
+      <view class="image-slots-config">
+        <view class="slot-item" wx:for="{{userImageConfig.slots}}" wx:key="index">
+          <view class="slot-header">
+            <view class="slot-number">{{index + 1}}</view>
+            <text class="slot-title-label">第{{index + 1}}张图片</text>
+            <view class="slot-required {{item.required ? 'active' : ''}}" bindtap="toggleSlotRequired" data-index="{{index}}">
+              <text>{{item.required ? '必填' : '选填'}}</text>
+            </view>
+          </view>
+          <view class="slot-form">
+            <input
+              class="slot-input"
+              placeholder="图片标题，如：正面照"
+              value="{{item.title}}"
+              bindinput="onSlotTitleInput"
+              data-index="{{index}}"
+              maxlength="10"
+            />
+            <input
+              class="slot-input"
+              placeholder="图片说明，如：请上传清晰的正面照片"
+              value="{{item.description}}"
+              bindinput="onSlotDescInput"
+              data-index="{{index}}"
+              maxlength="30"
+            />
+            <view class="slot-role-picker">
+              <text class="role-label">图片用途：</text>
+              <picker mode="selector" range="{{imageRoleOptions}}" range-key="label" value="{{item.roleIndex || 0}}" bindchange="onSlotRoleChange" data-index="{{index}}">
+                <view class="role-picker-btn">
+                  <text>{{imageRoleOptions[item.roleIndex || 0].label}}</text>
+                  <image class="picker-arrow" src="/images/icon-arrow-down.svg" mode="aspectFit"></image>
+                </view>
+              </picker>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 区块4：用户操作步骤（插槽配置） -->
     <view class="section-card">
       <view class="section-header">
         <text class="section-title">用户操作步骤</text>
