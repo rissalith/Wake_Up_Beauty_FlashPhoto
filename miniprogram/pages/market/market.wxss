@@ -33,8 +33,8 @@
 }
 
 .lang-option {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
   border-radius: 6px;
@@ -51,7 +51,8 @@
 }
 
 .nav-title-img {
-  height: 28px;
+  height: 68px;
+  margin-top: 4px;
 }
 
 .nav-placeholder {

@@ -118,7 +118,7 @@ Component({
 
     // 用户选择稍后登录
     onSkip() {
-      this.triggerEvent('skip');
+      this.triggerEvent('close');
     }
   }
 });

@@ -213,14 +213,7 @@ Page({
   // 跳转到制作页面（直接做同款）
   goToTemplate(e) {
     const templateId = e.currentTarget.dataset.id;
-    const userId = wx.getStorageSync('userId');
-
-    if (!userId) {
-      this.setData({ showLoginModal: true });
-      return;
-    }
-
-    // 直接跳转到场景页制作
+    // 允许未登录用户进入场景页浏览，登录检查移到场景页的功能操作时
     wx.navigateTo({
       url: `/pages/scene/scene?template_id=${templateId}`
     });
@@ -229,14 +222,7 @@ Page({
   // 做同款
   doSame(e) {
     const templateId = e.currentTarget.dataset.id;
-    const userId = wx.getStorageSync('userId');
-
-    if (!userId) {
-      this.setData({ showLoginModal: true });
-      return;
-    }
-
-    // 跳转到场景页，带上模板ID（使用 template_id 参数名与 scene.js 保持一致）
+    // 允许未登录用户进入场景页浏览，登录检查移到场景页的功能操作时
     wx.navigateTo({
       url: `/pages/scene/scene?template_id=${templateId}`
     });
