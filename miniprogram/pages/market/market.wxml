@@ -69,22 +69,17 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <view class="like-badge">
-              <image class="like-badge-icon" src="/images/icon-heart.svg" mode="aspectFit"></image>
-              <text class="like-badge-count">{{item.like_count || 0}}</text>
+            <!-- 左上角原图缩略图 -->
+            <view class="reference-thumb" wx:if="{{item.reference_image}}">
+              <image class="reference-image" src="{{item.reference_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
+              <text class="reference-label">{{i18n.text('原图', 'Original', currentLang)}}</text>
             </view>
           </view>
-          <view class="card-bottom">
-            <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
-            <view class="card-meta-row">
-              <view class="creator-info">
-                <image class="creator-avatar" src="{{i18n.getAvatar(item.creator, officialAvatar)}}" mode="aspectFill"></image>
-                <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
-              </view>
-              <view class="price-info">
-                <text class="price-text" wx:if="{{item.points_cost > 0}}">{{item.points_cost}}{{i18n.text('醒币', 'coins', currentLang)}}</text>
-                <text class="price-text free" wx:else>{{i18n.text('免费', 'Free', currentLang)}}</text>
-              </view>
+          <view class="card-bottom-new">
+            <text class="card-title-new">{{i18n.getName(item, currentLang)}}</text>
+            <view class="do-same-btn" catchtap="doSame" data-id="{{item.id}}">
+              <image class="spark-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text class="do-same-text">{{i18n.text('做同款', 'Try it', currentLang)}}</text>
             </view>
           </view>
         </view>
@@ -106,22 +101,17 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <view class="like-badge">
-              <image class="like-badge-icon" src="/images/icon-heart.svg" mode="aspectFit"></image>
-              <text class="like-badge-count">{{item.like_count || 0}}</text>
+            <!-- 左上角原图缩略图 -->
+            <view class="reference-thumb" wx:if="{{item.reference_image}}">
+              <image class="reference-image" src="{{item.reference_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
+              <text class="reference-label">{{i18n.text('原图', 'Original', currentLang)}}</text>
             </view>
           </view>
-          <view class="card-bottom">
-            <text class="card-title">{{i18n.getName(item, currentLang)}}</text>
-            <view class="card-meta-row">
-              <view class="creator-info">
-                <image class="creator-avatar" src="{{i18n.getAvatar(item.creator, officialAvatar)}}" mode="aspectFill"></image>
-                <text class="creator-name">{{item.creator.name || i18n.text('醒美官方', 'Official', currentLang)}}</text>
-              </view>
-              <view class="price-info">
-                <text class="price-text" wx:if="{{item.points_cost > 0}}">{{item.points_cost}}{{i18n.text('醒币', 'coins', currentLang)}}</text>
-                <text class="price-text free" wx:else>{{i18n.text('免费', 'Free', currentLang)}}</text>
-              </view>
+          <view class="card-bottom-new">
+            <text class="card-title-new">{{i18n.getName(item, currentLang)}}</text>
+            <view class="do-same-btn" catchtap="doSame" data-id="{{item.id}}">
+              <image class="spark-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+              <text class="do-same-text">{{i18n.text('做同款', 'Try it', currentLang)}}</text>
             </view>
           </view>
         </view>

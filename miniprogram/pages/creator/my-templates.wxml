@@ -105,6 +105,11 @@ module.exports = {
         <!-- 封面区域 -->
         <view class="card-cover-wrap" bindtap="onTemplateClick" data-id="{{item.id}}" data-status="{{item.status}}">
           <image class="card-cover" src="{{item.cover_image || '/images/placeholder.svg'}}" mode="aspectFill" lazy-load="{{true}}"></image>
+          <!-- 左上角原图缩略图 -->
+          <view class="reference-thumb" wx:if="{{item.reference_image}}">
+            <image class="reference-image" src="{{item.reference_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
+            <text class="reference-label">原图</text>
+          </view>
           <!-- 状态标签 -->
           <view class="card-status {{item.status}}">
             <text>{{utils.getStatusText(item.status)}}</text>

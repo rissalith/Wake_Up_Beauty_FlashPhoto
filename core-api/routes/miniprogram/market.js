@@ -108,7 +108,7 @@ router.get('/templates', (req, res) => {
     // 查询列表
     const listSql = `
       SELECT
-        t.id, t.name, t.name_en, t.description, t.cover_image,
+        t.id, t.name, t.name_en, t.description, t.cover_image, t.reference_image,
         t.category_id, t.tags, t.gender, t.points_cost,
         t.is_featured, t.is_official,
         t.view_count, t.use_count, t.like_count, t.favorite_count,
@@ -129,6 +129,7 @@ router.get('/templates', (req, res) => {
       name_en: t.name_en,
       description: t.description,
       cover_image: t.cover_image,
+      reference_image: t.reference_image,
       category_id: t.category_id,
       tags: t.tags ? t.tags.split(',') : [],
       gender: t.gender,
@@ -172,7 +173,7 @@ router.get('/featured', (req, res) => {
 
     const templates = db.prepare(`
       SELECT
-        t.id, t.name, t.name_en, t.description, t.cover_image,
+        t.id, t.name, t.name_en, t.description, t.cover_image, t.reference_image,
         t.category_id, t.tags, t.gender, t.points_cost,
         t.is_featured, t.is_official,
         t.view_count, t.use_count, t.like_count, t.favorite_count,
@@ -191,6 +192,7 @@ router.get('/featured', (req, res) => {
       name_en: t.name_en,
       description: t.description,
       cover_image: t.cover_image,
+      reference_image: t.reference_image,
       category_id: t.category_id,
       tags: t.tags ? t.tags.split(',') : [],
       gender: t.gender,
@@ -228,7 +230,7 @@ router.get('/hot', (req, res) => {
 
     const templates = db.prepare(`
       SELECT
-        t.id, t.name, t.name_en, t.description, t.cover_image,
+        t.id, t.name, t.name_en, t.description, t.cover_image, t.reference_image,
         t.category_id, t.tags, t.gender, t.points_cost,
         t.is_featured, t.is_official,
         t.view_count, t.use_count, t.like_count, t.favorite_count,
@@ -247,6 +249,7 @@ router.get('/hot', (req, res) => {
       name_en: t.name_en,
       description: t.description,
       cover_image: t.cover_image,
+      reference_image: t.reference_image,
       category_id: t.category_id,
       tags: t.tags ? t.tags.split(',') : [],
       gender: t.gender,
@@ -411,7 +414,7 @@ router.get('/search', (req, res) => {
     // 查询列表
     const templates = db.prepare(`
       SELECT
-        t.id, t.name, t.name_en, t.description, t.cover_image,
+        t.id, t.name, t.name_en, t.description, t.cover_image, t.reference_image,
         t.category_id, t.tags, t.gender, t.points_cost,
         t.is_featured, t.is_official,
         t.view_count, t.use_count, t.like_count, t.favorite_count,
@@ -431,6 +434,7 @@ router.get('/search', (req, res) => {
       name_en: t.name_en,
       description: t.description,
       cover_image: t.cover_image,
+      reference_image: t.reference_image,
       category_id: t.category_id,
       tags: t.tags ? t.tags.split(',') : [],
       gender: t.gender,
