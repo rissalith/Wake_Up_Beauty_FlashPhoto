@@ -659,6 +659,20 @@ function createTables() {
     } catch (e) {}
   }
 
+  // 用户上传图数量配置
+  if (!columnNames.includes('user_image_count')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN user_image_count INTEGER DEFAULT 1');
+    } catch (e) {}
+  }
+
+  // 用户上传图配置（JSON格式，包含每个槽位的标题和描述）
+  if (!columnNames.includes('user_image_config')) {
+    try {
+      db.exec('ALTER TABLE user_templates ADD COLUMN user_image_config TEXT');
+    } catch (e) {}
+  }
+
   // 模板步骤配置表
   db.exec(`
     CREATE TABLE IF NOT EXISTS template_steps (
@@ -713,6 +727,26 @@ function createTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE
+    )
+  `);
+
+  // 模板参考图配置表（创作者上传的参考图）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS template_reference_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id TEXT NOT NULL,
+      image_index INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      title_en TEXT,
+      description TEXT,
+      description_en TEXT,
+      image_url TEXT,
+      role TEXT DEFAULT 'style_reference',
+      is_required INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES user_templates(id) ON DELETE CASCADE,
+      UNIQUE(template_id, image_index)
     )
   `);
 
@@ -1010,6 +1044,7 @@ function createIndexes() {
     'CREATE INDEX IF NOT EXISTS idx_template_steps_template ON template_steps(template_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_step_options_step ON template_step_options(step_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_prompts_template ON template_prompts(template_id)',
+    'CREATE INDEX IF NOT EXISTS idx_template_reference_images_template ON template_reference_images(template_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_favorites_user ON template_favorites(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_favorites_template ON template_favorites(template_id)',
     'CREATE INDEX IF NOT EXISTS idx_template_likes_user ON template_likes(user_id)',

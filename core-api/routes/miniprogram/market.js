@@ -328,6 +328,38 @@ router.get('/templates/:id', (req, res) => {
       LIMIT 1
     `).get(id);
 
+    // 获取创作者参考图配置
+    const referenceImages = db.prepare(`
+      SELECT * FROM template_reference_images
+      WHERE template_id = ?
+      ORDER BY sort_order ASC
+    `).all(id);
+
+    // 解析用户图配置
+    let userImageConfig = null;
+    if (template.user_image_config) {
+      try {
+        userImageConfig = JSON.parse(template.user_image_config);
+      } catch (e) {
+        console.error('[Market] 解析用户图配置失败:', e);
+      }
+    }
+    // 如果没有配置，使用默认配置
+    if (!userImageConfig) {
+      userImageConfig = {
+        max_count: template.user_image_count || 1,
+        slots: [{
+          index: 1,
+          title: '上传照片',
+          title_en: 'Upload Photo',
+          description: '请上传清晰的正面照片',
+          description_en: 'Please upload a clear front photo',
+          required: true,
+          role: 'face_source'
+        }]
+      };
+    }
+
     // 检查用户是否已点赞/收藏
     let isLiked = false;
     let isFavorited = false;
@@ -379,6 +411,19 @@ router.get('/templates/:id', (req, res) => {
           reference_weight: prompt.reference_weight,
           face_swap_mode: prompt.face_swap_mode
         } : null,
+        // 新增：创作者参考图配置
+        referenceImages: referenceImages.map(img => ({
+          index: img.image_index,
+          title: img.title,
+          title_en: img.title_en,
+          description: img.description,
+          description_en: img.description_en,
+          image_url: img.image_url,
+          role: img.role,
+          is_required: img.is_required === 1
+        })),
+        // 新增：用户上传图配置
+        userImageConfig,
         isLiked,
         isFavorited
       }

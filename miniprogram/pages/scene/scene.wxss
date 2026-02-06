@@ -1230,3 +1230,358 @@
   color: #999;
   font-size: 26rpx;
 }
+
+/* ========== 双栏布局样式 ========== */
+.dual-column-layout {
+  display: flex;
+  flex-direction: row;
+  padding: 16rpx;
+  gap: 16rpx;
+}
+
+/* 左侧列 - 参考图 */
+.left-column {
+  width: 45%;
+  flex-shrink: 0;
+}
+
+/* 右侧列 - 上传区和流程组件 */
+.right-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* 参考图区域 */
+.reference-section {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 20rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.reference-main-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+}
+
+.reference-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reference-badge {
+  position: absolute;
+  bottom: 12rpx;
+  right: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 6rpx 12rpx;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20rpx;
+}
+
+.badge-icon {
+  width: 24rpx;
+  height: 24rpx;
+}
+
+.badge-text {
+  font-size: 20rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* 多参考图列表 */
+.reference-list {
+  padding: 12rpx 16rpx;
+  white-space: nowrap;
+}
+
+.reference-thumb-list {
+  display: inline-flex;
+  gap: 12rpx;
+}
+
+.reference-thumb {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  border: 3rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.reference-thumb.active {
+  border-color: #ff6b35;
+}
+
+.thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 参考图说明 */
+.reference-info {
+  padding: 12rpx 16rpx 16rpx;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.reference-desc {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* 用户上传区 */
+.user-upload-section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.upload-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.upload-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.upload-slot {
+  position: relative;
+  width: calc(50% - 6rpx);
+  aspect-ratio: 1;
+  border-radius: 12rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-slot.filled {
+  background: #f5f5f5;
+}
+
+.upload-slot.empty {
+  background: #fafafa;
+  border: 2rpx dashed #ddd;
+}
+
+.upload-slot.empty.required {
+  border-color: #ff6b35;
+  border-style: dashed;
+}
+
+.upload-slot.uploading {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+}
+
+.slot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slot-delete {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-icon {
+  width: 20rpx;
+  height: 20rpx;
+}
+
+.slot-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8rpx;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+.slot-label text {
+  font-size: 20rpx;
+  color: #fff;
+}
+
+.slot-add-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-bottom: 8rpx;
+}
+
+.slot-add-icon image {
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.slot-title {
+  font-size: 24rpx;
+  color: #666;
+  text-align: center;
+}
+
+.slot-hint {
+  font-size: 20rpx;
+  color: #999;
+  text-align: center;
+  margin-top: 4rpx;
+}
+
+.required-badge {
+  position: absolute;
+  top: 8rpx;
+  left: 8rpx;
+  padding: 4rpx 8rpx;
+  background: #ff6b35;
+  border-radius: 6rpx;
+}
+
+.required-badge text {
+  font-size: 18rpx;
+  color: #fff;
+}
+
+.upload-tips {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 12rpx;
+  text-align: center;
+}
+
+/* 流程组件区 */
+.flow-components-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.flow-components-section .config-section {
+  margin: 0;
+  padding: 16rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.flow-components-section .section-header {
+  padding: 0 0 12rpx 0;
+}
+
+/* Prompt 预览区 */
+.prompt-preview-section {
+  margin: 16rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.prompt-preview-section .section-header {
+  padding: 16rpx 20rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: #ff6b35;
+}
+
+.toggle-icon {
+  width: 24rpx;
+  height: 24rpx;
+  transition: transform 0.3s;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.prompt-preview-content {
+  padding: 16rpx 20rpx;
+  max-height: 120rpx;
+  overflow: hidden;
+  transition: max-height 0.3s;
+}
+
+.prompt-preview-content.expanded {
+  max-height: 400rpx;
+  overflow-y: auto;
+}
+
+.prompt-text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.prompt-preview-footer {
+  padding: 12rpx 20rpx;
+  background: #fafafa;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.preview-hint {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 响应式调整 - 小屏幕时改为单列 */
+@media screen and (max-width: 400px) {
+  .dual-column-layout {
+    flex-direction: column;
+  }
+
+  .left-column {
+    width: 100%;
+  }
+
+  .reference-main-image {
+    aspect-ratio: 16/9;
+  }
+
+  .upload-slot {
+    width: calc(33.33% - 8rpx);
+  }
+}

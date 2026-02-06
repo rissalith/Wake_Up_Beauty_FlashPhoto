@@ -1,4 +1,6 @@
-<!--通用场景页面 - 根据中台配置动态渲染-->
+<!--通用场景页面 - 双栏布局重构版-->
+<wxs src="../../utils/i18n.wxs" module="i18n" />
+
 <view class="scene-page">
   <!-- 加载中 -->
   <view class="loading-container" wx:if="{{configLoading}}">
@@ -19,203 +21,294 @@
       showReassurance="{{true}}"
     />
 
-    <!-- 图片上传区 -->
-    <view class="upload-section">
-      <view class="section-title">{{lang.fp_uploadPhoto || '上传照片'}}</view>
-      <view class="upload-area">
-        <view class="image-list">
-          <view class="image-item" wx:for="{{uploadedImages}}" wx:key="index">
-            <image src="{{item.path}}" mode="aspectFill" class="preview-image" />
-            <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
+    <!-- 双栏布局容器 -->
+    <view class="dual-column-layout">
+      <!-- 左侧：创作者参考图 -->
+      <view class="left-column">
+        <view class="reference-section">
+          <view class="section-header">
+            <text class="section-title">{{i18n.text('效果参考', 'Reference', currentLang)}}</text>
           </view>
-          <!-- 上传中状态 -->
-          <view class="image-item uploading-item" wx:if="{{uploading}}">
-            <view class="upload-progress-wrap">
-              <view class="upload-spinner"></view>
-              <text class="upload-progress-text">{{uploadProgress || 0}}%</text>
+          <!-- 主参考图 -->
+          <view class="reference-main-image" bindtap="previewReferenceImage">
+            <image
+              class="reference-image"
+              src="{{referenceImage || sceneConfig.cover_image || sceneConfig.icon}}"
+              mode="aspectFill"
+              lazy-load="{{true}}"
+            />
+            <view class="reference-badge">
+              <image class="badge-icon" src="/images/icon-ai-spark.svg" mode="aspectFit" />
+              <text class="badge-text">AI</text>
             </view>
           </view>
-          <view class="add-image" wx:elif="{{uploadedImages.length < 3}}" bindtap="chooseImage">
-            <view class="add-icon">+</view>
-            <text class="add-text">{{lang.fp_add || '添加照片'}}</text>
-          </view>
-        </view>
-        <view class="upload-tips">{{lang.fp_uploadTip || '最多上传3张照片，建议正面清晰照片'}}</view>
-      </view>
-    </view>
-
-    <!-- 动态步骤配置 -->
-    <block wx:for="{{steps}}" wx:key="step_key">
-      <!-- 跳过图片上传类型 -->
-      <block wx:if="{{item.component_type !== 'image_upload'}}">
-        <!-- 摇骰子组件不需要 options，单独处理 -->
-        <view class="config-section" wx:if="{{item.component_type === 'random_dice' || (stepOptions[item.step_key] && stepOptions[item.step_key].length > 0)}}">
-          <view class="section-title">
-            <image class="step-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
-            <text>{{item.title}}</text>
-            <!-- 骰子步骤显示问号图标 -->
-            <view class="title-help-icon" wx:if="{{item.component_type === 'random_dice'}}" catchtap="onShowDiceRules" data-step-key="{{item.step_key}}" data-draw-type="{{item.config.poolType || 'phrase'}}">?</view>
-          </view>
-
-          <!-- 性别选择 (gender_select) -->
-          <view class="gender-options" wx:if="{{item.component_type === 'gender_select'}}">
-            <view
-              class="gender-item male {{selections[item.step_key] === 'male' ? 'active' : ''}}"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="male"
-            >
-              <view class="gender-icon-wrapper">
-                <view class="gender-icon-male"></view>
-              </view>
-          <text class="gender-text">{{lang.fp_male || '男'}}</text>
-            </view>
-            <view
-              class="gender-item female {{selections[item.step_key] === 'female' ? 'active' : ''}}"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="female"
-            >
-              <view class="gender-icon-wrapper">
-                <view class="gender-icon-female"></view>
-              </view>
-          <text class="gender-text">{{lang.fp_female || '女'}}</text>
-            </view>
-          </view>
-
-          <!-- 单选框/性别选择 (radio) -->
-          <view class="radio-options" wx:if="{{item.component_type === 'radio'}}">
-            <view
-              class="radio-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
-              wx:for="{{stepOptions[item.step_key]}}"
-              wx:for-item="opt"
-              wx:key="id"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="{{opt.id}}"
-            >
-              <text>{{opt.name}}</text>
-            </view>
-          </view>
-
-          <!-- 标签选择（文字） -->
-          <view class="tag-options" wx:if="{{item.component_type === 'tags'}}">
-            <view
-              class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
-              wx:for="{{stepOptions[item.step_key]}}"
-              wx:for-item="opt"
-              wx:key="id"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="{{opt.id}}"
-            >
-              <text>{{opt.name}}</text>
-            </view>
-          </view>
-
-          <!-- 规格选择 -->
-          <view class="tag-options" wx:if="{{item.component_type === 'spec_select'}}">
-            <view
-              class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
-              wx:for="{{stepOptions[item.step_key]}}"
-              wx:for-item="opt"
-              wx:key="id"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="{{opt.id}}"
-            >
-              <text>{{opt.name}}</text>
-            </view>
-          </view>
-
-          <!-- 颜色选择器 -->
-          <view class="color-options" wx:if="{{item.component_type === 'color_picker'}}">
-            <view
-              class="color-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
-              wx:for="{{stepOptions[item.step_key]}}"
-              wx:for-item="opt"
-              wx:key="id"
-              bindtap="selectOption"
-              data-key="{{item.step_key}}"
-              data-id="{{opt.id}}"
-            >
-              <view class="color-circle" style="background-color: {{opt.color || '#ffffff'}};"></view>
-              <text class="color-name">{{opt.name}}</text>
-            </view>
-          </view>
-
-          <!-- 图片标签选择 -->
-          <scroll-view class="image-tag-scroll" scroll-x wx:if="{{item.component_type === 'image_tags'}}">
-            <view class="image-tag-options">
+          <!-- 多参考图列表（如果有） -->
+          <scroll-view class="reference-list" scroll-x wx:if="{{referenceImages && referenceImages.length > 1}}">
+            <view class="reference-thumb-list">
               <view
-                class="image-tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
-                wx:for="{{stepOptions[item.step_key]}}"
-                wx:for-item="opt"
-                wx:key="id"
-                bindtap="selectOption"
-                data-key="{{item.step_key}}"
-                data-id="{{opt.id}}"
+                class="reference-thumb {{currentRefIndex === index ? 'active' : ''}}"
+                wx:for="{{referenceImages}}"
+                wx:key="index"
+                bindtap="selectReferenceImage"
+                data-index="{{index}}"
               >
-                <view class="tag-image-wrapper">
-                  <image
-                    src="{{opt.image}}"
-                    mode="aspectFill"
-                    class="tag-image"
-                    wx:if="{{opt.image}}"
-                    catchtap="previewTagImage"
-                    data-url="{{opt.image}}"
-                    data-name="{{opt.name}}"
-                  />
-                  <view class="tag-placeholder" wx:else>
-                    <text>{{opt.name}}</text>
-                  </view>
-                </view>
-                <text class="tag-name">{{opt.name}}</text>
-                <view class="select-indicator {{selections[item.step_key] === opt.id ? 'selected' : ''}}">
-                  <view class="indicator-dot" wx:if="{{selections[item.step_key] === opt.id}}"></view>
-                </view>
+                <image class="thumb-image" src="{{item.image_url}}" mode="aspectFill" />
               </view>
             </view>
           </scroll-view>
-
-          <!-- 滑块 -->
-          <view class="slider-wrapper" wx:if="{{item.component_type === 'slider'}}">
-            <slider
-              value="{{selections[item.step_key]}}"
-              min="{{item.min || 0}}"
-              max="{{item.max || 100}}"
-              step="{{item.step || 1}}"
-              show-value
-              activeColor="#ff6b35"
-              bindchange="onSliderChange"
-              data-key="{{item.step_key}}"
-            />
+          <!-- 参考图说明 -->
+          <view class="reference-info" wx:if="{{sceneConfig.description}}">
+            <text class="reference-desc">{{i18n.getName(sceneConfig, currentLang) || sceneConfig.description}}</text>
           </view>
-
-          <!-- 摇骰子组件 (random_dice) -->
-          <dice-roller
-            wx:if="{{item.component_type === 'random_dice'}}"
-            scene-id="{{sceneId}}"
-            step-key="{{item.step_key}}"
-            draw-type="{{item.config.poolType || 'phrase'}}"
-            result="{{diceSteps[item.step_key].result}}"
-            is-rolling="{{diceSteps[item.step_key].isRolling}}"
-            free-count="{{diceSteps[item.step_key].freeCount}}"
-            confirmed="{{diceSteps[item.step_key].confirmed}}"
-            cost-per-roll="{{item.config.costPerRoll || 10}}"
-            show-rarity="{{item.config.showRarity || false}}"
-            title="{{item.config.title || item.title}}"
-            subtitle="{{item.config.subtitle || ''}}"
-            user-points="{{userPoints}}"
-            pool-items="{{diceSteps[item.step_key].poolItems}}"
-            bind:roll="onDiceRoll"
-            bind:confirm="onDiceConfirm"
-            bind:insufficientPoints="onDiceInsufficientPoints"
-            bind:loadPool="onLoadDicePool"
-          />
         </view>
-      </block>
-    </block>
+      </view>
+
+      <!-- 右侧：用户上传区 + 流程组件 -->
+      <view class="right-column">
+        <!-- 用户上传区 -->
+        <view class="user-upload-section">
+          <view class="section-header">
+            <text class="section-title">{{i18n.text('上传照片', 'Upload Photos', currentLang)}}</text>
+            <text class="upload-count">{{uploadedImages.length}}/{{userImageConfig.max_count || 3}}</text>
+          </view>
+          <view class="upload-slots">
+            <!-- 已上传的图片 -->
+            <view
+              class="upload-slot filled"
+              wx:for="{{uploadedImages}}"
+              wx:key="index"
+            >
+              <image class="slot-image" src="{{item.path}}" mode="aspectFill" />
+              <view class="slot-delete" catchtap="deleteImage" data-index="{{index}}">
+                <image class="delete-icon" src="/images/icon-close.svg" mode="aspectFit" />
+              </view>
+              <!-- 槽位标题 -->
+              <view class="slot-label" wx:if="{{userImageConfig.slots[index].title}}">
+                <text>{{i18n.text(userImageConfig.slots[index].title, userImageConfig.slots[index].title_en, currentLang)}}</text>
+              </view>
+            </view>
+            <!-- 上传中状态 -->
+            <view class="upload-slot uploading" wx:if="{{uploading}}">
+              <view class="upload-progress-wrap">
+                <view class="upload-spinner"></view>
+                <text class="upload-progress-text">{{uploadProgress || 0}}%</text>
+              </view>
+            </view>
+            <!-- 空槽位（可添加） -->
+            <block wx:for="{{emptySlots}}" wx:key="index">
+              <view
+                class="upload-slot empty {{item.required ? 'required' : ''}}"
+                bindtap="chooseImageForSlot"
+                data-slot-index="{{uploadedImages.length + index}}"
+                wx:if="{{!uploading || index > 0}}"
+              >
+                <view class="slot-add-icon">
+                  <image src="/images/icon-add.svg" mode="aspectFit" />
+                </view>
+                <text class="slot-title">{{i18n.text(item.title, item.title_en, currentLang) || i18n.text('添加照片', 'Add Photo', currentLang)}}</text>
+                <text class="slot-hint" wx:if="{{item.description}}">{{i18n.text(item.description, item.description_en, currentLang)}}</text>
+                <view class="required-badge" wx:if="{{item.required}}">
+                  <text>{{i18n.text('必填', 'Required', currentLang)}}</text>
+                </view>
+              </view>
+            </block>
+          </view>
+          <view class="upload-tips">{{i18n.text('建议上传清晰的正面照片', 'Please upload clear front-facing photos', currentLang)}}</view>
+        </view>
+
+        <!-- 流程组件区 -->
+        <view class="flow-components-section">
+          <block wx:for="{{steps}}" wx:key="step_key">
+            <!-- 跳过图片上传类型 -->
+            <block wx:if="{{item.component_type !== 'image_upload'}}">
+              <!-- 摇骰子组件不需要 options，单独处理 -->
+              <view class="config-section" wx:if="{{item.component_type === 'random_dice' || (stepOptions[item.step_key] && stepOptions[item.step_key].length > 0)}}">
+                <view class="section-header">
+                  <image class="step-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
+                  <text class="section-title">{{item.title}}</text>
+                  <!-- 骰子步骤显示问号图标 -->
+                  <view class="title-help-icon" wx:if="{{item.component_type === 'random_dice'}}" catchtap="onShowDiceRules" data-step-key="{{item.step_key}}" data-draw-type="{{item.config.poolType || 'phrase'}}">?</view>
+                </view>
+
+                <!-- 性别选择 (gender_select) -->
+                <view class="gender-options" wx:if="{{item.component_type === 'gender_select'}}">
+                  <view
+                    class="gender-item male {{selections[item.step_key] === 'male' ? 'active' : ''}}"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="male"
+                  >
+                    <view class="gender-icon-wrapper">
+                      <view class="gender-icon-male"></view>
+                    </view>
+                    <text class="gender-text">{{lang.fp_male || '男'}}</text>
+                  </view>
+                  <view
+                    class="gender-item female {{selections[item.step_key] === 'female' ? 'active' : ''}}"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="female"
+                  >
+                    <view class="gender-icon-wrapper">
+                      <view class="gender-icon-female"></view>
+                    </view>
+                    <text class="gender-text">{{lang.fp_female || '女'}}</text>
+                  </view>
+                </view>
+
+                <!-- 单选框/性别选择 (radio) -->
+                <view class="radio-options" wx:if="{{item.component_type === 'radio'}}">
+                  <view
+                    class="radio-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                    wx:for="{{stepOptions[item.step_key]}}"
+                    wx:for-item="opt"
+                    wx:key="id"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="{{opt.id}}"
+                  >
+                    <text>{{opt.name}}</text>
+                  </view>
+                </view>
+
+                <!-- 标签选择（文字） -->
+                <view class="tag-options" wx:if="{{item.component_type === 'tags'}}">
+                  <view
+                    class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                    wx:for="{{stepOptions[item.step_key]}}"
+                    wx:for-item="opt"
+                    wx:key="id"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="{{opt.id}}"
+                  >
+                    <text>{{opt.name}}</text>
+                  </view>
+                </view>
+
+                <!-- 规格选择 -->
+                <view class="tag-options" wx:if="{{item.component_type === 'spec_select'}}">
+                  <view
+                    class="tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                    wx:for="{{stepOptions[item.step_key]}}"
+                    wx:for-item="opt"
+                    wx:key="id"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="{{opt.id}}"
+                  >
+                    <text>{{opt.name}}</text>
+                  </view>
+                </view>
+
+                <!-- 颜色选择器 -->
+                <view class="color-options" wx:if="{{item.component_type === 'color_picker'}}">
+                  <view
+                    class="color-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                    wx:for="{{stepOptions[item.step_key]}}"
+                    wx:for-item="opt"
+                    wx:key="id"
+                    bindtap="selectOption"
+                    data-key="{{item.step_key}}"
+                    data-id="{{opt.id}}"
+                  >
+                    <view class="color-circle" style="background-color: {{opt.color || '#ffffff'}};"></view>
+                    <text class="color-name">{{opt.name}}</text>
+                  </view>
+                </view>
+
+                <!-- 图片标签选择 -->
+                <scroll-view class="image-tag-scroll" scroll-x wx:if="{{item.component_type === 'image_tags'}}">
+                  <view class="image-tag-options">
+                    <view
+                      class="image-tag-item {{selections[item.step_key] === opt.id ? 'active' : ''}}"
+                      wx:for="{{stepOptions[item.step_key]}}"
+                      wx:for-item="opt"
+                      wx:key="id"
+                      bindtap="selectOption"
+                      data-key="{{item.step_key}}"
+                      data-id="{{opt.id}}"
+                    >
+                      <view class="tag-image-wrapper">
+                        <image
+                          src="{{opt.image}}"
+                          mode="aspectFill"
+                          class="tag-image"
+                          wx:if="{{opt.image}}"
+                          catchtap="previewTagImage"
+                          data-url="{{opt.image}}"
+                          data-name="{{opt.name}}"
+                        />
+                        <view class="tag-placeholder" wx:else>
+                          <text>{{opt.name}}</text>
+                        </view>
+                      </view>
+                      <text class="tag-name">{{opt.name}}</text>
+                      <view class="select-indicator {{selections[item.step_key] === opt.id ? 'selected' : ''}}">
+                        <view class="indicator-dot" wx:if="{{selections[item.step_key] === opt.id}}"></view>
+                      </view>
+                    </view>
+                  </view>
+                </scroll-view>
+
+                <!-- 滑块 -->
+                <view class="slider-wrapper" wx:if="{{item.component_type === 'slider'}}">
+                  <slider
+                    value="{{selections[item.step_key]}}"
+                    min="{{item.min || 0}}"
+                    max="{{item.max || 100}}"
+                    step="{{item.step || 1}}"
+                    show-value
+                    activeColor="#ff6b35"
+                    bindchange="onSliderChange"
+                    data-key="{{item.step_key}}"
+                  />
+                </view>
+
+                <!-- 摇骰子组件 (random_dice) -->
+                <dice-roller
+                  wx:if="{{item.component_type === 'random_dice'}}"
+                  scene-id="{{sceneId}}"
+                  step-key="{{item.step_key}}"
+                  draw-type="{{item.config.poolType || 'phrase'}}"
+                  result="{{diceSteps[item.step_key].result}}"
+                  is-rolling="{{diceSteps[item.step_key].isRolling}}"
+                  free-count="{{diceSteps[item.step_key].freeCount}}"
+                  confirmed="{{diceSteps[item.step_key].confirmed}}"
+                  cost-per-roll="{{item.config.costPerRoll || 10}}"
+                  show-rarity="{{item.config.showRarity || false}}"
+                  title="{{item.config.title || item.title}}"
+                  subtitle="{{item.config.subtitle || ''}}"
+                  user-points="{{userPoints}}"
+                  pool-items="{{diceSteps[item.step_key].poolItems}}"
+                  bind:roll="onDiceRoll"
+                  bind:confirm="onDiceConfirm"
+                  bind:insufficientPoints="onDiceInsufficientPoints"
+                  bind:loadPool="onLoadDicePool"
+                />
+              </view>
+            </block>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- Prompt 预览区 -->
+    <view class="prompt-preview-section" wx:if="{{showPromptPreview && promptPreview}}">
+      <view class="section-header">
+        <text class="section-title">{{i18n.text('生成预览', 'Generation Preview', currentLang)}}</text>
+        <view class="preview-toggle" bindtap="togglePromptPreview">
+          <text>{{promptPreviewExpanded ? i18n.text('收起', 'Collapse', currentLang) : i18n.text('展开', 'Expand', currentLang)}}</text>
+          <image class="toggle-icon {{promptPreviewExpanded ? 'expanded' : ''}}" src="/images/icon-arrow-down.svg" mode="aspectFit" />
+        </view>
+      </view>
+      <view class="prompt-preview-content {{promptPreviewExpanded ? 'expanded' : ''}}">
+        <text class="prompt-text" selectable="{{false}}">{{promptPreview}}</text>
+      </view>
+      <view class="prompt-preview-footer">
+        <text class="preview-hint">{{i18n.text('以上内容将用于AI生成，不可编辑', 'The above content will be used for AI generation and cannot be edited', currentLang)}}</text>
+      </view>
+    </view>
 
     <!-- 底部占位 -->
     <view class="bottom-placeholder"></view>
