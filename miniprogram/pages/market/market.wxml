@@ -69,7 +69,7 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <!-- 左上角原图缩略图 -->
+            <!-- 左下角原图缩略图 -->
             <view class="reference-thumb" wx:if="{{item.reference_image}}">
               <image class="reference-image" src="{{item.reference_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
               <text class="reference-label">{{i18n.text('原图', 'Original', currentLang)}}</text>
@@ -101,7 +101,7 @@
               mode="widthFix"
               lazy-load="{{true}}"
             ></image>
-            <!-- 左上角原图缩略图 -->
+            <!-- 左下角原图缩略图 -->
             <view class="reference-thumb" wx:if="{{item.reference_image}}">
               <image class="reference-image" src="{{item.reference_image}}" mode="aspectFill" lazy-load="{{true}}"></image>
               <text class="reference-label">{{i18n.text('原图', 'Original', currentLang)}}</text>

@@ -364,11 +364,11 @@
 
 /* ========== 新版模板卡片样式 ========== */
 
-/* 左上角原图缩略图 */
+/* 右下角原图缩略图 */
 .reference-thumb {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  bottom: 10px;
+  right: 10px;
   width: 56px;
   height: 56px;
   border-radius: 8px;
@@ -424,10 +424,11 @@
   display: flex;
   align-items: center;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  background: #fff;
   border-radius: 16px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(255, 165, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0e0c0;
 }
 
 .do-same-btn:active {
@@ -443,7 +444,8 @@
 
 .do-same-text {
   font-size: 12px;
-  color: #fff;
   font-weight: 600;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

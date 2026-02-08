@@ -178,81 +178,33 @@
       <text class="upload-tips">参考图：AI 将基于此图生成，用户的脸会替换到这张图中</text>
     </view>
 
-    <!-- 区块3：用户上传图配置 -->
-    <view class="section-card">
+    <!-- 区块3：用户上传图配置（只读展示，AI生成） -->
+    <view class="section-card" wx:if="{{userImageConfig && userImageConfig.slots && userImageConfig.slots.length > 0}}">
       <view class="section-header">
         <text class="section-title">用户上传图配置</text>
-        <text class="section-hint">配置用户需要上传的照片</text>
-      </view>
-
-      <!-- 图片数量配置 -->
-      <view class="form-item">
-        <text class="form-label">最多上传数量</text>
-        <view class="image-count-options">
-          <view
-            class="count-option {{userImageConfig.max_count === item ? 'active' : ''}}"
-            wx:for="{{[1, 2, 3, 4, 5]}}"
-            wx:key="*this"
-            bindtap="setUserImageCount"
-            data-count="{{item}}"
-          >
-            <text>{{item}}张</text>
+        <view class="section-header-right">
+          <view class="ai-modify-btn" bindtap="showUserImageConfigModifyModal">
+            <image class="ai-modify-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
+            <text>AI修改</text>
           </view>
         </view>
       </view>
 
-      <!-- 最少上传数量 -->
-      <view class="form-item">
-        <text class="form-label">最少上传数量</text>
-        <view class="min-count-options">
-          <view
-            class="count-option small {{userImageConfig.min_count === item ? 'active' : ''}}"
-            wx:for="{{minCountOptions}}"
-            wx:key="*this"
-            bindtap="setMinImageCount"
-            data-count="{{item}}"
-          >
-            <text>{{item === 0 ? '不限' : item + '张'}}</text>
-          </view>
+      <!-- 只读展示 -->
+      <view class="user-image-config-readonly">
+        <view class="config-summary">
+          <text class="config-summary-text">最多{{userImageConfig.max_count}}张{{userImageConfig.min_count === 0 ? '（可选上传）' : userImageConfig.min_count < userImageConfig.max_count ? '，至少' + userImageConfig.min_count + '张' : ''}}</text>
         </view>
-        <text class="form-hint">设为0表示用户可以不上传照片</text>
-      </view>
-
-      <!-- 图片槽位配置 -->
-      <view class="image-slots-config">
-        <view class="slot-item" wx:for="{{userImageConfig.slots}}" wx:key="index">
-          <view class="slot-header">
-            <view class="slot-number">{{index + 1}}</view>
-            <text class="slot-title-label">第{{index + 1}}张图片</text>
-            <view class="slot-required {{item.required ? 'active' : ''}}" bindtap="toggleSlotRequired" data-index="{{index}}">
-              <text>{{item.required ? '必填' : '选填'}}</text>
+        <view class="config-slots-list">
+          <view class="config-slot-item" wx:for="{{userImageConfig.slots}}" wx:key="index">
+            <view class="config-slot-num">{{index + 1}}</view>
+            <view class="config-slot-info">
+              <text class="config-slot-title">{{item.title}}</text>
+              <text class="config-slot-desc" wx:if="{{item.description}}">{{item.description}}</text>
             </view>
-          </view>
-          <view class="slot-form">
-            <input
-              class="slot-input"
-              placeholder="图片标题，如：正面照"
-              value="{{item.title}}"
-              bindinput="onSlotTitleInput"
-              data-index="{{index}}"
-              maxlength="10"
-            />
-            <input
-              class="slot-input"
-              placeholder="图片说明，如：请上传清晰的正面照片"
-              value="{{item.description}}"
-              bindinput="onSlotDescInput"
-              data-index="{{index}}"
-              maxlength="30"
-            />
-            <view class="slot-role-picker">
-              <text class="role-label">图片用途：</text>
-              <picker mode="selector" range="{{imageRoleOptions}}" range-key="label" value="{{item.roleIndex || 0}}" bindchange="onSlotRoleChange" data-index="{{index}}">
-                <view class="role-picker-btn">
-                  <text>{{imageRoleOptions[item.roleIndex || 0].label}}</text>
-                  <image class="picker-arrow" src="/images/icon-arrow-down.svg" mode="aspectFit"></image>
-                </view>
-              </picker>
+            <view class="config-slot-tags">
+              <text class="config-slot-role">{{item.role === 'face_source' ? '人脸' : item.role === 'pose_reference' ? '姿势' : item.role === 'style_reference' ? '风格' : item.role === 'background' ? '背景' : '其他'}}</text>
+              <text class="config-slot-required {{item.required ? 'required' : 'optional'}}">{{item.required ? '必填' : '选填'}}</text>
             </view>
           </view>
         </view>
@@ -530,7 +482,7 @@
   <view class="ai-modify-modal-mask" wx:if="{{showModifyModal}}" bindtap="hideModifyModal">
     <view class="ai-modify-modal" catchtap="preventBubble">
       <view class="ai-modify-modal-header">
-        <text class="ai-modify-modal-title">AI 修改{{modifyTarget === 'steps' ? '操作步骤' : modifyTarget === 'basicInfo' ? '基本信息' : '生成效果'}}</text>
+        <text class="ai-modify-modal-title">AI 修改{{modifyTarget === 'steps' ? '操作步骤' : modifyTarget === 'basicInfo' ? '基本信息' : modifyTarget === 'userImageConfig' ? '上传图配置' : '生成效果'}}</text>
         <view class="ai-modify-modal-close" bindtap="hideModifyModal">×</view>
       </view>
 
@@ -563,6 +515,15 @@
             <text class="prompt-text" wx:if="{{formData.prompt_template}}">{{formData.prompt_template}}</text>
             <text class="no-prompt-text" wx:else>暂无 Prompt 配置</text>
           </view>
+          <!-- 用户上传图配置预览 -->
+          <view class="preview-content" wx:if="{{modifyTarget === 'userImageConfig'}}">
+            <text class="preview-item-value">最多{{userImageConfig.max_count}}张，最少{{userImageConfig.min_count}}张</text>
+            <view class="preview-step" wx:for="{{userImageConfig.slots}}" wx:key="index">
+              <text class="step-num">{{index + 1}}.</text>
+              <text class="step-name">{{item.title}}</text>
+              <text class="step-type-badge">{{item.role === 'face_source' ? '人脸' : item.role === 'pose_reference' ? '姿势' : item.role === 'style_reference' ? '风格' : item.role === 'background' ? '背景' : '其他'}}</text>
+            </view>
+          </view>
         </view>
 
         <!-- 修改指令输入 -->
@@ -570,7 +531,7 @@
           <text class="modify-input-label">告诉 AI 你想怎么修改：</text>
           <textarea
             class="modify-input-textarea"
-            placeholder="{{modifyTarget === 'steps' ? '例如：添加一个背景颜色选择步骤、删除第2个步骤...' : modifyTarget === 'basicInfo' ? '例如：名称更简洁一些、描述更吸引人...' : '例如：背景更梦幻一些、增加光影效果...'}}"
+            placeholder="{{modifyTarget === 'steps' ? '例如：添加一个背景颜色选择步骤、删除第2个步骤...' : modifyTarget === 'basicInfo' ? '例如：名称更简洁一些、描述更吸引人...' : modifyTarget === 'userImageConfig' ? '例如：改成需要上传2张照片、第一张正面第二张侧面...' : '例如：背景更梦幻一些、增加光影效果...'}}"
             value="{{modifyInstruction}}"
             bindinput="onModifyInstructionInput"
             maxlength="200"
@@ -601,6 +562,11 @@
             <text class="quick-tag" bindtap="useQuickInstruction" data-text="背景更梦幻一些">更梦幻</text>
             <text class="quick-tag" bindtap="useQuickInstruction" data-text="增加光影效果">加光影</text>
             <text class="quick-tag" bindtap="useQuickInstruction" data-text="人物更清晰">更清晰</text>
+          </view>
+          <view class="quick-tags" wx:if="{{modifyTarget === 'userImageConfig'}}">
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="改成需要上传2张照片，一张正面一张侧面">2张正侧面</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="改成可选上传，不强制要求">改为可选</text>
+            <text class="quick-tag" bindtap="useQuickInstruction" data-text="只需要1张正面人脸照片">1张人脸</text>
           </view>
         </view>
       </view>

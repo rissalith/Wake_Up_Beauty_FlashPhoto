@@ -577,10 +577,10 @@ router.post('/partial-modify', async (req, res) => {
       });
     }
 
-    if (!['steps', 'prompt', 'basicInfo'].includes(target)) {
+    if (!['steps', 'prompt', 'basicInfo', 'userImageConfig'].includes(target)) {
       return res.status(400).json({
         code: 400,
-        message: '不支持的修改目标，仅支持 steps、prompt 或 basicInfo'
+        message: '不支持的修改目标，仅支持 steps、prompt、basicInfo 或 userImageConfig'
       });
     }
 
@@ -764,9 +764,69 @@ ${JSON.stringify(globalContext.steps || [], null, 2)}
 
       const responseText = textParts[textParts.length - 1].text;
       result = parseJsonResponse(responseText);
-    }
+    } else if (target === 'userImageConfig') {
+      // 修改用户上传图配置
+      const currentConfig = globalContext.user_image_config || { max_count: 1, min_count: 1, slots: [] };
+      const modifyUserImagePrompt = `你是一个模板配置专家。用户想要修改模板的"用户上传图配置"。
 
-    console.log('[AI Agent API] 局部修改成功:', target);
+当前模板信息：
+- 模板名称：${globalContext.name || '未命名'}
+- 模板描述：${globalContext.description || '无'}
+- 当前用户上传图配置：
+${JSON.stringify(currentConfig, null, 2)}
+
+用户的修改指令：${instruction}
+
+请根据用户的指令修改用户上传图配置。
+
+## 配置说明
+- max_count: 最多上传数量（1-5）
+- min_count: 最少上传数量（0表示可选上传，不强制）
+- slots: 每个上传槽位的配置数组，数量应与 max_count 一致
+  - index: 槽位序号（从1开始）
+  - title: 中文标题（如"正面照"、"侧面照"）
+  - title_en: 英文标题
+  - description: 中文说明（如"请上传清晰的正面照片"）
+  - description_en: 英文说明
+  - required: 是否必填（布尔值）
+  - role: 图片用途，可选值: face_source（人脸来源）、pose_reference（姿势参考）、style_reference（风格参考）、background（背景素材）、other（其他）
+
+请返回 JSON 格式：
+{
+  "user_image_config": {
+    "max_count": 数字,
+    "min_count": 数字,
+    "slots": [槽位数组]
+  }
+}`;
+
+      const response = await axios.post(
+        `${AI_API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`,
+        {
+          contents: [{ parts: [{ text: modifyUserImagePrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AI_API_KEY}`
+          },
+          timeout: 30000
+        }
+      );
+
+      const parts = response.data.candidates?.[0]?.content?.parts || [];
+      const textParts = parts.filter(p => p.text && !p.thought);
+      if (textParts.length === 0) {
+        throw new Error('AI 返回内容为空');
+      }
+
+      const responseText = textParts[textParts.length - 1].text;
+      result = parseJsonResponse(responseText);
+    }
 
     res.json({
       code: 200,

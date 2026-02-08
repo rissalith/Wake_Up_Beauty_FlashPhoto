@@ -17,7 +17,7 @@ class ConfigAgent extends BaseAgent {
     this.systemPrompt = `你是一个专业的 AI 图片生成场景配置专家。根据规划和知识库参考，生成完整的场景配置。
 
 ## 输出格式要求
-必须返回有效的 JSON，包含 scene、steps、prompt_template 三个部分。
+必须返回有效的 JSON，包含 scene、steps、prompt_template、user_image_config 四个部分。
 
 ## 步骤类型说明
 - image_upload: 图片上传（必须作为第一步）
@@ -25,6 +25,13 @@ class ConfigAgent extends BaseAgent {
 - tags: 标签选择（通用单选）
 - image_tags: 图片标签选择（带图片的选项）
 - dice_roll: 摇骰子（随机抽取）
+
+## 用户上传图配置说明
+user_image_config 定义用户需要上传的照片要求：
+- max_count: 最多上传数量（1-5）
+- min_count: 最少上传数量（0表示可选上传）
+- slots: 每个上传槽位的配置
+  - role 可选值: face_source（人脸来源）、pose_reference（姿势参考）、style_reference（风格参考）、background（背景素材）、other（其他）
 
 ## 配置规范
 1. 每个场景必须以 image_upload 步骤开始
@@ -34,6 +41,7 @@ class ConfigAgent extends BaseAgent {
 5. Prompt 模板必须使用 {{variable_name}} 引用步骤的 step_key
 6. 必须提供 negative_prompt
 7. **重要：所有文本都使用中文，包括 prompt_text 和 template**
+8. 大多数场景只需1张人脸照片，证件照类可要求2-3张
 
 ## 数据结构
 {
@@ -74,6 +82,21 @@ class ConfigAgent extends BaseAgent {
   "prompt_template": {
     "template": "【重要】严格保持参考照片中的人脸特征，包括脸型、五官、肤色。生成一张高质量的{{gender}}肖像照片，{{background}}。风格：专业摄影，清晰锐利，自然光线。",
     "negative_prompt": "模糊，变形，低质量，水印，文字，面部变形，多余肢体"
+  },
+  "user_image_config": {
+    "max_count": 1,
+    "min_count": 1,
+    "slots": [
+      {
+        "index": 1,
+        "title": "上传照片",
+        "title_en": "Upload Photo",
+        "description": "请上传清晰的正面照片",
+        "description_en": "Please upload a clear front photo",
+        "required": true,
+        "role": "face_source"
+      }
+    ]
   }
 }
 
@@ -260,6 +283,50 @@ ${plan.special_requirements ? plan.special_requirements.join('\n') : '无'}
         !config.prompt_template.template.includes('面部') &&
         !config.prompt_template.template.includes('脸型')) {
       config.prompt_template.template = this.addFacePreservation(config.prompt_template.template);
+    }
+
+    // 补全 user_image_config
+    if (!config.user_image_config) {
+      config.user_image_config = {
+        max_count: 1,
+        min_count: 1,
+        slots: [{
+          index: 1,
+          title: '上传照片',
+          title_en: 'Upload Photo',
+          description: '请上传清晰的正面照片',
+          description_en: 'Please upload a clear front photo',
+          required: true,
+          role: 'face_source'
+        }]
+      };
+    } else {
+      const uic = config.user_image_config;
+      uic.max_count = uic.max_count || 1;
+      uic.min_count = uic.min_count !== undefined ? uic.min_count : 1;
+      uic.slots = (uic.slots || []).map((slot, i) => ({
+        index: slot.index || (i + 1),
+        title: slot.title || `照片${i + 1}`,
+        title_en: slot.title_en || slot.title || `Photo ${i + 1}`,
+        description: slot.description || '',
+        description_en: slot.description_en || slot.description || '',
+        required: slot.required !== false,
+        role: slot.role || 'face_source',
+        ...slot
+      }));
+      while (uic.slots.length < uic.max_count) {
+        const idx = uic.slots.length + 1;
+        uic.slots.push({
+          index: idx,
+          title: `照片${idx}`,
+          title_en: `Photo ${idx}`,
+          description: '',
+          description_en: '',
+          required: false,
+          role: 'face_source'
+        });
+      }
+      uic.slots = uic.slots.slice(0, uic.max_count);
     }
 
     return config;

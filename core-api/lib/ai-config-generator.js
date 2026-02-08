@@ -14,7 +14,7 @@ const AI_MODEL = process.env.AI_CONFIG_MODEL || 'gemini-3-flash-preview';
 const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家。根据用户的描述，生成完整的场景配置。
 
 ## 输出格式要求
-必须返回有效的 JSON，包含 scene、steps、prompt_template 三个部分。不要包含任何其他文字说明，只返回 JSON。
+必须返回有效的 JSON，包含 scene、steps、prompt_template、user_image_config 四个部分。不要包含任何其他文字说明，只返回 JSON。
 
 ## 步骤类型说明
 - image_upload: 图片上传（必须作为第一步，让用户上传照片）
@@ -22,6 +22,20 @@ const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家�
 - tags: 标签选择（通用单选，用于选择风格、背景等）
 - image_tags: 图片标签选择（带图片的选项，适合需要视觉参考的选择）
 - dice_roll: 摇骰子（随机抽取，需配置品级 normal/rare/epic/legendary）
+
+## 用户上传图配置说明
+user_image_config 定义用户需要上传的照片要求：
+- max_count: 最多上传数量（1-5），根据场景需要决定
+- min_count: 最少上传数量（0表示可选上传，不强制）
+- slots: 每个上传槽位的配置
+  - role 可选值: face_source（人脸来源）、pose_reference（姿势参考）、style_reference（风格参考）、background（背景素材）、other（其他）
+
+## 用户上传图配置规范
+1. 大多数场景只需要1张人脸照片（face_source），max_count=1, min_count=1
+2. 需要多角度的场景（如3D建模、全身照）可以要求2-3张
+3. 证件照类场景建议 max_count=3, min_count=1，允许用户多传参考图
+4. 纯风格生成（不需要用户照片）设置 min_count=0
+5. 每个 slot 的 title 和 description 要清晰告诉用户该上传什么
 
 ## 配置规范
 1. 每个场景必须以 image_upload 步骤开始
@@ -76,6 +90,21 @@ const SYSTEM_PROMPT = `你是一个专业的 AI 图片生成场景配置专家�
   "prompt_template": {
     "template": "Generate a professional portrait photo. Subject: {{gender}}. Background: {{background}}. Style: high quality, studio lighting, sharp focus.",
     "negative_prompt": "blurry, distorted, low quality, watermark, text, deformed face, extra limbs"
+  },
+  "user_image_config": {
+    "max_count": 1,
+    "min_count": 1,
+    "slots": [
+      {
+        "index": 1,
+        "title": "上传照片",
+        "title_en": "Upload Photo",
+        "description": "请上传清晰的正面照片",
+        "description_en": "Please upload a clear front photo",
+        "required": true,
+        "role": "face_source"
+      }
+    ]
   }
 }`;
 
@@ -288,6 +317,51 @@ function completeConfig(config) {
     negative_prompt: config.prompt_template.negative_prompt || 'blurry, distorted, low quality, watermark',
     ...config.prompt_template
   };
+
+  // 补全 user_image_config
+  if (!config.user_image_config) {
+    config.user_image_config = {
+      max_count: 1,
+      min_count: 1,
+      slots: [{
+        index: 1,
+        title: '上传照片',
+        title_en: 'Upload Photo',
+        description: '请上传清晰的正面照片',
+        description_en: 'Please upload a clear front photo',
+        required: true,
+        role: 'face_source'
+      }]
+    };
+  } else {
+    const uic = config.user_image_config;
+    uic.max_count = uic.max_count || 1;
+    uic.min_count = uic.min_count !== undefined ? uic.min_count : 1;
+    uic.slots = (uic.slots || []).map((slot, i) => ({
+      index: slot.index || (i + 1),
+      title: slot.title || `照片${i + 1}`,
+      title_en: slot.title_en || slot.title || `Photo ${i + 1}`,
+      description: slot.description || '',
+      description_en: slot.description_en || slot.description || '',
+      required: slot.required !== false,
+      role: slot.role || 'face_source',
+      ...slot
+    }));
+    // 确保 slots 数量与 max_count 一致
+    while (uic.slots.length < uic.max_count) {
+      const idx = uic.slots.length + 1;
+      uic.slots.push({
+        index: idx,
+        title: `照片${idx}`,
+        title_en: `Photo ${idx}`,
+        description: '',
+        description_en: '',
+        required: false,
+        role: 'face_source'
+      });
+    }
+    uic.slots = uic.slots.slice(0, uic.max_count);
+  }
 
   return config;
 }
