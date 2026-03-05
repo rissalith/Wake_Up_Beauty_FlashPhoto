@@ -63,6 +63,7 @@
             </view>
             <view class="service-info">
               <text class="service-title">{{item.displayName}}</text>
+              <text class="service-desc">{{item.displayDesc}}</text>
             </view>
           </view>
         </view>
