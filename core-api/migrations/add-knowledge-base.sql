@@ -226,7 +226,6 @@ INSERT OR REPLACE INTO knowledge_base (category, name, name_en, content, tags, q
       "component_type": "tags",
       "is_required": true,
       "options": [
-        {"label": "春节", "value": "spring", "prompt_text": "Chinese New Year, red lanterns, golden decorations, festive atmosphere"},
         {"label": "中秋", "value": "midautumn", "prompt_text": "Mid-Autumn Festival, full moon, mooncakes, traditional Chinese elements"},
         {"label": "圣诞", "value": "christmas", "prompt_text": "Christmas, snow, Christmas tree, warm lights, festive decorations"}
       ]

@@ -209,7 +209,6 @@ function insertInitialKnowledge() {
           component_type: "tags",
           is_required: true,
           options: [
-            { label: "春节", value: "spring", prompt_text: "Chinese New Year, red lanterns, golden decorations" },
             { label: "中秋", value: "midautumn", prompt_text: "Mid-Autumn Festival, full moon, mooncakes" },
             { label: "圣诞", value: "christmas", prompt_text: "Christmas, snow, Christmas tree, warm lights" }
           ]
@@ -628,7 +627,6 @@ function extractKeywords(text) {
     '证件': ['证件照', 'ID'],
     '职业': ['职业照', '商务', '正装'],
     '写真': ['写真', '艺术', '人像'],
-    '春节': ['春节', '新年', '红色', '喜庆'],
     '中秋': ['中秋', '月亮', '团圆'],
     '圣诞': ['圣诞', '雪', '节日'],
     '婚纱': ['婚纱', '婚礼', '浪漫'],
