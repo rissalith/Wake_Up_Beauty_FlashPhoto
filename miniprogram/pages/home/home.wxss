@@ -325,7 +325,7 @@ page {
 /* 服务网格 - 两列并列 */
 .service-grid {
   display: flex;
-  gap: 20rpx;
+  gap: 24rpx;
   padding: 0 24rpx;
   justify-content: space-between;
 }
@@ -334,21 +334,23 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx;
-  border-radius: 16rpx;
+  padding: 32rpx 24rpx;
+  border-radius: 20rpx;
   transition: all 0.2s ease;
   flex: 1;
+  background: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .service-card:active {
-  background: #f5f7fa;
+  background: #fff;
 }
 
 /* hover效果 - 点击反馈 */
 .service-card-hover {
-  background: rgba(232, 182, 134, 0.1);
-  transform: scale(0.98);
-  box-shadow: 0 2rpx 8rpx rgba(232, 182, 134, 0.2);
+  background: #fff;
+  transform: scale(0.96);
+  box-shadow: 0 8rpx 24rpx rgba(232, 182, 134, 0.3);
 }
 
 .service-card.disabled {
@@ -367,11 +369,11 @@ page {
 }
 
 .service-icon-wrap {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 28rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 32rpx;
   margin-right: 0;
-  margin-bottom: 16rpx;
+  margin-bottom: 24rpx;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -403,18 +405,18 @@ page {
 }
 
 .service-title {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 600;
   color: #333;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: 12rpx;
 }
 
 .service-desc {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #999;
   display: block;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .coming-tag {
