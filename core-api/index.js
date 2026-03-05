@@ -337,6 +337,102 @@ app.post('/api/upload/image', async (req, res) => {
   }
 });
 
+// 行为上报（小程序埋点）
+app.post('/api/behavior/report', (req, res) => {
+  try {
+    const db = getDb();
+    const behaviors = Array.isArray(req.body?.behaviors) ? req.body.behaviors : [];
+
+    if (behaviors.length === 0) {
+      return res.json({ code: 0, msg: 'success', data: { received: 0, saved: 0 } });
+    }
+
+    const insertStmt = db.prepare(`
+      INSERT INTO user_behaviors (
+        id, user_id, session_id, behavior_type, behavior_name,
+        page_path, page_query, element_id, element_type, element_text,
+        extra_data, device_brand, device_model, system_info, network_type,
+        duration, client_time, created_at
+      ) VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, CURRENT_TIMESTAMP
+      )
+    `);
+
+    let saved = 0;
+    behaviors.slice(0, 200).forEach((item, index) => {
+      if (!item || !item.behavior_type || !item.behavior_name) return;
+
+      const behaviorId = `bhv_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`;
+      insertStmt.run(
+        behaviorId,
+        item.user_id || null,
+        item.session_id || null,
+        String(item.behavior_type),
+        String(item.behavior_name),
+        item.page_path || null,
+        item.page_query || null,
+        item.element_id || null,
+        item.element_type || null,
+        item.element_text || null,
+        item.extra_data || null,
+        item.device_brand || null,
+        item.device_model || null,
+        item.system_info || null,
+        item.network_type || null,
+        typeof item.duration === 'number' ? item.duration : null,
+        item.client_time || null
+      );
+      saved += 1;
+    });
+
+    saveDatabase();
+    res.json({ code: 0, msg: 'success', data: { received: behaviors.length, saved } });
+  } catch (error) {
+    console.error('行为上报错误:', error);
+    res.status(500).json({ code: 500, msg: '行为上报失败' });
+  }
+});
+
+// 热门模板（首页）
+app.get('/api/market/hot', (req, res) => {
+  try {
+    const db = getDb();
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 6, 1), 50);
+
+    const templates = db.prepare(`
+      SELECT
+        id,
+        name,
+        name_en,
+        description,
+        description_en,
+        cover_image,
+        is_official,
+        use_count,
+        like_count,
+        created_at
+      FROM user_templates
+      WHERE status = 'published'
+      ORDER BY is_featured DESC, use_count DESC, like_count DESC, created_at DESC
+      LIMIT ?
+    `).all(limit);
+
+    res.json({
+      code: 200,
+      msg: 'success',
+      data: {
+        templates
+      }
+    });
+  } catch (error) {
+    console.error('获取热门模板错误:', error);
+    res.status(500).json({ code: 500, msg: '获取热门模板失败' });
+  }
+});
+
 // 兼容路由：/api/users/sign-agreement -> /api/user/sign-agreement
 app.post('/api/users/sign-agreement', (req, res) => {
   try {
