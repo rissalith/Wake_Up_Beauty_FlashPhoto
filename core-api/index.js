@@ -72,10 +72,6 @@ const miniprogramBehaviorRoutes = require('./routes/miniprogram/behavior');
 const miniprogramDrawRoutes = require('./routes/miniprogram/draw');
 const miniprogramVideoRewardRoutes = require('./routes/miniprogram/video-reward');
 
-// 尝试加载创作者相关路由（可能不存在）
-let miniprogramCreatorRoutes, miniprogramTemplateRoutes;
-try { miniprogramCreatorRoutes = require('./routes/miniprogram/creator'); } catch(e) { console.log('[Core API] creator routes not found:', e.message); }
-try { miniprogramTemplateRoutes = require('./routes/miniprogram/template'); } catch(e) { console.log('[Core API] template routes not found:', e.message); }
 
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
