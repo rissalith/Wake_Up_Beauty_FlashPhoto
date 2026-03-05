@@ -328,7 +328,7 @@ page {
   gap: 24rpx;
   padding: 0 24rpx;
   justify-content: space-between;
-  margin-top: 40rpx;
+  margin-top: 60rpx;
 }
 
 .service-card {
@@ -339,21 +339,21 @@ page {
   border-radius: 24rpx;
   transition: all 0.2s ease;
   flex: 1;
-  background: #fff;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  background: transparent;
+  box-shadow: none;
   min-height: 320rpx;
   justify-content: center;
 }
 
 .service-card:active {
-  background: #fff;
+  background: transparent;
 }
 
 /* hover效果 - 点击反馈 */
 .service-card-hover {
-  background: #fff;
+  background: transparent;
   transform: scale(0.96);
-  box-shadow: 0 8rpx 24rpx rgba(232, 182, 134, 0.3);
+  box-shadow: none;
 }
 
 .service-card.disabled {
