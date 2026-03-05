@@ -7,8 +7,8 @@
         <span class="subtitle">管理所有AI生成场景，配置步骤和定价</span>
       </div>
       <div class="header-right">
-        <el-button type="primary" @click="showAddDialog">
-          <el-icon><Plus /></el-icon> 新增场景
+        <el-button type="primary" disabled>
+          <el-icon><Plus /></el-icon> 新增场景（已禁用）
         </el-button>
       </div>
     </div>
@@ -92,8 +92,8 @@
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <div class="action-btns-row">
-              <el-button type="primary" link size="small" @click="editScene(row)">编辑</el-button>
-              <el-button type="danger" link size="small" @click="deleteScene(row)">删除</el-button>
+              <el-button type="primary" link size="small" disabled>编辑</el-button>
+              <el-button type="danger" link size="small" disabled>删除</el-button>
             </div>
           </template>
         </el-table-column>

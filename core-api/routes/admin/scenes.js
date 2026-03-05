@@ -61,138 +61,27 @@ router.get('/:id', (req, res) => {
   }
 });
 
-// 创建场景
+// 场景管理已改为只读模式（硬编码配置）
+// POST、PUT、DELETE 操作已禁用
+
+// 创建场景 - 已禁用
 router.post('/', (req, res) => {
-  try {
-    const db = getDb();
-    const {
-      sceneKey, name, nameEn, nameTw, description, descriptionEn, descriptionTw,
-      icon, coverImage, price, isFree, status, isReviewSafe, pagePath,
-      useDynamicRender, comingSoonText, sortOrder
-    } = req.body;
-
-    if (!sceneKey || !name) {
-      return res.status(400).json({ code: -1, msg: '场景key和名称不能为空' });
-    }
-
-    const existing = db.prepare('SELECT id FROM scenes WHERE scene_key = ?').get(sceneKey);
-    if (existing) {
-      return res.status(400).json({ code: -1, msg: '场景key已存在' });
-    }
-
-    const result = dbRun(db, `
-      INSERT INTO scenes (scene_key, name, name_en, description, description_en,
-        icon, cover_image, price, is_free, status, is_review_safe, page_path,
-        use_dynamic_render, coming_soon_text, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      sceneKey, name, nameEn || null, description || null, descriptionEn || null,
-      icon || null, coverImage || null, price || 0, isFree ? 1 : 0, status || 'offline', isReviewSafe ? 1 : 0, pagePath || null,
-      useDynamicRender ? 1 : 0, comingSoonText || null, sortOrder || 0
-    ]);
-
-    saveDatabase();
-
-    res.json({
-      code: 0,
-      msg: 'success',
-      data: { id: result.lastInsertRowid }
-    });
-  } catch (error) {
-    console.error('创建场景错误:', error);
-    res.status(500).json({ code: -1, msg: '服务器错误' });
-  }
+  res.status(405).json({ code: -1, msg: '场景管理已改为只读模式，不支持创建' });
 });
 
-// 更新场景
+// 更新场景 - 已禁用
 router.put('/:id', (req, res) => {
-  try {
-    const db = getDb();
-    const { id } = req.params;
-    const updates = req.body;
-
-    const existing = db.prepare('SELECT id FROM scenes WHERE id = ?').get(id);
-    if (!existing) {
-      return res.status(404).json({ code: -1, msg: '场景不存在' });
-    }
-
-    const fields = [];
-    const values = [];
-
-    const fieldMap = {
-      name: 'name', nameEn: 'name_en',
-      description: 'description', descriptionEn: 'description_en',
-      icon: 'icon', coverImage: 'cover_image', price: 'price', pointsCost: 'points_cost',
-      isFree: 'is_free', status: 'status', isReviewSafe: 'is_review_safe',
-      pagePath: 'page_path', useDynamicRender: 'use_dynamic_render',
-      comingSoonText: 'coming_soon_text', sortOrder: 'sort_order',
-      isHighlighted: 'is_highlighted', highlightColor: 'highlight_color',
-      highlightIntensity: 'highlight_intensity'
-    };
-
-    Object.entries(updates).forEach(([key, value]) => {
-      if (fieldMap[key] !== undefined) {
-        fields.push(`${fieldMap[key]} = ?`);
-        if (['isFree', 'isReviewSafe', 'useDynamicRender', 'isHighlighted'].includes(key)) {
-          values.push(value ? 1 : 0);
-        } else {
-          values.push(value);
-        }
-      }
-    });
-
-    if (fields.length === 0) {
-      return res.status(400).json({ code: -1, msg: '没有可更新的字段' });
-    }
-
-    fields.push('updated_at = CURRENT_TIMESTAMP');
-    values.push(id);
-
-    dbRun(db, `UPDATE scenes SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
-
-    res.json({ code: 0, msg: 'success' });
-  } catch (error) {
-    console.error('更新场景错误:', error);
-    res.status(500).json({ code: -1, msg: '服务器错误' });
-  }
+  res.status(405).json({ code: -1, msg: '场景管理已改为只读模式，不支持编辑' });
 });
 
-// 删除场景
+// 删除场景 - 已禁用
 router.delete('/:id', (req, res) => {
-  try {
-    const db = getDb();
-    const { id } = req.params;
-
-    dbRun(db, 'DELETE FROM scenes WHERE id = ?', [id]);
-    saveDatabase();
-
-    res.json({ code: 0, msg: 'success' });
-  } catch (error) {
-    console.error('删除场景错误:', error);
-    res.status(500).json({ code: -1, msg: '服务器错误' });
-  }
+  res.status(405).json({ code: -1, msg: '场景管理已改为只读模式，不支持删除' });
 });
 
-// 批量更新状态
+// 批量更新状态 - 已禁用
 router.post('/batch-status', (req, res) => {
-  try {
-    const db = getDb();
-    const { ids, status } = req.body;
-
-    if (!ids || !ids.length || !status) {
-      return res.status(400).json({ code: -1, msg: '参数错误' });
-    }
-
-    const placeholders = ids.map(() => '?').join(',');
-    dbRun(db, `UPDATE scenes SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`, [status, ...ids]);
-    saveDatabase();
-
-    res.json({ code: 0, msg: 'success' });
-  } catch (error) {
-    console.error('批量更新状态错误:', error);
-    res.status(500).json({ code: -1, msg: '服务器错误' });
-  }
+  res.status(405).json({ code: -1, msg: '场景管理已改为只读模式，不支持批量操作' });
 });
 
 // ==================== 词组池管理 ====================

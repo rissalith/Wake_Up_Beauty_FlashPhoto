@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const { initHardcodedScenes } = require('./scenes-hardcoded');
 
 // 数据库路径配置 - 支持多种环境变量名称以兼容不同服务
 const DB_DIR = process.env.DB_DIR || path.join(__dirname, '../data');
@@ -40,10 +41,13 @@ async function initDatabase() {
   
   // 创建表结构
   createTables();
-  
+
+  // 初始化硬编码场景
+  initHardcodedScenes(db);
+
   // 初始化默认数据
   await initDefaultData();
-  
+
   return db;
 }
 
