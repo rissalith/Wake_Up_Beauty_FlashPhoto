@@ -390,7 +390,6 @@ page {
 .service-info {
   flex: 1;
   min-width: 0;
-  text-align: center;
 }
 
 .service-title-row {
