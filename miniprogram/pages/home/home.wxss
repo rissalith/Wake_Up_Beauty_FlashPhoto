@@ -314,7 +314,7 @@ page {
   height: 480rpx;
 }
 
-/* 服务列表 */
+/* 服务列表 - 横向并列 */
 .service-list {
   background: transparent;
   border-radius: 0;
@@ -322,12 +322,22 @@ page {
   margin-bottom: 0;
 }
 
+/* 服务网格 - 两列并列 */
+.service-grid {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 24rpx;
+  justify-content: space-between;
+}
+
 .service-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 20rpx 20rpx;
+  padding: 20rpx;
   border-radius: 16rpx;
   transition: all 0.2s ease;
+  flex: 1;
 }
 
 .service-card:active {
@@ -357,10 +367,11 @@ page {
 }
 
 .service-icon-wrap {
-  width: 120rpx;
-  height: 120rpx;
+  width: 140rpx;
+  height: 140rpx;
   border-radius: 28rpx;
-  margin-right: 28rpx;
+  margin-right: 0;
+  margin-bottom: 16rpx;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -377,6 +388,7 @@ page {
 .service-info {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .service-title-row {

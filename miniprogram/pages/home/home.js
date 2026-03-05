@@ -143,15 +143,10 @@ Page({
         displayDesc: this.getLocalizedText(scene, 'description', currentLang)
       }));
 
-      const scenesPerPage = this.data.scenesPerPage;
-      const scenePages = [];
-      for (let i = 0; i < allScenes.length; i += scenesPerPage) {
-        scenePages.push(allScenes.slice(i, i + scenesPerPage));
-      }
-      if (scenePages.length === 0) {
-        scenePages.push([]);
-      }
-      const pageCount = scenePages.length;
+      // 只保留证件照和职业照两个场景
+      const coreScenes = allScenes.filter(s => s.id === 'idphoto' || s.id === 'professional');
+      const scenePages = [coreScenes];
+      const pageCount = 1;
 
       this.setData({
         activeScenes,

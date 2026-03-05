@@ -48,7 +48,7 @@
       <text class="announcement-text">{{announcement}}</text>
     </view>
 
-    <!-- 功能列表 - 可滑动切页 -->
+    <!-- 功能列表 - 两个场景横向并列 -->
     <view class="service-section">
       <view class="service-header">
         <text class="service-section-title">{{i18n.selectScene || '选择场景'}}</text>
@@ -56,51 +56,26 @@
 
       <!-- 配置加载完成后渲染 -->
       <block wx:if="{{configLoaded}}">
-        <swiper class="service-swiper" bindchange="onSwiperChange" current="{{currentPage}}" duration="300" easing-function="easeOutCubic">
-          <!-- 动态渲染每一页 -->
-          <swiper-item wx:for="{{scenePages}}" wx:key="index" wx:for-item="pageScenes" wx:for-index="pageIndex">
-            <view class="service-list">
-              <!-- 当前页的场景列表 -->
-              <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}} {{item.is_highlighted ? 'highlighted' : ''}}" wx:for="{{pageScenes}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100" style="{{item.is_highlighted ? '--highlight-color:' + (item.highlight_color || '#ff6b6b') + ';--highlight-intensity:' + (item.highlight_intensity || 0.3) : ''}}">
-                <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
-                  <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
-                </view>
-                <view class="service-info">
-                  <view class="service-title-row" wx:if="{{item.status === 'coming_soon'}}">
-                    <text class="service-title">{{item.displayName}}</text>
-                    <view class="coming-tag">{{item.coming_soon_text || i18n.comingSoon || '即将上线'}}</view>
-                  </view>
-                  <text class="service-title" wx:else>{{item.displayName}}</text>
-                  <text class="service-desc">{{item.displayDesc}}</text>
-                </view>
-              </view>
-
-              <!-- 最后一页且场景不满时显示"更多场景"占位 -->
-              <view class="service-card more-coming" wx:if="{{pageIndex === pageCount - 1 && pageScenes.length < scenesPerPage}}">
-                <view class="service-icon-wrap more">
-                  <view class="more-icon">
-                    <view class="more-dot"></view>
-                    <view class="more-dot"></view>
-                    <view class="more-dot"></view>
-                  </view>
-                </view>
-                <view class="service-info">
-                  <text class="service-title">{{i18n.moreScene || '更多场景'}}</text>
-                  <text class="service-desc">{{i18n.moreSceneDesc || '更多精彩场景，敬请期待...'}}</text>
-                </view>
-              </view>
+        <view class="service-grid">
+          <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}}" wx:for="{{scenePages[0]}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100">
+            <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
+              <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
             </view>
-          </swiper-item>
-        </swiper>
-        <!-- 动态分页指示器 -->
-        <view class="swiper-dots-bottom" wx:if="{{pageCount > 1}}">
-          <view class="dot {{currentPage === index ? 'active' : ''}}" wx:for="{{scenePages}}" wx:key="index"></view>
+            <view class="service-info">
+              <view class="service-title-row" wx:if="{{item.status === 'coming_soon'}}">
+                <text class="service-title">{{item.displayName}}</text>
+                <view class="coming-tag">{{item.coming_soon_text || i18n.comingSoon || '即将上线'}}</view>
+              </view>
+              <text class="service-title" wx:else>{{item.displayName}}</text>
+              <text class="service-desc">{{item.displayDesc}}</text>
+            </view>
+          </view>
         </view>
       </block>
 
       <!-- 加载中状态 -->
       <view class="service-loading" wx:if="{{!configLoaded}}">
-        <view class="loading-placeholder" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="loading-placeholder" wx:for="{{[1,2]}}" wx:key="*this">
           <view class="placeholder-icon"></view>
           <view class="placeholder-text"></view>
         </view>
