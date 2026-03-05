@@ -305,44 +305,6 @@
                     <span class="config-tip">（勾选后每个选项需要配置图片）</span>
                   </div>
 
-                  <!-- 品级方案管理 -->
-                  <div class="grade-scheme-section">
-                    <div class="section-title">
-                      品级方案管理
-                    </div>
-                    <div v-if="form.id && currentStep.step_key" class="grade-scheme-selector">
-                      <div class="grade-scheme-row">
-                        <el-select
-                          v-model="currentStep.config.gradeSchemeId"
-                          placeholder="选择品级方案"
-                          style="width: 180px"
-                          size="small"
-                          @change="onGradeSchemeChange"
-                        >
-                          <el-option
-                            v-for="scheme in gradeSchemes"
-                            :key="scheme.id"
-                            :label="scheme.name"
-                            :value="scheme.id"
-                          />
-                        </el-select>
-                        <el-button size="small" @click="showGradeSchemeManager">编辑</el-button>
-                      </div>
-                      <!-- 品级预览 -->
-                      <div v-if="selectedGradeScheme" class="grade-preview">
-                        <span
-                          v-for="grade in selectedGradeScheme.grades"
-                          :key="grade.id"
-                          class="grade-preview-item"
-                          :style="{ background: grade.color, color: '#fff' }"
-                        >
-                          {{ grade.name }}
-                        </span>
-                      </div>
-                    </div>
-                    <el-empty v-else description="请先保存场景" :image-size="60" />
-                  </div>
-
                   <!-- 词条池管理 -->
                   <div class="dice-pool-manager">
                     <div class="section-title">词条池管理</div>
@@ -690,23 +652,6 @@
       </template>
     </el-dialog>
 
-    <!-- 品级方案管理弹窗 -->
-    <el-dialog
-      v-model="gradeSchemeManagerVisible"
-      title="品级方案管理"
-      width="900px"
-      destroy-on-close
-    >
-      <grade-scheme-manager
-        v-if="gradeSchemeManagerVisible && form.id && currentStep?.step_key"
-        :scene-id="String(form.id)"
-        :step-key="currentStep.step_key"
-        @change="onGradeSchemeManagerChange"
-      />
-      <template #footer>
-        <el-button @click="gradeSchemeManagerVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -719,7 +664,6 @@ import draggable from 'vuedraggable'
 import request from '@/api'
 import { translateToEnglish, batchTranslateToEnglish } from '@/utils/translate'
 import DrawPoolManager from '@/components/DrawPoolManager.vue'
-import GradeSchemeManager from '@/components/GradeSchemeManager.vue'
 import PromptTemplateEditor from '@/components/PromptTemplateEditor.vue'
 
 const loading = ref(false)
@@ -765,59 +709,8 @@ const sceneIconFolderFilter = ref('')  // 文件夹筛选
 const selectedSceneIcon = ref('')
 const filteredSceneIcons = ref([])  // 筛选后的图标列表
 
-// 品级方案相关
-const gradeSchemes = ref([])
-const gradeSchemeManagerVisible = ref(false)
-const selectedGradeScheme = computed(() => {
-  if (!currentStep.value?.config?.gradeSchemeId) return null
-  return gradeSchemes.value.find(s => s.id === currentStep.value.config.gradeSchemeId)
-})
 
-// 显示品级方案管理弹窗
-function showGradeSchemeManager() {
-  if (!form.id || !currentStep.value?.step_key) {
-    ElMessage.warning('请先保存场景')
-    return
-  }
-  gradeSchemeManagerVisible.value = true
-}
 
-// 品级方案管理器变化回调
-function onGradeSchemeManagerChange() {
-  loadGradeSchemes()
-}
-
-// 加载品级方案列表
-async function loadGradeSchemes() {
-  try {
-    const res = await request.get('/admin/grade-schemes')
-    const schemes = res.data.list || []
-    // 为每个方案加载品级详情
-    for (const scheme of schemes) {
-      try {
-        const detailRes = await request.get(`/admin/grade-schemes/${scheme.id}`)
-        if (detailRes.code === 0 && detailRes.data) {
-          scheme.grades = detailRes.data.grades || []
-        }
-      } catch (e) {
-        scheme.grades = []
-      }
-    }
-    gradeSchemes.value = schemes
-  } catch (error) {
-    console.error('加载品级方案失败:', error)
-  }
-}
-
-// 品级方案选择变化
-function onGradeSchemeChange(schemeId) {
-  if (currentStep.value) {
-    if (!currentStep.value.config) {
-      currentStep.value.config = {}
-    }
-    currentStep.value.config.gradeSchemeId = schemeId
-  }
-}
 
 const filteredStepIcons = computed(() => {
   if (!stepIconSearch.value) return stepIcons.value
@@ -1811,7 +1704,6 @@ async function translateOption(opt) {
 
 onMounted(() => {
   loadScenes()
-  loadGradeSchemes()
 })
 </script>
 
