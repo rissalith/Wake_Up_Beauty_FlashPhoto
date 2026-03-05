@@ -1221,6 +1221,12 @@ onMounted(() => {
   color: #909399;
 }
 
+/* 语言切换按钮 - 更扁的样式 */
+.section-header :deep(.el-radio-group) .el-radio-button__inner {
+  padding: 5px 12px;
+  line-height: 1.2;
+}
+
 .section-filters {
   display: flex;
   gap: 10px;

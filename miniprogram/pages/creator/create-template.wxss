@@ -27,6 +27,24 @@
   color: #d48806;
 }
 
+.active-notice {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+}
+
+.active-notice .notice-text {
+  color: #389e0d;
+}
+
+.offline-notice {
+  background: #f0f0f0;
+  border-color: #d9d9d9;
+}
+
+.offline-notice .notice-text {
+  color: #666;
+}
+
 /* 禁用状态样式 */
 .form-input.disabled,
 .form-textarea.disabled {
@@ -101,10 +119,8 @@
 }
 
 .ai-icon-wrapper {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,6 +130,12 @@
 .ai-icon {
   width: 24px;
   height: 24px;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
 .ai-text-wrapper {
@@ -485,14 +507,33 @@
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
+.btn-delete {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #ffd6d6;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.btn-delete-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .btn-draft {
-  flex: 1;
+  width: 100px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f5f5f5;
   border-radius: 22px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .btn-draft .btn-text {
@@ -501,13 +542,14 @@
 }
 
 .btn-submit {
-  flex: 2;
+  width: 120px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #E8B686 0%, #D4A574 100%);
   border-radius: 22px;
+  flex-shrink: 0;
 }
 
 .btn-submit .btn-text {
@@ -534,6 +576,42 @@
   font-size: 15px;
   color: #fff;
   font-weight: 500;
+}
+
+.active-status-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  gap: 6px;
+}
+
+.active-status-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.active-status-text {
+  font-size: 15px;
+  color: #389e0d;
+  font-weight: 500;
+}
+
+.btn-offline {
+  height: 44px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 22px;
+}
+
+.btn-offline .btn-text {
+  font-size: 15px;
+  color: #666;
 }
 
 /* 底部安全区 */

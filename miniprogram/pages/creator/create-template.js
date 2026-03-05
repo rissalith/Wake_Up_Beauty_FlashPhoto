@@ -166,7 +166,7 @@ Page({
         const pointsCost = template.points_cost || 50;
         const priceIndex = PRICE_OPTIONS.indexOf(pointsCost);
         const status = template.status || 'draft';
-        const isEditable = ['draft', 'rejected'].includes(status);
+        const isEditable = ['draft', 'rejected', 'offline'].includes(status);
 
         // 解析用户图配置
         let userImageConfig = JSON.parse(JSON.stringify(DEFAULT_USER_IMAGE_CONFIG));
@@ -361,6 +361,73 @@ Page({
             wx.hideLoading();
             console.error('撤销审核失败:', error);
             wx.showToast({ title: '撤销失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  },
+
+  // 下架模板
+  async offlineTemplate() {
+    const { templateId, templateStatus } = this.data;
+
+    if (templateStatus !== 'active') {
+      wx.showToast({ title: '当前状态不支持下架', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '下架模板',
+      content: '确定要下架此模板吗？下架后用户将无法使用，但你可以修改后重新提交审核。',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '下架中...' });
+          try {
+            const userId = wx.getStorageSync('userId');
+            const result = await api.offlineTemplate(templateId, userId);
+            wx.hideLoading();
+            if (result.code === 200) {
+              wx.showToast({ title: '已下架', icon: 'success' });
+              this.setData({ templateStatus: 'offline', isEditable: true });
+            } else {
+              wx.showToast({ title: result.msg || '下架失败', icon: 'none' });
+            }
+          } catch (error) {
+            wx.hideLoading();
+            console.error('下架模板失败:', error);
+            wx.showToast({ title: '下架失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  },
+
+  // 删除模板
+  async deleteTemplate() {
+    const { templateId } = this.data;
+    if (!templateId) return;
+
+    wx.showModal({
+      title: '删除模板',
+      content: '确定要删除此模板吗？删除后无法恢复。',
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '删除中...' });
+          try {
+            const userId = wx.getStorageSync('userId');
+            const result = await api.deleteTemplate(templateId, userId);
+            wx.hideLoading();
+            if (result.code === 200) {
+              wx.showToast({ title: '已删除', icon: 'success' });
+              setTimeout(() => { wx.navigateBack(); }, 1000);
+            } else {
+              wx.showToast({ title: result.msg || '删除失败', icon: 'none' });
+            }
+          } catch (error) {
+            wx.hideLoading();
+            console.error('删除模板失败:', error);
+            wx.showToast({ title: '删除失败', icon: 'none' });
           }
         }
       }
@@ -902,7 +969,6 @@ Page({
     // 如果有用户图配置，也应用
     if (aiResult.user_image_config) {
       updates.userImageConfig = aiResult.user_image_config;
-    }
     }
 
     this.setData(updates);

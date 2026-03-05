@@ -10,8 +10,6 @@ Component({
     // TabBar 图标
     tabHome: images.tabHome,
     tabHomeActive: images.tabHomeActive,
-    tabCreator: images.tabCreator,
-    tabCreatorActive: images.tabCreatorActive,
     tabHistory: images.tabHistory,
     tabHistoryActive: images.tabHistoryActive,
     tabMine: images.tabMine,

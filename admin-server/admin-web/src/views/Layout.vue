@@ -35,35 +35,11 @@
         </el-menu-item>
 
         <el-divider style="margin: 10px 15px; border-color: rgba(255,255,255,0.1);" />
-        <div style="padding: 0 20px; color: #999; font-size: 12px; margin-bottom: 5px;">中台管理</div>
+        <div style="padding: 0 20px; color: #999; font-size: 12px; margin-bottom: 5px;">证件照配置</div>
 
         <el-menu-item index="/scenes">
           <el-icon><Grid /></el-icon>
-          <span>场景管理（旧）</span>
-        </el-menu-item>
-        <el-menu-item index="/template-management">
-          <el-icon><Document /></el-icon>
-          <span>模板管理</span>
-        </el-menu-item>
-        <el-menu-item index="/official-templates">
-          <el-icon><Files /></el-icon>
-          <span>官方模板</span>
-        </el-menu-item>
-        <el-menu-item index="/ai-agent">
-          <el-icon><MagicStick /></el-icon>
-          <span>AI 智能生成</span>
-        </el-menu-item>
-        <el-menu-item index="/creator-scenes">
-          <el-icon><Stamp /></el-icon>
-          <span>创作者场景（旧）</span>
-        </el-menu-item>
-        <el-menu-item index="/categories">
-          <el-icon><Collection /></el-icon>
-          <span>分类管理</span>
-        </el-menu-item>
-        <el-menu-item index="/assets">
-          <el-icon><FolderOpened /></el-icon>
-          <span>素材管理</span>
+          <span>场景管理</span>
         </el-menu-item>
 
         <el-divider style="margin: 10px 15px; border-color: rgba(255,255,255,0.1);" />

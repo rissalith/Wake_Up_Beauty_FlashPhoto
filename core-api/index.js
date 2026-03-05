@@ -72,12 +72,6 @@ const miniprogramBehaviorRoutes = require('./routes/miniprogram/behavior');
 const miniprogramDrawRoutes = require('./routes/miniprogram/draw');
 const miniprogramVideoRewardRoutes = require('./routes/miniprogram/video-reward');
 
-// 创作者中心路由
-const miniprogramMarketRoutes = require('./routes/miniprogram/market');
-const miniprogramCreatorRoutes = require('./routes/miniprogram/creator');
-const miniprogramTemplateRoutes = require('./routes/miniprogram/template');
-const miniprogramCreatorSceneRoutes = require('./routes/miniprogram/creator-scene');
-
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
 const adminUsersRoutes = require('./routes/admin/users');
@@ -85,10 +79,6 @@ const adminStatsRoutes = require('./routes/admin/stats');
 const adminConfigRoutes = require('./routes/admin/config');
 const adminScenesRoutes = require('./routes/admin/scenes');
 const adminMonitorRoutes = require('./routes/admin/monitor');
-const adminGradeSchemesRoutes = require('./routes/admin/grade-schemes');
-const adminTemplateReviewRoutes = require('./routes/admin/template-review');
-const adminCreatorSceneReviewRoutes = require('./routes/admin/creator-scene-review');
-const adminAiAgentRoutes = require('./routes/admin/ai-agent');
 
 // 尝试加载额外路由（可能不存在）
 let adminTranslateRoutes, adminPhotosRoutes;
@@ -114,12 +104,6 @@ app.use('/api/behavior', miniprogramBehaviorRoutes);
 app.use('/api/draw', miniprogramDrawRoutes);
 app.use('/api/video-reward', miniprogramVideoRewardRoutes);
 
-// 创作者中心路由
-app.use('/api/market', miniprogramMarketRoutes);
-app.use('/api/creator', miniprogramCreatorRoutes);
-app.use('/api/template', miniprogramTemplateRoutes);
-app.use('/api/creator-scene', miniprogramCreatorSceneRoutes);
-
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
@@ -127,10 +111,6 @@ app.use('/api/admin/stats', adminStatsRoutes);
 app.use('/api/admin/config', adminConfigRoutes);
 app.use('/api/admin/scenes', adminScenesRoutes);
 app.use('/api/admin/monitor', adminMonitorRoutes);
-app.use('/api/admin/grade-schemes', adminGradeSchemesRoutes);
-app.use('/api/admin/template-review', adminTemplateReviewRoutes);
-app.use('/api/admin/creator-scenes', adminCreatorSceneReviewRoutes);
-app.use('/api/admin/ai-agent', adminAiAgentRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);

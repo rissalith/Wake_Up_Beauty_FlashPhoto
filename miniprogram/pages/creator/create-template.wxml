@@ -14,10 +14,18 @@
   <!-- 页面内容 -->
   <scroll-view class="page-scroll" style="top: {{navBarHeight}}px;" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 
-    <!-- 审核中提示条 -->
-    <view class="review-notice" wx:if="{{!isEditable}}">
+    <!-- 状态提示条 -->
+    <view class="review-notice" wx:if="{{!isEditable && templateStatus !== 'active'}}">
       <image class="notice-icon" src="/images/icon-info.svg" mode="aspectFit"></image>
       <text class="notice-text">{{templateStatus === 'reviewing' ? '审核中，如需修改请先撤销审核' : '待人工复核，如需修改请先撤销审核'}}</text>
+    </view>
+    <view class="review-notice active-notice" wx:if="{{templateStatus === 'active'}}">
+      <image class="notice-icon" src="/images/icon-info.svg" mode="aspectFit"></image>
+      <text class="notice-text">模板已上架，如需修改请先下架</text>
+    </view>
+    <view class="review-notice offline-notice" wx:if="{{templateStatus === 'offline'}}">
+      <image class="notice-icon" src="/images/icon-info.svg" mode="aspectFit"></image>
+      <text class="notice-text">模板已下架，修改后可重新提交审核</text>
     </view>
 
     <!-- AI 智能生成入口 - 仅可编辑时显示 -->
@@ -44,7 +52,7 @@
           <!-- AI修改按钮 -->
           <view class="ai-modify-btn" wx:if="{{formData.name || formData.description}}" bindtap="showBasicInfoModifyModal">
             <image class="ai-modify-icon" src="/images/icon-ai-spark.svg" mode="aspectFit"></image>
-            <text>AI修改</text>
+            <text>AI优化</text>
           </view>
         </view>
       </view>
@@ -284,14 +292,23 @@
 
   <!-- 底部按钮 -->
   <view class="bottom-bar" style="padding-bottom: env(safe-area-inset-bottom);">
+    <!-- 已上架状态：显示下架按钮 -->
+    <block wx:if="{{templateStatus === 'active'}}">
+      <view class="btn-offline" bindtap="offlineTemplate">
+        <text class="btn-text">下架模板</text>
+      </view>
+    </block>
     <!-- 审核中/待审核状态：显示撤销按钮 -->
-    <block wx:if="{{templateStatus === 'reviewing' || templateStatus === 'pending'}}">
+    <block wx:elif="{{templateStatus === 'reviewing' || templateStatus === 'pending'}}">
       <view class="btn-withdraw" bindtap="withdrawReview">
         <text class="btn-text">撤销审核</text>
       </view>
     </block>
-    <!-- 草稿/已拒绝状态：显示保存和提交按钮 -->
+    <!-- 草稿/已拒绝/已下架状态：显示保存和提交按钮 -->
     <block wx:else>
+      <view class="btn-delete" wx:if="{{isEdit}}" bindtap="deleteTemplate">
+        <image class="btn-delete-icon" src="/images/icon-delete.svg" mode="aspectFit"></image>
+      </view>
       <view class="btn-draft" bindtap="saveDraft">
         <text class="btn-text">保存草稿</text>
       </view>

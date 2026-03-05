@@ -1,8 +1,7 @@
 {
   "pages": [
-    "pages/market/market",
+    "pages/home/home",
     "pages/history/history",
-    "pages/creator/creator",
     "pages/mine/mine",
     "pages/scene/scene",
     "pages/recharge/recharge",
@@ -15,16 +14,7 @@
     "pages/feedback/feedback",
     "pages/feedback-submit/feedback-submit",
     "pages/webview/index",
-    "pages/video-reward/video-reward",
-    "pages/creator/create-template",
-    "pages/creator/my-templates",
-    "pages/creator/earnings",
-    "pages/creator/background-tasks",
-    "pages/creator/my-scenes/my-scenes",
-    "pages/creator/scene-editor/scene-editor",
-    "pages/creator/step-editor/step-editor",
-    "pages/template-detail/template-detail",
-    "pages/index/index"
+    "pages/video-reward/video-reward"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -39,12 +29,8 @@
     "backgroundColor": "#ffffff",
     "list": [
       {
-        "pagePath": "pages/market/market",
+        "pagePath": "pages/home/home",
         "text": "首页"
-      },
-      {
-        "pagePath": "pages/creator/creator",
-        "text": "创作"
       },
       {
         "pagePath": "pages/history/history",

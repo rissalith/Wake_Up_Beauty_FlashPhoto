@@ -55,47 +55,11 @@ const routes = [
         meta: { title: '场景管理' }
       },
       {
-        path: 'creator-scenes',
-        name: 'CreatorScenes',
-        component: () => import('../views/CreatorScenes.vue'),
-        meta: { title: '创作者场景审核' }
-      },
-      {
-        path: 'official-templates',
-        name: 'OfficialTemplates',
-        component: () => import('../views/OfficialTemplates.vue'),
-        meta: { title: '官方模板管理' }
-      },
-      {
-        path: 'template-management',
-        name: 'TemplateManagement',
-        component: () => import('../views/TemplateManagement.vue'),
-        meta: { title: '模板管理' }
-      },
-      {
-        path: 'categories',
-        name: 'Categories',
-        component: () => import('../views/Categories.vue'),
-        meta: { title: '分类管理' }
-      },
-      {
-        path: 'assets',
-        name: 'Assets',
-        component: () => import('../views/Assets.vue'),
-        meta: { title: '素材管理' }
-      },
-      {
         path: 'monitor',
         name: 'Monitor',
         component: () => import('../views/Monitor.vue'),
         meta: { title: '服务监控' }
       },
-      {
-        path: 'ai-agent',
-        name: 'AiAgent',
-        component: () => import('../views/AiAgent.vue'),
-        meta: { title: 'AI 智能生成' }
-      }
     ]
   }
 ]

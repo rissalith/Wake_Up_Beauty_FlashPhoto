@@ -57,30 +57,7 @@ I18nPage({
     templateConfig: null,
     referenceImage: '',
     referenceWeight: 0.8,
-    faceSwapMode: 'replace',
-    // 新增：多参考图支持
-    referenceImages: [],
-    currentRefIndex: 0,
-    // 新增：用户图配置
-    userImageConfig: {
-      max_count: 3,
-      slots: [{
-        index: 1,
-        title: '上传照片',
-        title_en: 'Upload Photo',
-        description: '请上传清晰的正面照片',
-        description_en: 'Please upload a clear front photo',
-        required: true,
-        role: 'face_source'
-      }]
-    },
-    emptySlots: [], // 空槽位列表
-    // 新增：Prompt 预览
-    showPromptPreview: true,
-    promptPreview: '',
-    promptPreviewExpanded: false,
-    // 当前语言
-    currentLang: 'zh-CN'
+    faceSwapMode: 'replace'
   },
 
   async onLoad(options) {
@@ -484,21 +461,6 @@ I18nPage({
         }
       }
 
-      // 初始化用户图配置（场景模式使用默认配置）
-      const userImageConfig = {
-        max_count: 3,
-        slots: [{
-          index: 1,
-          title: '上传照片',
-          title_en: 'Upload Photo',
-          description: '请上传清晰的正面照片',
-          description_en: 'Please upload a clear front photo',
-          required: true,
-          role: 'face_source'
-        }]
-      };
-      const emptySlots = this._calculateEmptySlots(userImageConfig, 0);
-
       this.setData({
         configLoading: false,
         sceneConfig,
@@ -506,17 +468,11 @@ I18nPage({
         pointsPerPhoto,
         totalPoints: pointsPerPhoto * this.data.generateCount,
         selections,
-        stepOptions,
-        userImageConfig,
-        emptySlots,
-        currentLang
+        stepOptions
       });
 
       // 初始化摇骰子步骤状态
       this.initDiceSteps(visibleSteps);
-
-      // 生成初始 Prompt 预览
-      this.updatePromptPreview();
 
     } catch (error) {
       // 静默处理
@@ -588,29 +544,6 @@ I18nPage({
       const referenceImage = templateConfig.reference_image || '';
       const promptConfig = templateConfig.prompt || {};
 
-      // 新增：获取多参考图配置
-      const referenceImages = templateConfig.referenceImages || [];
-
-      // 新增：获取用户图配置
-      let userImageConfig = templateConfig.userImageConfig || {
-        max_count: 3,
-        slots: [{
-          index: 1,
-          title: '上传照片',
-          title_en: 'Upload Photo',
-          description: '请上传清晰的正面照片',
-          description_en: 'Please upload a clear front photo',
-          required: true,
-          role: 'face_source'
-        }]
-      };
-
-      // 计算空槽位
-      const emptySlots = this._calculateEmptySlots(userImageConfig, 0);
-
-      // 获取当前语言
-      const currentLang = getCurrentLang();
-
       this.setData({
         configLoading: false,
         templateConfig,
@@ -621,91 +554,19 @@ I18nPage({
         selections,
         stepOptions,
         referenceImage,
-        referenceImages,
         referenceWeight: promptConfig.reference_weight || 0.8,
         faceSwapMode: promptConfig.face_swap_mode || 'replace',
-        isTemplateMode: true,
-        userImageConfig,
-        emptySlots,
-        currentLang
+        isTemplateMode: true
       });
 
       // 初始化摇骰子步骤状态
       this.initDiceSteps(visibleSteps);
-
-      // 生成初始 Prompt 预览
-      this.updatePromptPreview();
 
     } catch (error) {
       console.error('[Scene] 加载模板配置失败:', error);
       this.setData({ configLoading: false });
       wx.showToast({ title: '模板加载失败', icon: 'none' });
     }
-  },
-
-  // 计算空槽位
-  _calculateEmptySlots(userImageConfig, uploadedCount) {
-    const maxCount = userImageConfig.max_count || 3;
-    const slots = userImageConfig.slots || [];
-    const emptySlots = [];
-
-    for (let i = uploadedCount; i < maxCount; i++) {
-      const slotConfig = slots[i] || {
-        index: i + 1,
-        title: '添加照片',
-        title_en: 'Add Photo',
-        required: false
-      };
-      emptySlots.push(slotConfig);
-    }
-
-    return emptySlots;
-  },
-
-  // 选择参考图
-  selectReferenceImage(e) {
-    const index = e.currentTarget.dataset.index;
-    const { referenceImages } = this.data;
-
-    if (referenceImages[index]) {
-      this.setData({
-        currentRefIndex: index,
-        referenceImage: referenceImages[index].image_url
-      });
-    }
-  },
-
-  // 预览参考图
-  previewReferenceImage() {
-    const { referenceImage, referenceImages } = this.data;
-    const urls = referenceImages.length > 0
-      ? referenceImages.map(img => img.image_url)
-      : [referenceImage];
-
-    wx.previewImage({
-      current: referenceImage,
-      urls: urls.filter(Boolean)
-    });
-  },
-
-  // 为指定槽位选择图片
-  chooseImageForSlot(e) {
-    const slotIndex = e.currentTarget.dataset.slotIndex;
-    this._currentSlotIndex = slotIndex;
-    this.chooseImage();
-  },
-
-  // 切换 Prompt 预览展开状态
-  togglePromptPreview() {
-    this.setData({
-      promptPreviewExpanded: !this.data.promptPreviewExpanded
-    });
-  },
-
-  // 更新 Prompt 预览
-  updatePromptPreview() {
-    const prompt = this.buildPrompt();
-    this.setData({ promptPreview: prompt });
   },
 
   onShow() {
@@ -758,14 +619,13 @@ I18nPage({
 
     // 检查是否有其他步骤依赖当前步骤
     const hasDependents = this._hasDependentSteps(key);
-
+    
     if (hasDependents) {
       // 更新所有依赖当前步骤的选项
       this._updateDependentOptions(key, id, newSelections);
     } else {
       this.setData({ selections: newSelections }, () => {
         this.logCurrentPrompt();
-        this.updatePromptPreview();
       });
     }
   },
@@ -821,7 +681,6 @@ I18nPage({
       selections: newSelections
     }, () => {
       this.logCurrentPrompt();
-      this.updatePromptPreview();
     });
   },
 
@@ -1128,8 +987,7 @@ I18nPage({
       return;
     }
 
-    const maxCount = this.data.userImageConfig.max_count || 3;
-    const remainCount = maxCount - this.data.uploadedImages.length;
+    const remainCount = 3 - this.data.uploadedImages.length;
     wx.chooseMedia({
       count: remainCount,
       mediaType: ['image'],
@@ -1293,11 +1151,8 @@ I18nPage({
     this.setData({ uploading: false });
 
     if (safeImages.length > 0) {
-      const newUploadedImages = [...this.data.uploadedImages, ...safeImages];
-      const emptySlots = this._calculateEmptySlots(this.data.userImageConfig, newUploadedImages.length);
       this.setData({
-        uploadedImages: newUploadedImages,
-        emptySlots
+        uploadedImages: [...this.data.uploadedImages, ...safeImages]
       });
     }
   },
@@ -1307,11 +1162,7 @@ I18nPage({
     const index = e.currentTarget.dataset.index;
     const images = [...this.data.uploadedImages];
     images.splice(index, 1);
-    const emptySlots = this._calculateEmptySlots(this.data.userImageConfig, images.length);
-    this.setData({
-      uploadedImages: images,
-      emptySlots
-    });
+    this.setData({ uploadedImages: images });
   },
 
   // 增加数量
@@ -1358,15 +1209,8 @@ I18nPage({
 
   // 显示支付弹窗
   showPaymentModal() {
-    const { uploadedImages, userImageConfig } = this.data;
-    const minCount = userImageConfig.min_count || 1;
-
-    // 检查最少上传数量
-    if (uploadedImages.length < minCount) {
-      const msg = minCount === 1
-        ? (t('fp_pleaseUpload') || '请先上传照片')
-        : `请至少上传${minCount}张照片`;
-      wx.showToast({ title: msg, icon: 'none' });
+    if (this.data.uploadedImages.length === 0) {
+      wx.showToast({ title: t('fp_pleaseUpload') || '请先上传照片', icon: 'none' });
       return;
     }
 
@@ -1461,15 +1305,8 @@ I18nPage({
 
   // 生成照片
   async generatePhoto() {
-    const { uploadedImages, userImageConfig } = this.data;
-    const minCount = userImageConfig.min_count || 1;
-
-    // 检查最少上传数量
-    if (uploadedImages.length < minCount) {
-      const msg = minCount === 1
-        ? (t('fp_pleaseUpload') || '请先上传照片')
-        : `请至少上传${minCount}张照片`;
-      wx.showToast({ title: msg, icon: 'none' });
+    if (this.data.uploadedImages.length === 0) {
+      wx.showToast({ title: t('fp_pleaseUpload') || '请先上传照片', icon: 'none' });
       return;
     }
 
@@ -1850,24 +1687,20 @@ I18nPage({
 
   // 调用AI API
   async callAPI(prompt) {
-    const { isTemplateMode, referenceImage, referenceWeight, faceSwapMode, userImageConfig, uploadedImages } = this.data;
+    const { isTemplateMode, referenceImage, referenceWeight, faceSwapMode } = this.data;
 
     // 获取用户上传的图片
-    const maxCount = userImageConfig.max_count || 3;
-    const imagesToUse = uploadedImages.slice(0, maxCount);
+    const imagesToUse = this.data.uploadedImages.slice(0, 3);
 
     if (imagesToUse.length === 0) {
       throw new Error(t('noAvailableImage') || '没有可用的图片');
     }
 
-    // 构建图片数组（新格式）
-    const images = [];
-
     // 读取用户照片的 base64
-    for (let i = 0; i < imagesToUse.length; i++) {
-      const img = imagesToUse[i];
-      const slotConfig = userImageConfig.slots[i] || {};
+    let userImageBase64 = null;
+    let userMimeType = 'image/jpeg';
 
+    for (const img of imagesToUse) {
       try {
         let base64Data;
         if (img.path.startsWith('http')) {
@@ -1882,27 +1715,17 @@ I18nPage({
             });
           });
         }
-
-        images.push({
-          type: 'user',
-          base64: base64Data,
-          mimeType: 'image/jpeg',
-          role: slotConfig.role || 'face_source',
-          slot_index: i + 1,
-          slot_title: slotConfig.title || `照片${i + 1}`
-        });
+        if (!userImageBase64) {
+          userImageBase64 = base64Data;
+        }
       } catch (err) {
-        console.error(`[Scene] 读取用户图片 ${i + 1} 失败:`, err);
+        // 静默处理
       }
     }
 
-    if (images.length === 0) {
+    if (!userImageBase64) {
       throw new Error(t('cannotReadImage') || '无法读取图片');
     }
-
-    // 获取第一张用户图作为主图（兼容旧逻辑）
-    const userImageBase64 = images[0].base64;
-    const userMimeType = images[0].mimeType;
 
     // 模板模式：使用参考图替换
     if (isTemplateMode && referenceImage) {
@@ -1910,7 +1733,7 @@ I18nPage({
       console.log('[AI请求] 参考图:', referenceImage.substring(0, 50) + '...');
       console.log('[AI请求] 参考图权重:', referenceWeight);
       console.log('[AI请求] 替换模式:', faceSwapMode);
-      console.log('[AI请求] 用户照片数量:', images.length);
+      console.log('[AI请求] 用户照片大小:', Math.round(userImageBase64.length / 1024) + 'KB');
       console.log('[AI请求] Prompt:', prompt);
       console.log('====================================');
 
@@ -1923,22 +1746,12 @@ I18nPage({
         throw new Error('参考图加载失败');
       }
 
-      // 添加参考图到图片数组
-      images.unshift({
-        type: 'reference',
-        base64: referenceImageBase64,
-        mimeType: 'image/jpeg',
-        role: 'style_reference'
-      });
-
-      // 调用参考图替换 API（传递扩展参数）
+      // 调用参考图替换 API
       return aiService.generateWithReference(prompt, referenceImageBase64, userImageBase64, {
         referenceMimeType: 'image/jpeg',
         userMimeType: userMimeType,
         referenceWeight: referenceWeight,
-        faceSwapMode: faceSwapMode,
-        // 新增：传递完整图片数组（供后端扩展使用）
-        images: images
+        faceSwapMode: faceSwapMode
       });
     }
 
@@ -1947,7 +1760,7 @@ I18nPage({
     console.log('[AI请求] 完整Prompt:');
     console.log(prompt);
     console.log('[AI请求] 图片类型:', userMimeType);
-    console.log('[AI请求] 图片数量:', images.length);
+    console.log('[AI请求] 图片大小:', userImageBase64 ? Math.round(userImageBase64.length / 1024) + 'KB' : '无图片');
     console.log('====================================');
 
     return aiService.generateImage(prompt, userImageBase64, userMimeType);
