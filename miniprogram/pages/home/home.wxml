@@ -62,12 +62,7 @@
               <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
             </view>
             <view class="service-info">
-              <view class="service-title-row" wx:if="{{item.status === 'coming_soon'}}">
-                <text class="service-title">{{item.displayName}}</text>
-                <view class="coming-tag">{{item.coming_soon_text || i18n.comingSoon || '即将上线'}}</view>
-              </view>
-              <text class="service-title" wx:else>{{item.displayName}}</text>
-              <text class="service-desc">{{item.displayDesc}}</text>
+              <text class="service-title">{{item.displayName}}</text>
             </view>
           </view>
         </view>
