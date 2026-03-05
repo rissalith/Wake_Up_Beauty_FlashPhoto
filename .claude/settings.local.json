@@ -295,7 +295,11 @@
       "Read(//c/Users/28218/Pictures/醒美闪图/商户微信支付相关/1105214064_20260122_cert/**)",
       "Bash(git update-index:*)",
       "Bash(npm cache clean:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(git checkout 5aa2b24 -- \"admin-server/admin-web/src/views/Scenes.vue\")",
+      "Bash(npm --prefix \"c:/Users/28218/WeChatProjects/miniprogram-1/admin-server/admin-web\" run build)",
+      "Bash(git add \"admin-server/admin-web/src/api/index.js\" \"admin-server/admin-web/src/router/index.js\" \"admin-server/admin-web/src/views/Assets.vue\" \"admin-server/admin-web/src/views/Layout.vue\" \"admin-server/admin-web/src/views/Scenes.vue\" \"admin-server/admin-web/src/views/AiAgent.vue\" \"admin-server/admin-web/src/views/Categories.vue\" \"admin-server/admin-web/src/views/CreatorScenes.vue\" \"admin-server/admin-web/src/views/OfficialTemplates.vue\" \"admin-server/admin-web/src/views/TemplateManagement.vue\" \"core-api/index.js\" \"core-api/routes/admin/ai-agent.js\" \"core-api/routes/admin/creator-scene-review.js\" \"core-api/routes/admin/template-review.js\" \"core-api/public/admin/index.html\" \"core-api/public/admin/assets\" \"miniprogram/app.json\" \"miniprogram/custom-tab-bar/index.js\" \"miniprogram/custom-tab-bar/index.wxml\" \"miniprogram/images/icon-ai-spark.svg\" \"miniprogram/images/icon-check-circle.svg\" \"miniprogram/images/icon-delete.svg\" \"miniprogram/images/icon-driver.svg\" \"miniprogram/images/icon-id-card.svg\" \"miniprogram/images/icon-one-inch.svg\" \"miniprogram/images/icon-passport.svg\" \"miniprogram/images/icon-two-inch.svg\" \"miniprogram/images/icon-visa.svg\" \"miniprogram/pages/creator/create-template.js\" \"miniprogram/pages/creator/create-template.wxml\" \"miniprogram/pages/creator/create-template.wxss\" \"miniprogram/pages/history/history.js\" \"miniprogram/pages/mine/mine.js\" \"miniprogram/pages/scene/scene.js\" \"miniprogram/pages/scene/scene.wxml\" \"miniprogram/pages/scene/scene.wxss\" \"miniprogram/pages/home\")",
+      "Bash(git push)"
     ]
   }
 }
