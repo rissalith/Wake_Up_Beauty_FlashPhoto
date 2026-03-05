@@ -50,10 +50,6 @@
 
     <!-- 功能列表 - 两个场景横向并列 -->
     <view class="service-section">
-      <view class="service-header">
-        <text class="service-section-title">{{i18n.selectScene || '选择场景'}}</text>
-      </view>
-
       <!-- 配置加载完成后渲染 -->
       <block wx:if="{{configLoaded}}">
         <view class="service-grid">
