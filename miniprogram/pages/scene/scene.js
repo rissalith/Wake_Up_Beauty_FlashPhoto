@@ -307,7 +307,9 @@ I18nPage({
 
       // 按需添加可选字段
       if (includeImage && opt.image) result.image = opt.image;
-      if (includeColor && opt.color) result.color = opt.color;
+      if (includeColor) {
+        result.color = opt.color || this._inferColorFromName(opt.option_key || opt.label || opt.name || '');
+      }
       if (opt.metadata) result.metadata = opt.metadata;
 
       return result;
@@ -448,6 +450,31 @@ I18nPage({
    */
   _needsColor(componentType) {
     return componentType === 'color_picker';
+  },
+
+  _inferColorFromName(name) {
+    if (!name) return '';
+    const lower = name.toLowerCase();
+    const colorMap = {
+      'white': '#ffffff', '白': '#ffffff', '白色': '#ffffff',
+      'blue': '#0066cc', '蓝': '#0066cc', '蓝色': '#0066cc', '深蓝': '#003399',
+      'red': '#cc0000', '红': '#cc0000', '红色': '#cc0000',
+      'gray': '#999999', 'grey': '#999999', '灰': '#999999', '灰色': '#999999',
+      'black': '#333333', '黑': '#333333', '黑色': '#333333',
+      'green': '#009933', '绿': '#009933', '绿色': '#009933',
+      'yellow': '#ffcc00', '黄': '#ffcc00', '黄色': '#ffcc00',
+      'pink': '#ff6699', '粉': '#ff6699', '粉色': '#ff6699', '粉红': '#ff6699',
+      'purple': '#9933cc', '紫': '#9933cc', '紫色': '#9933cc',
+      'orange': '#ff6600', '橙': '#ff6600', '橙色': '#ff6600',
+      'brown': '#663300', '棕': '#663300', '棕色': '#663300',
+      'cyan': '#00cccc', '青': '#00cccc', '青色': '#00cccc',
+      'gradient_blue': '#4a90d9', '渐变蓝': '#4a90d9',
+      '顺安蓝': '#1a5599'
+    };
+    for (const [key, value] of Object.entries(colorMap)) {
+      if (lower === key || lower.includes(key)) return value;
+    }
+    return '';
   },
 
   // 加载场景配置
