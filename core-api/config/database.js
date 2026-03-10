@@ -947,6 +947,7 @@ function createTables() {
   const phCols = ['task_id TEXT', 'scene TEXT', 'spec TEXT', 'beauty TEXT',
     'clothing TEXT', 'bg_color TEXT', 'original_url TEXT', 'result_url TEXT',
     'error_msg TEXT', 'retry_count INTEGER DEFAULT 0', 'points_cost INTEGER DEFAULT 0',
+    'status TEXT DEFAULT \'generating\'', 'created_at DATETIME DEFAULT CURRENT_TIMESTAMP',
     'updated_at DATETIME DEFAULT CURRENT_TIMESTAMP'];
   for (const col of phCols) {
     try { db.exec(`ALTER TABLE photo_history ADD COLUMN ${col}`); } catch (e) { /* 已存在 */ }

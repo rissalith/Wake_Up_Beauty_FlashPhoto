@@ -420,7 +420,7 @@ router.get('/task/:taskId', (req, res) => {
     });
   } catch (error) {
     console.error('查询任务状态错误:', error);
-    res.status(500).json({ code: -1, msg: '服务器错误' });
+    res.status(500).json({ code: -1, msg: '服务器错误', debug: error.message });
   }
 });
 
