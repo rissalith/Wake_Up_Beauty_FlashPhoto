@@ -203,21 +203,9 @@ Page({
     }
   },
 
-  // 虚拟支付流程 (iOS) - 暂未开放
+  // 虚拟支付流程 (iOS) - 使用 Apple 支付
   async doVirtualPayment(amount, points) {
     const { i18n } = this.data;
-
-    // iOS 虚拟支付暂未开放，显示提示弹窗
-    wx.showModal({
-      title: i18n.iosPaymentNotAvailableTitle || 'iOS支付暂未开放',
-      content: i18n.iosPaymentNotAvailableContent || '抱歉，iOS虚拟支付功能暂未开放，敬请期待！\n\n您可以通过以下方式获取醒币：\n1. 使用安卓设备充值\n2. 邀请好友注册\n3. 分享内容获取奖励',
-      showCancel: false,
-      confirmText: i18n.iKnow || '我知道了'
-    });
-    return;
-
-    // 以下代码暂时保留，待 iOS 虚拟支付开放后启用
-    /*
     const userId = wx.getStorageSync('userId');
     const openid = wx.getStorageSync('openid');
 
@@ -258,7 +246,6 @@ Page({
           sessionKey = wx.getStorageSync('session_key');
         }
       } catch (e) {
-        // 静默处理
         // 尝试使用本地存储的 session_key
         sessionKey = wx.getStorageSync('session_key');
       }
@@ -284,7 +271,6 @@ Page({
 
       const payParams = res.data;
 
-      // 调试：打印虚拟支付参数
       console.log('[虚拟支付] API 返回参数:', JSON.stringify(payParams, null, 2));
 
       const virtualPayParams = {
@@ -297,7 +283,7 @@ Page({
 
       console.log('[虚拟支付] 调用 wx.requestVirtualPayment 参数:', JSON.stringify(virtualPayParams, null, 2));
 
-      // 2. 调用微信虚拟支付 API
+      // 2. 调用微信虚拟支付 API（平台自动路由：Android→微信支付，iOS→Apple支付）
       wx.requestVirtualPayment({
         ...virtualPayParams,
         success: async (payRes) => {
@@ -307,7 +293,6 @@ Page({
         },
         fail: async (err) => {
           console.error('[虚拟支付] 支付失败:', err);
-          // 静默处理
           this.setData({ loading: false });
 
           // 取消订单
@@ -329,14 +314,12 @@ Page({
         }
       });
     } catch (error) {
-      // 静默处理
       this.setData({ loading: false });
       wx.showToast({
         title: error.message || i18n.rechargeFailed || '充值失败',
         icon: 'none'
       });
     }
-    */
   },
 
   // 主动发货
