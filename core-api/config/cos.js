@@ -609,6 +609,30 @@ async function deleteFromAssetBucket(key) {
   });
 }
 
+// 上传到用户照片桶（用于后端将AI生成的图片存到COS）
+async function uploadToUserBucket(buffer, key, contentType) {
+  if (!cosClient) {
+    throw new Error('COS客户端未初始化');
+  }
+
+  return new Promise((resolve, reject) => {
+    cosClient.putObject({
+      Bucket: COS_CONFIG.bucket,
+      Region: COS_CONFIG.region,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType
+    }, (err, data) => {
+      if (err) reject(err);
+      else resolve({
+        key: key,
+        url: `${COS_CONFIG.baseUrl}/${key}`,
+        etag: data.ETag
+      });
+    });
+  });
+}
+
 // 获取所有素材列表（分类整理）
 async function getAllAssets() {
   const data = await listAssetObjects('', 1000);
@@ -805,6 +829,7 @@ module.exports = {
   getUserPhotos,
   getAllUserIds,
   listAssetObjects,
+  uploadToUserBucket,
   uploadToAssetBucket,
   deleteFromAssetBucket,
   getAllAssets,

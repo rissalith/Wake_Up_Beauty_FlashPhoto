@@ -4,57 +4,6 @@ page {
   background: linear-gradient(180deg, #FFF8F0 0%, #FFF5EB 50%, #FFFAF5 100%);
 }
 
-/* 悬浮进度条 */
-.floating-progress {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100%);
-  z-index: 999;
-  padding-top: env(safe-area-inset-top);
-  transition: transform 0.3s ease;
-}
-
-.floating-progress.show {
-  transform: translateX(-50%) translateY(0);
-}
-
-.floating-progress-inner {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  background: linear-gradient(135deg, #F5D0A9 0%, #E8B686 100%);
-  padding: 16rpx 32rpx;
-  border-radius: 0 0 32rpx 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(232, 182, 134, 0.4);
-}
-
-.progress-spinner {
-  width: 28rpx;
-  height: 28rpx;
-  border: 3rpx solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.progress-text {
-  font-size: 26rpx;
-  color: #fff;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.progress-arrow {
-  font-size: 32rpx;
-  color: rgba(255,255,255,0.8);
-  margin-left: 8rpx;
-}
-
 .container {
   padding: 40rpx 32rpx;
   padding-bottom: 180rpx;

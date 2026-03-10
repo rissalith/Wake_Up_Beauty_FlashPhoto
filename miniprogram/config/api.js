@@ -314,6 +314,23 @@ const api = {
     });
   },
 
+  // 提交异步生图任务
+  submitGeneration(data) {
+    return request({
+      url: '/photo/generate',
+      method: 'POST',
+      data,
+      timeout: 30000
+    });
+  },
+
+  // 查询生图任务状态
+  getTaskStatus(taskId) {
+    return request({
+      url: `/photo/task/${taskId}`
+    });
+  },
+
   // 同步照片到服务器（照片生成完成后调用）
   syncPhoto(data) {
     return request({

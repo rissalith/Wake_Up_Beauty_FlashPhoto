@@ -17,6 +17,11 @@ Component({
     showReassurance: {
       type: Boolean,
       value: true
+    },
+    // 主题风格：golden | cream | grey
+    theme: {
+      type: String,
+      value: 'golden'
     }
   },
 

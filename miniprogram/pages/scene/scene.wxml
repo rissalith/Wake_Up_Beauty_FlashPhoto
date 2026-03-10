@@ -7,17 +7,19 @@
   </view>
 
   <!-- 主内容 -->
-  <scroll-view class="main-content" scroll-y wx:else>
-    <!-- 顶部提醒 -->
-    <view class="top-notice {{showTopNotice ? 'show' : ''}}" wx:if="{{showTopNotice}}">
-      <text>{{topNoticeText}}</text>
-    </view>
-
+  <block wx:else>
     <!-- 悬浮进度条组件 -->
     <floating-progress
-      topOffset="16"
+      topOffset="{{navBarHeight}}"
       showReassurance="{{true}}"
+      theme="grey"
     />
+
+    <scroll-view class="main-content" scroll-y>
+      <!-- 顶部提醒 -->
+      <view class="top-notice {{showTopNotice ? 'show' : ''}}" wx:if="{{showTopNotice}}">
+        <text>{{topNoticeText}}</text>
+      </view>
 
     <!-- 图片上传区 -->
     <view class="upload-section">
@@ -125,6 +127,7 @@
               data-id="{{opt.id}}"
             >
               <text>{{opt.name}}</text>
+              <text class="spec-size" wx:if="{{opt.sizeDesc}}">{{opt.sizeDesc}}</text>
             </view>
           </view>
 
@@ -220,6 +223,7 @@
     <!-- 底部占位 -->
     <view class="bottom-placeholder"></view>
   </scroll-view>
+  </block>
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar" wx:if="{{!configLoading}}">

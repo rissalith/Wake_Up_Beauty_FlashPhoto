@@ -4,6 +4,7 @@
 <floating-progress
   topOffset="{{navBarHeight}}"
   showReassurance="{{true}}"
+  theme="golden"
 />
 
 <view class="page-container">
@@ -41,7 +42,7 @@
   </view>
 
   <!-- 页面内容 -->
-  <view class="container" style="padding-top: {{navBarHeight + 180}}px;">
+  <view class="container" style="padding-top: {{navBarHeight + 160}}px;">
 
     <!-- 公告提示 -->
     <view class="announcement-bar" wx:if="{{announcement}}">

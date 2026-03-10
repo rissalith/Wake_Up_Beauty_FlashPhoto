@@ -1,6 +1,6 @@
 <!--悬浮进度条组件 - 显示生成任务状态-->
 <view
-  class="floating-progress {{visible ? 'show' : ''}} {{showCompleted ? 'completed' : ''}}"
+  class="floating-progress theme-{{theme}} {{visible ? 'show' : ''}} {{showCompleted ? 'completed' : ''}}"
   style="top: {{topOffset}}px;"
   bindtap="onTap"
   wx:if="{{visible}}"

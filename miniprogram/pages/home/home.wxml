@@ -4,6 +4,7 @@
 <floating-progress
   topOffset="{{navBarHeight}}"
   showReassurance="{{true}}"
+  theme="golden"
 />
 
 <view class="page-container">

@@ -1,36 +1,30 @@
 /* 悬浮进度条组件样式 */
-/* 奶油渐变风格配色 - 胶囊形状 */
+/* 全宽条状设计 - 与页面顶部主题贴合 */
 
-/* 悬浮进度条容器 */
+/* ========== 基础容器 ========== */
 .floating-progress {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100%);
+  left: 0;
+  right: 0;
   z-index: 1001;
+  transform: translateY(-100%);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .floating-progress.show {
-  transform: translateX(-50%) translateY(8rpx);
+  transform: translateY(0);
 }
 
-/* 内部容器 - 胶囊形状 */
+/* 内部容器 - 仅底部圆角 */
 .progress-inner {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 12rpx 20rpx;
-  border-radius: 100rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  gap: 12rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 0 0 24rpx 24rpx;
 }
 
-/* 完成状态 */
-.floating-progress.completed .progress-inner {
-  background: rgba(255, 255, 255, 0.95);
-}
-
-/* 图标区域 */
+/* ========== 图标区域 ========== */
 .progress-icon {
   flex-shrink: 0;
   width: 24rpx;
@@ -40,7 +34,7 @@
   justify-content: center;
 }
 
-/* 加载动画 - 灰色圆环 */
+/* 加载动画 */
 .spinner {
   width: 22rpx;
   height: 22rpx;
@@ -54,7 +48,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* 完成图标 - 绿色对勾 */
+/* 完成图标 */
 .check-icon {
   width: 22rpx;
   height: 22rpx;
@@ -73,12 +67,13 @@
   transform: rotate(45deg);
 }
 
-/* 文字内容区 */
+/* ========== 文字内容区 ========== */
 .progress-content {
   display: flex;
   flex-direction: column;
   gap: 2rpx;
   min-width: 0;
+  flex: 1;
 }
 
 .progress-main-text {
@@ -106,4 +101,107 @@
   font-size: 24rpx;
   color: #ccc;
   margin-left: 4rpx;
+}
+
+/* ========== Golden 主题 (index / home) ========== */
+.theme-golden .progress-inner {
+  background: linear-gradient(135deg, #E8B686 0%, #D4956A 100%);
+  box-shadow: 0 4rpx 16rpx rgba(232, 182, 134, 0.4);
+}
+
+.theme-golden .progress-main-text {
+  color: #fff;
+  font-weight: 600;
+}
+
+.theme-golden .progress-sub-text {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.theme-golden .spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+}
+
+.theme-golden .check-icon::after {
+  border-color: #fff;
+}
+
+.theme-golden .progress-arrow {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Golden 完成状态 - 浅金色 */
+.theme-golden.completed .progress-inner {
+  background: linear-gradient(135deg, #F5D0A9 0%, #E8B686 100%);
+}
+
+/* ========== Cream 主题 (mine) ========== */
+.theme-cream .progress-inner {
+  background: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(232, 182, 134, 0.2);
+  border-left: 6rpx solid #E8B686;
+}
+
+.theme-cream .progress-main-text {
+  color: #5a3e2b;
+  font-weight: 500;
+}
+
+.theme-cream .progress-sub-text {
+  color: #a08060;
+}
+
+.theme-cream .spinner {
+  border-color: #f0dcc8;
+  border-top-color: #E8B686;
+}
+
+.theme-cream .check-icon::after {
+  border-color: #E8B686;
+}
+
+.theme-cream .progress-arrow {
+  color: #c9a880;
+}
+
+/* Cream 完成状态 - 左边框变绿 */
+.theme-cream.completed .progress-inner {
+  background: #FFFAF5;
+  border-left-color: #52c41a;
+}
+
+/* ========== Grey 主题 (scene) ========== */
+.theme-grey .progress-inner {
+  background: #fff;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  border-bottom: 4rpx solid #ff6b35;
+  border-radius: 0;
+}
+
+.theme-grey .progress-main-text {
+  color: #333;
+  font-weight: 500;
+}
+
+.theme-grey .progress-sub-text {
+  color: #999;
+}
+
+.theme-grey .spinner {
+  border-color: #e0e0e0;
+  border-top-color: #ff6b35;
+}
+
+.theme-grey .check-icon::after {
+  border-color: #52c41a;
+}
+
+.theme-grey .progress-arrow {
+  color: #ccc;
+}
+
+/* Grey 完成状态 - 底边框变绿 */
+.theme-grey.completed .progress-inner {
+  border-bottom-color: #52c41a;
 }

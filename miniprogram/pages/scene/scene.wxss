@@ -362,6 +362,19 @@
   color: #666;
   border: 2rpx solid transparent;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spec-size {
+  font-size: 20rpx;
+  color: #999;
+  margin-top: 2rpx;
+}
+
+.tag-item.active .spec-size {
+  color: #ff6b35;
 }
 
 .tag-item.active {

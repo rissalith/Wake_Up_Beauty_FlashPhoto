@@ -13,6 +13,7 @@ Page({
     userId: '',
     isLoggedIn: false, // 是否已登录
     userPoints: 0, // 醒币余额
+    navBarHeight: 0, // 导航栏高度
     // 平台相关
     showRecharge: true, // 是否显示充值入口
     platformTips: {}, // 平台提示信息
@@ -25,8 +26,6 @@ Page({
     inviteEarnedPoints: 0,
     privacyConfirmed: false,
     privacyConfirmTimeStr: '',
-    // 生成中任务
-    generatingCount: 0,
     // 醒币明细展开
     showPointsDetail: false,
     recentPointsRecords: [],
@@ -49,6 +48,12 @@ Page({
   },
 
   onLoad() {
+    // 计算导航栏高度（系统导航栏）
+    const app = getApp();
+    const systemInfo = app.globalData.systemInfo || wx.getWindowInfo();
+    const statusBarHeight = systemInfo.statusBarHeight;
+    this.setData({ navBarHeight: statusBarHeight + 44 });
+
     // 初始化平台相关设置
     this.initPlatformSettings();
 
@@ -56,23 +61,6 @@ Page({
     this.loadStats();
     this.loadLanguage();
     this.loadUserPoints();
-
-    // 监听全局历史更新事件，实时刷新进度条
-    const app = getApp();
-    if (app && app.on) {
-      this._historyUpdateHandler = () => {
-        this.loadGeneratingCount();
-      };
-      app.on('historyUpdated', this._historyUpdateHandler);
-    }
-  },
-
-  onUnload() {
-    // 移除事件监听
-    const app = getApp();
-    if (app && app.off && this._historyUpdateHandler) {
-      app.off('historyUpdated', this._historyUpdateHandler);
-    }
   },
 
   onShow() {
@@ -80,7 +68,6 @@ Page({
     this.loadStats();
     this.loadInviteStats();
     this.loadPrivacyStatus();
-    this.loadGeneratingCount();
     this.loadLanguage(); // 每次显示时刷新语言
     this.loadUserPoints(); // 刷新醒币余额
     this.loadRecentPointsRecords(); // 加载最近醒币明细
@@ -191,23 +178,6 @@ Page({
     });
   },
 
-  // 加载生成中的任务数量
-  loadGeneratingCount() {
-    try {
-      const history = wx.getStorageSync(HISTORY_KEY) || [];
-      const generatingCount = history.filter(item => item.status === 'generating').length;
-      this.setData({ generatingCount });
-    } catch (e) {
-      // 静默处理
-    }
-  },
-
-  // 跳转到历史页面
-  goToHistory() {
-    wx.switchTab({
-      url: '/pages/history/history'
-    });
-  },
 
   // 加载用户信息
   loadUserInfo() {
@@ -310,7 +280,6 @@ Page({
             userPoints: 0,
             privacyConfirmed: false,
             privacyConfirmTimeStr: '',
-            generatingCount: 0,
             inviteCount: 0,
             inviteEarnedPoints: 0,
             recentPointsRecords: [],

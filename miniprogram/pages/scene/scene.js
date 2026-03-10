@@ -70,13 +70,20 @@ I18nPage({
       return;
     }
 
+    // 计算导航栏高度（系统导航栏）
+    const app = getApp();
+    const systemInfo = app.globalData.systemInfo || wx.getWindowInfo();
+    const statusBarHeight = systemInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + 44;
+
     // 初始化平台设置
     this.setData({
       sceneId: sceneId || '',
       templateId: templateId || '',
       isTemplateMode: !!templateId,
       showRecharge: canShowRecharge(),
-      isIOSPlatform: isIOS()
+      isIOSPlatform: isIOS(),
+      navBarHeight
     });
 
     // 根据模式加载配置
@@ -282,7 +289,7 @@ I18nPage({
       return [];
     }
 
-    const { filterBy, filterValue, includeImage = false, includeColor = false } = config;
+    const { filterBy, filterValue, includeImage = false, includeColor = false, includeSize = false } = config;
 
     // 根据依赖字段过滤
     let filteredOptions = options;
@@ -309,6 +316,9 @@ I18nPage({
       if (includeImage && opt.image) result.image = opt.image;
       if (includeColor) {
         result.color = opt.color || this._inferColorFromName(opt.option_key || opt.label || opt.name || '');
+      }
+      if (includeSize) {
+        result.sizeDesc = this._inferSizeFromKey(opt.option_key || opt.label || opt.name || '');
       }
       if (opt.metadata) result.metadata = opt.metadata;
 
@@ -396,11 +406,13 @@ I18nPage({
     const maleHints = ['male', 'man', 'boy', '/male/', '男', '男士'];
     const femaleHints = ['female', 'woman', 'girl', '/female/', '女', '女士'];
 
-    const hasMaleHint = maleHints.some(hint => merged.includes(hint));
+    // 必须先检测 female：'female' 包含 'male'，'woman' 包含 'man'
     const hasFemaleHint = femaleHints.some(hint => merged.includes(hint));
+    if (hasFemaleHint) return 'female';
 
-    if (hasMaleHint && !hasFemaleHint) return 'male';
-    if (hasFemaleHint && !hasMaleHint) return 'female';
+    const hasMaleHint = maleHints.some(hint => merged.includes(hint));
+    if (hasMaleHint) return 'male';
+
     return '';
   },
 
@@ -452,6 +464,10 @@ I18nPage({
     return componentType === 'color_picker';
   },
 
+  _needsSize(componentType) {
+    return componentType === 'spec_select';
+  },
+
   _inferColorFromName(name) {
     if (!name) return '';
     const lower = name.toLowerCase();
@@ -468,11 +484,29 @@ I18nPage({
       'orange': '#ff6600', '橙': '#ff6600', '橙色': '#ff6600',
       'brown': '#663300', '棕': '#663300', '棕色': '#663300',
       'cyan': '#00cccc', '青': '#00cccc', '青色': '#00cccc',
-      'gradient_blue': '#4a90d9', '渐变蓝': '#4a90d9',
+      'gradient': '#4a90d9', 'gradient_blue': '#4a90d9',
+      '渐变': '#4a90d9', '渐变蓝': '#4a90d9',
       '顺安蓝': '#1a5599'
     };
     for (const [key, value] of Object.entries(colorMap)) {
       if (lower === key || lower.includes(key)) return value;
+    }
+    return '';
+  },
+
+  _inferSizeFromKey(name) {
+    if (!name) return '';
+    const lower = name.toLowerCase();
+    const sizeMap = {
+      'one_inch': '25×35mm', '1inch': '25×35mm', '一寸': '25×35mm',
+      'two_inch': '35×49mm', '2inch': '35×49mm', '二寸': '35×49mm',
+      'small1inch': '22×32mm', 'small_one_inch': '22×32mm', '小一寸': '22×32mm',
+      'big1inch': '33×48mm', 'big_one_inch': '33×48mm', '大一寸': '33×48mm',
+      'passport': '33×48mm', '护照': '33×48mm',
+      'visa': '35×45mm', '签证': '35×45mm'
+    };
+    for (const [key, value] of Object.entries(sizeMap)) {
+      if (lower === key) return value;
     }
     return '';
   },
@@ -563,7 +597,8 @@ I18nPage({
           // 其他类型：通用处理
           stepOptions[key] = this._processOptions(options, {
             includeImage: this._needsImage(componentType),
-            includeColor: this._needsColor(componentType)
+            includeColor: this._needsColor(componentType),
+            includeSize: this._needsSize(componentType)
           });
           selections[key] = this._getDefaultSelection(stepOptions[key]);
         }
@@ -590,7 +625,8 @@ I18nPage({
           filterBy: filterField,
           filterValue: dependentValue,
           includeImage: this._needsImage(componentType),
-          includeColor: this._needsColor(componentType)
+          includeColor: this._needsColor(componentType),
+          includeSize: this._needsSize(componentType)
         });
         selections[key] = this._getDefaultSelection(stepOptions[key]);
       });
@@ -694,7 +730,8 @@ I18nPage({
         } else if (options.length > 0) {
           stepOptions[key] = this._processOptions(options, {
             includeImage: this._needsImage(componentType),
-            includeColor: this._needsColor(componentType)
+            includeColor: this._needsColor(componentType),
+            includeSize: this._needsSize(componentType)
           });
           selections[key] = this._getDefaultSelection(stepOptions[key]);
         }
@@ -829,7 +866,8 @@ I18nPage({
         filterBy: filterField,
         filterValue: newValue,
         includeImage: this._needsImage(componentType),
-        includeColor: this._needsColor(componentType)
+        includeColor: this._needsColor(componentType),
+        includeSize: this._needsSize(componentType)
       });
 
       newStepOptions[stepKey] = filteredOptions;
@@ -1701,142 +1739,150 @@ I18nPage({
     };
   },
 
-  // 处理生成队列
+  // 处理生成队列（异步提交模式）
   async processGenerationQueue(historyIds, prompt, paymentInfo) {
-    const MAX_CONCURRENT = 3;
     const STAGES = this.getProgressStages();
+    const { api } = require('../../config/api');
+    const app = getApp();
+    const userId = app.globalData.userId || wx.getStorageSync('userId');
 
-    // 阶段1: 排队
-    historyIds.forEach(hid => this.updateHistoryItem(hid, { 
-      progress: STAGES.QUEUED.progress, 
-      progressText: STAGES.QUEUED.text 
-    }));
-
-    // 阶段2: 扣费
-    historyIds.forEach(hid => this.updateHistoryItem(hid, { 
-      progress: STAGES.DEDUCTING.progress,
-      progressText: STAGES.DEDUCTING.text 
-    }));
-
-    const deductResult = await this.deductUserPoints(
-      paymentInfo.totalPoints,
-      `生成${paymentInfo.generateCount}张${this.data.sceneConfig?.name || '照片'}`
-    );
-
-    if (!deductResult.success) {
+    if (!userId) {
       historyIds.forEach(hid => {
-        this.updateHistoryItem(hid, { status: 'failed', failReason: deductResult.message, progress: 0 });
+        this.updateHistoryItem(hid, { status: 'failed', failReason: t('userNotLoggedIn') || '用户未登录', progress: 0 });
       });
-      wx.showToast({ title: deductResult.message, icon: 'none' });
       return;
     }
 
-    // 消费记录已由服务器端 consumePoints 接口自动保存到 points_records 表
-
-    // 阶段3: 上传准备
-    historyIds.forEach(hid => this.updateHistoryItem(hid, { 
-      progress: STAGES.UPLOADING.progress,
-      progressText: STAGES.UPLOADING.text 
+    // 阶段1: 排队
+    historyIds.forEach(hid => this.updateHistoryItem(hid, {
+      progress: STAGES.QUEUED.progress,
+      progressText: STAGES.QUEUED.text
     }));
 
-    const processOneTask = async (historyId, index) => {
-      // 阶段4: AI处理
-      this.updateHistoryItem(historyId, { 
-        progress: STAGES.PROCESSING.progress,
-        progressText: STAGES.PROCESSING.text 
-      });
+    // 阶段2: 准备图片数据
+    historyIds.forEach(hid => this.updateHistoryItem(hid, {
+      progress: STAGES.UPLOADING.progress,
+      progressText: STAGES.UPLOADING.text
+    }));
 
+    // 读取用户上传的图片 base64
+    let userImageBase64 = null;
+    let userMimeType = 'image/jpeg';
+    const imagesToUse = this.data.uploadedImages.slice(0, 3);
+
+    if (imagesToUse.length === 0) {
+      historyIds.forEach(hid => {
+        this.updateHistoryItem(hid, { status: 'failed', failReason: t('noAvailableImage') || '没有可用的图片', progress: 0 });
+      });
+      wx.showToast({ title: t('noAvailableImage') || '没有可用的图片', icon: 'none' });
+      return;
+    }
+
+    for (const img of imagesToUse) {
       try {
-        let result = null;
-        for (let retry = 0; retry < 3; retry++) {
-          try {
-            if (retry > 0) {
-              const retryText = (t('progress_retrying') || '重试中({retry}/3)...').replace('{retry}', retry);
-              this.updateHistoryItem(historyId, {
-                progressText: retryText
-              });
-              await new Promise(resolve => setTimeout(resolve, 2000 + retry * 1000));
-            }
-            
-            // 阶段5: 生成中
-            this.updateHistoryItem(historyId, { 
-              progress: STAGES.GENERATING.progress,
-              progressText: STAGES.GENERATING.text 
+        let base64Data;
+        if (img.path.startsWith('http')) {
+          base64Data = await this.downloadImageAsBase64(img.path);
+        } else {
+          base64Data = await new Promise((resolve, reject) => {
+            wx.getFileSystemManager().readFile({
+              filePath: img.path,
+              encoding: 'base64',
+              success: (res) => resolve(res.data),
+              fail: reject
             });
-            
-            result = await this.callAPI(prompt);
-            break;
-          } catch (err) {
-            if (retry >= 2) throw err;
+          });
+        }
+        if (!userImageBase64) {
+          userImageBase64 = base64Data;
+        }
+      } catch (err) {
+        // 静默处理
+      }
+    }
+
+    if (!userImageBase64) {
+      historyIds.forEach(hid => {
+        this.updateHistoryItem(hid, { status: 'failed', failReason: t('cannotReadImage') || '无法读取图片', progress: 0 });
+      });
+      wx.showToast({ title: t('cannotReadImage') || '无法读取图片', icon: 'none' });
+      return;
+    }
+
+    // 准备参考图数据（模板模式）
+    let referenceImageBase64 = null;
+    const { isTemplateMode, referenceImage, referenceWeight, faceSwapMode } = this.data;
+    if (isTemplateMode && referenceImage) {
+      try {
+        referenceImageBase64 = await this.downloadImageAsBase64(referenceImage);
+      } catch (err) {
+        console.log('[生图] 参考图下载失败:', err.message);
+      }
+    }
+
+    // 阶段3: 提交异步生成任务（后端扣费+异步生成+自动上传COS）
+    historyIds.forEach(hid => this.updateHistoryItem(hid, {
+      progress: STAGES.PROCESSING.progress,
+      progressText: t('progress_submitting') || '提交任务...'
+    }));
+
+    let submitCount = 0;
+
+    for (const historyId of historyIds) {
+      try {
+        const submitData = {
+          userId,
+          prompt,
+          imageBase64: userImageBase64,
+          mimeType: userMimeType,
+          scene: this.data.sceneConfig?.name || '',
+          pointsCost: this.data.pointsPerPhoto || 50
+        };
+
+        // 参考图模式参数
+        if (referenceImageBase64) {
+          submitData.referenceImageBase64 = referenceImageBase64;
+          submitData.referenceMimeType = 'image/jpeg';
+          submitData.referenceWeight = referenceWeight;
+          submitData.faceSwapMode = faceSwapMode;
+        }
+
+        const result = await api.submitGeneration(submitData);
+
+        if (result.data) {
+          // 更新本地历史记录：标记为 generating，关联 taskId
+          this.updateHistoryItem(historyId, {
+            status: 'generating',
+            taskId: result.data.taskId,
+            photoId: result.data.photoId,
+            progress: STAGES.GENERATING.progress,
+            progressText: STAGES.GENERATING.text
+          });
+          submitCount++;
+
+          // 更新余额显示
+          if (result.data.balance !== undefined) {
+            this.setData({ userPoints: result.data.balance });
           }
         }
-
-        if (result && result.imageData) {
-          // 阶段6: 优化处理
-          this.updateHistoryItem(historyId, { 
-            progress: STAGES.ENHANCING.progress,
-            progressText: STAGES.ENHANCING.text 
-          });
-
-          // 阶段7: 保存
-          this.updateHistoryItem(historyId, { 
-            progress: STAGES.SAVING.progress,
-            progressText: STAGES.SAVING.text 
-          });
-
-          const filePath = await this.saveBase64ToFile(result.imageData, result.mimeType);
-          
-          // 阶段8: 完成
-          this.updateHistoryItem(historyId, { 
-            status: 'done', 
-            resultImage: filePath, 
-            progress: STAGES.DONE.progress,
-            progressText: STAGES.DONE.text 
-          });
-          return { success: true };
-        } else {
-          this.updateHistoryItem(historyId, { status: 'failed', failReason: t('fp_noImage') || '未获取到图片', progress: 0 });
-          return { success: false };
-        }
       } catch (error) {
-        this.updateHistoryItem(historyId, { status: 'failed', failReason: error.message || t('fp_generateFailed') || '生成失败', progress: 0 });
-        return { success: false };
-      }
-    };
-
-    const runWithConcurrencyLimit = async (tasks, limit) => {
-      const results = [];
-      const executing = [];
-
-      for (let i = 0; i < tasks.length; i++) {
-        const task = tasks[i];
-        const p = task().then(result => {
-          executing.splice(executing.indexOf(p), 1);
-          return result;
+        const errorMsg = error.msg || error.message || t('fp_generateFailed') || '提交失败';
+        this.updateHistoryItem(historyId, {
+          status: 'failed',
+          failReason: errorMsg,
+          progress: 0
         });
-        results.push(p);
-        executing.push(p);
-
-        if (executing.length >= limit) {
-          await Promise.race(executing);
-        }
       }
+    }
 
-      return Promise.all(results);
-    };
+    if (submitCount > 0) {
+      const submitMsg = (t('photosGenerateComplete') || '{count}张照片已提交生成').replace('{count}', submitCount);
+      this.showNotice(submitMsg);
 
-    const tasks = historyIds.map((hid, index) => () => processOneTask(hid, index));
-    const results = await runWithConcurrencyLimit(tasks, MAX_CONCURRENT);
-
-    const successCount = results.filter(r => r.success).length;
-    if (successCount > 0) {
-      const completeMsg = (t('photosGenerateComplete') || '{count}张照片生成完成').replace('{count}', successCount);
-      this.showNotice(completeMsg);
-
-      // 关键修复：生成完成后重置骰子状态，清空抽到的词条
+      // 重置骰子状态
       this.resetDiceSteps();
 
-      // 生成完成后自动跳转到历史页面，让用户查看结果
+      // 跳转到历史页面查看结果
       setTimeout(() => {
         wx.switchTab({ url: '/pages/history/history' });
       }, 1500);

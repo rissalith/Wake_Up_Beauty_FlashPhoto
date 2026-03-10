@@ -47,6 +47,7 @@ Page({
 
   // 事件监听回调函数
   _historyUpdateHandler: null,
+  _generatingTimer: null,
 
   onLoad() {
     this.loadHistory();
@@ -69,7 +70,9 @@ Page({
     if (app && app.off && this._historyUpdateHandler) {
       app.off('historyUpdated', this._historyUpdateHandler);
     }
-    
+    // 停止轮询
+    this._stopGeneratingTimer();
+
     // 内存清理
     this._cleanupMemory();
   },
@@ -88,6 +91,86 @@ Page({
 
     // 清理事件处理器引用
     this._historyUpdateHandler = null;
+  },
+
+  // 停止生成任务轮询
+  _stopGeneratingTimer() {
+    if (this._generatingTimer) {
+      clearTimeout(this._generatingTimer);
+      this._generatingTimer = null;
+    }
+  },
+
+  // 启动生成任务轮询（检查 generating 状态的任务是否已完成）
+  _startGeneratingTimer() {
+    this._stopGeneratingTimer();
+    const history = wx.getStorageSync('photoHistory') || [];
+    const generatingItems = history.filter(item => item.status === 'generating' && item.taskId);
+    if (generatingItems.length > 0) {
+      this._generatingTimer = setTimeout(() => {
+        this._checkGeneratingTasks();
+      }, 3000);
+    }
+  },
+
+  // 轮询检查 generating 任务状态
+  async _checkGeneratingTasks() {
+    const history = wx.getStorageSync('photoHistory') || [];
+    const generatingItems = history.filter(item => item.status === 'generating' && item.taskId);
+
+    if (generatingItems.length === 0) {
+      this._stopGeneratingTimer();
+      return;
+    }
+
+    let hasUpdate = false;
+
+    for (const item of generatingItems) {
+      try {
+        const res = await api.getTaskStatus(item.taskId);
+        if (res.code === 0 && res.data) {
+          const serverTask = res.data;
+          if (serverTask.status === 'completed' && serverTask.result_url) {
+            // 任务完成，更新本地历史
+            const idx = history.findIndex(h => h.id === item.id);
+            if (idx !== -1) {
+              history[idx].status = 'done';
+              history[idx].resultImage = serverTask.result_url;
+              history[idx].synced = true;
+              hasUpdate = true;
+            }
+          } else if (serverTask.status === 'failed') {
+            // 任务失败
+            const idx = history.findIndex(h => h.id === item.id);
+            if (idx !== -1) {
+              history[idx].status = 'failed';
+              history[idx].failReason = serverTask.error_msg || '生成失败';
+              history[idx].synced = true;
+              hasUpdate = true;
+            }
+          }
+        }
+      } catch (err) {
+        // 静默处理，下次轮询会重试
+      }
+    }
+
+    if (hasUpdate) {
+      wx.setStorageSync('photoHistory', history);
+      this.loadHistory();
+      // 通知其他页面更新
+      if (app && app.emit) {
+        app.emit('historyUpdated');
+      }
+    }
+
+    // 继续轮询（如果还有 generating 任务）
+    const remaining = history.filter(item => item.status === 'generating' && item.taskId);
+    if (remaining.length > 0) {
+      this._generatingTimer = setTimeout(() => {
+        this._checkGeneratingTasks();
+      }, 3000);
+    }
   },
 
   onShow() {
@@ -115,8 +198,15 @@ Page({
       // 先尝试从服务器恢复数据，再加载本地历史
       this.restoreFromServer().then(() => {
         this.loadHistory();
+        // 启动 generating 任务轮询
+        this._startGeneratingTimer();
       });
     });
+  },
+
+  onHide() {
+    // 页面隐藏时停止轮询，避免后台浪费请求
+    this._stopGeneratingTimer();
   },
 
   // 跳转到首页登录

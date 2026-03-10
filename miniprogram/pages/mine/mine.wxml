@@ -1,13 +1,11 @@
 <!-- 我的页面 -->
 
-<!-- 悬浮进度条 - 有正在生成的任务时显示 -->
-<view class="floating-progress {{generatingCount > 0 ? 'show' : ''}}" bindtap="goToHistory">
-  <view class="floating-progress-inner">
-    <view class="progress-spinner"></view>
-    <text class="progress-text">{{generatingCount}}{{i18n.generatingPhotos || '张照片生成中...'}}</text>
-    <text class="progress-arrow">›</text>
-  </view>
-</view>
+<!-- 悬浮进度条组件 -->
+<floating-progress
+  topOffset="{{navBarHeight}}"
+  showReassurance="{{true}}"
+  theme="cream"
+/>
 
 <view class="container">
   <!-- 用户信息区域 -->
