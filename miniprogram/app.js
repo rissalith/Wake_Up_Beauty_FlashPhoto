@@ -49,6 +49,9 @@ App({
     // 立即预加载所有图片资源（不等登录，提升语言切换体验）
     preloader.preloadAllImages();
 
+    // 预热后端连接（避免首次生图时 Nginx 连接冷启动失败）
+    api.healthCheck().catch(() => {});
+
     // 并行执行初始化任务，不阻塞启动
     Promise.all([
       this.initConfig(),

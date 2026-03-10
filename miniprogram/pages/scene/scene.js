@@ -482,6 +482,7 @@ I18nPage({
       'pink': '#ff6699', '粉': '#ff6699', '粉色': '#ff6699', '粉红': '#ff6699',
       'purple': '#9933cc', '紫': '#9933cc', '紫色': '#9933cc',
       'orange': '#ff6600', '橙': '#ff6600', '橙色': '#ff6600',
+      'beige': '#F5F5DC', '米': '#F5F5DC', '米色': '#F5F5DC',
       'brown': '#663300', '棕': '#663300', '棕色': '#663300',
       'cyan': '#00cccc', '青': '#00cccc', '青色': '#00cccc',
       'gradient': '#4a90d9', 'gradient_blue': '#4a90d9',
@@ -1866,6 +1867,14 @@ I18nPage({
           }
         }
       } catch (error) {
+        console.error('[生图] 提交失败:', JSON.stringify({
+          msg: error.msg,
+          message: error.message,
+          statusCode: error.statusCode,
+          code: error.code,
+          errMsg: error.errMsg,
+          error: error.error ? JSON.stringify(error.error) : undefined
+        }));
         const errorMsg = error.msg || error.message || t('fp_generateFailed') || '提交失败';
         this.updateHistoryItem(historyId, {
           status: 'failed',

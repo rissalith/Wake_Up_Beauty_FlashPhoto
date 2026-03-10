@@ -80,6 +80,7 @@ function baseRequest(options) {
         }
       },
       fail: (err) => {
+        console.error(`[API ${requestId}] 请求失败:`, fullUrl, JSON.stringify(err));
         reject({ code: -1, msg: '网络错误', error: err });
       }
     });
@@ -94,24 +95,30 @@ function baseRequest(options) {
  */
 async function request(options, maxRetries = 3, retryDelay = 1000) {
   let lastError;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      if (attempt > 0) {
+        console.log(`[API] 第${attempt + 1}次重试: ${options.url}`);
+      }
       return await baseRequest(options);
     } catch (error) {
       lastError = error;
-      
+
+      const retryable = isRetryableError(error);
+      console.log(`[API] 请求失败(${attempt + 1}/${maxRetries}): ${options.url}, statusCode=${error.statusCode}, 可重试=${retryable}`);
+
       // 如果不是可重试的错误，或已是最后一次尝试，直接抛出
-      if (!isRetryableError(error) || attempt === maxRetries - 1) {
+      if (!retryable || attempt === maxRetries - 1) {
         throw error;
       }
-      
+
       // 递增延迟重试
       const waitTime = retryDelay * (attempt + 1);
       await delay(waitTime);
     }
   }
-  
+
   throw lastError;
 }
 

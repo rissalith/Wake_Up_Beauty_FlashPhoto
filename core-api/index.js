@@ -1616,8 +1616,25 @@ app.get('/admin/*', (req, res) => {
 
 // ==================== 错误处理 ====================
 app.use((err, req, res, next) => {
-  console.error('[Core API] 未捕获错误:', err);
-  res.status(500).json({ code: 500, message: '服务器内部错误' });
+  console.error('[Core API] 未捕获错误:', {
+    message: err.message,
+    type: err.type,
+    status: err.status,
+    path: req.path,
+    method: req.method,
+    contentLength: req.headers?.['content-length'] || 'unknown',
+    stack: err.stack?.split('\n').slice(0, 3).join(' | ')
+  });
+
+  // body-parser 错误（请求体过大或解析失败）
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ code: -1, msg: '请求数据过大' });
+  }
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ code: -1, msg: '请求数据解析失败' });
+  }
+
+  res.status(err.status || 500).json({ code: -1, msg: '服务器错误' });
 });
 
 // 404 处理

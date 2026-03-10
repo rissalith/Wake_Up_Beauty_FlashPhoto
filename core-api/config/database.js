@@ -36,6 +36,8 @@ async function initDatabase() {
   
   // 启用 WAL 模式提升并发性能
   db.pragma('journal_mode = WAL');
+  // 设置忙等待超时，防止并发写入时立即抛 SQLITE_BUSY
+  db.pragma('busy_timeout = 5000');
   
   console.log(`[Database] 已加载数据库: ${DB_PATH}`);
   
