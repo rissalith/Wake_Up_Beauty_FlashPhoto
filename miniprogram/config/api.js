@@ -37,8 +37,9 @@ const isRetryableError = (error) => {
          message.includes('timeout') || 
          message.includes('网络') ||
          message.includes('超时') ||
-         statusCode === 502 || 
-         statusCode === 503 || 
+         statusCode === 500 ||
+         statusCode === 502 ||
+         statusCode === 503 ||
          statusCode === 504;
 };
 

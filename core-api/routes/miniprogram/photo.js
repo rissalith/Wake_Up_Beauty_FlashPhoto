@@ -238,6 +238,9 @@ router.post('/generate', (req, res) => {
     if (!prompt) {
       return res.status(400).json({ code: -1, msg: '缺少提示词' });
     }
+    if (!imageBase64 && !referenceImageBase64) {
+      return res.status(400).json({ code: -1, msg: '缺少图片数据' });
+    }
 
     // 1. 查找用户并检查积分
     const user = findUserByIdOrOpenid(db, userId);
@@ -366,7 +369,15 @@ router.post('/generate', (req, res) => {
     });
 
   } catch (error) {
-    console.error('异步生图接口错误:', error);
+    console.error('异步生图接口错误:', {
+      message: error.message,
+      stack: error.stack,
+      type: error.constructor?.name,
+      code: error.code,
+      userId: req.body?.userId,
+      hasImageData: !!req.body?.imageBase64,
+      bodySize: req.headers?.['content-length'] || 'unknown'
+    });
     res.status(500).json({ code: -1, msg: '服务器错误' });
   }
 });
