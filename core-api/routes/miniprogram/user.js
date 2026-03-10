@@ -323,7 +323,7 @@ router.get('/stats/:userId', (req, res) => {
     const realUserId = user ? user.id : userId;
 
     const photoCount = db.prepare("SELECT COUNT(*) as count FROM photo_history WHERE user_id = ?").get(realUserId).count;
-    const successCount = db.prepare("SELECT COUNT(*) as count FROM photo_history WHERE user_id = ? AND status = 'done'").get(realUserId).count;
+    const successCount = db.prepare("SELECT COUNT(*) as count FROM photo_history WHERE user_id = ? AND status = 'completed'").get(realUserId).count;
 
     res.json({
       code: 0,

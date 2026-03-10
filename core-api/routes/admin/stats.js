@@ -39,7 +39,7 @@ router.get(['/overview', '/dashboard'], async (req, res) => {
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN DATE(created_at) = DATE('now') THEN 1 ELSE 0 END) as today,
-        SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as success,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as success,
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
       FROM photo_history
     `).get();
