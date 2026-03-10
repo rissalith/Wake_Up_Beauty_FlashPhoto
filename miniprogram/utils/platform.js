@@ -8,10 +8,11 @@ let _systemInfo = null;
 
 /**
  * 获取系统信息（带缓存）
+ * 使用 wx.getDeviceInfo() 替代已弃用的 wx.getSystemInfoSync()
  */
 function getSystemInfo() {
   if (!_systemInfo) {
-    _systemInfo = wx.getSystemInfoSync();
+    _systemInfo = wx.getDeviceInfo();
   }
   return _systemInfo;
 }

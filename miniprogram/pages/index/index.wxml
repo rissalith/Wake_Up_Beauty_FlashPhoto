@@ -19,8 +19,8 @@
         </view>
       </view>
       <text class="nav-title">{{i18n.appName || '醒美闪图'}}</text>
-      <view class="nav-title-wrap">
-        <image class="nav-title-img" src="{{titleImage}}" mode="heightFix"></image>
+      <view class="nav-title-wrap" wx:if="{{!titleImageError}}">
+        <image class="nav-title-img" src="{{titleImage}}" mode="heightFix" binderror="onTitleImageError"></image>
       </view>
     </view>
   </view>

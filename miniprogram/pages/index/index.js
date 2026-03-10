@@ -28,6 +28,7 @@ Page({
     featureImage: imageConfig.images.featureZhCN,
     // 导航栏标题图片
     titleImage: imageConfig.images.titleZhCN,
+    titleImageError: false,
     // 中台配置
     activeScenes: [],      // 上线中的场景
     comingSoonScenes: [],  // 即将上线的场景
@@ -44,7 +45,7 @@ Page({
   onLoad(options) {
     // 使用 app 缓存的系统信息，避免重复调用
     const app = getApp();
-    const systemInfo = app.globalData.systemInfo || wx.getSystemInfoSync();
+    const systemInfo = app.globalData.systemInfo || wx.getWindowInfo();
     const statusBarHeight = systemInfo.statusBarHeight;
     this.setData({
       statusBarHeight,
@@ -489,6 +490,10 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().loadLanguage();
     }
+  },
+
+  onTitleImageError() {
+    this.setData({ titleImageError: true });
   },
 
   // 切换语言

@@ -281,15 +281,21 @@ I18nPage({
     if (!options || !Array.isArray(options)) {
       return [];
     }
-    
+
     const { filterBy, filterValue, includeImage = false, includeColor = false } = config;
-    
+
     // 根据依赖字段过滤
     let filteredOptions = options;
-    if (filterBy && filterValue) {
-      filteredOptions = options.filter(opt => opt[filterBy] === filterValue);
+    if (filterBy && filterValue !== undefined && filterValue !== null && filterValue !== '') {
+      const normalizedTarget = this._normalizeFilterValue(filterValue);
+
+      filteredOptions = options.filter(opt => {
+        const optionValue = this._getOptionFilterValue(opt, filterBy);
+        const normalizedValue = this._normalizeFilterValue(optionValue);
+        return normalizedValue === normalizedTarget;
+      });
     }
-    
+
     // 转换为前端格式（后端已经根据语言返回了正确的 label）
     return filteredOptions.map(opt => {
       const result = {
@@ -298,14 +304,125 @@ I18nPage({
         promptText: opt.prompt_text || '',
         isDefault: opt.is_default || false
       };
-      
+
       // 按需添加可选字段
       if (includeImage && opt.image) result.image = opt.image;
       if (includeColor && opt.color) result.color = opt.color;
       if (opt.metadata) result.metadata = opt.metadata;
-      
+
       return result;
     });
+  },
+
+  _normalizeFilterValue(value) {
+    if (value === undefined || value === null || value === '') return '';
+
+    const raw = String(value).trim().toLowerCase();
+    const genderMap = {
+      male: 'male',
+      man: 'male',
+      m: 'male',
+      '1': 'male',
+      '男': 'male',
+      '男士': 'male',
+      female: 'female',
+      woman: 'female',
+      f: 'female',
+      '2': 'female',
+      '女': 'female',
+      '女士': 'female'
+    };
+
+    return genderMap[raw] || raw;
+  },
+
+  _getOptionFilterValue(option, filterBy) {
+    if (!option || !filterBy) return '';
+
+    let metadata = option.metadata;
+    if (typeof metadata === 'string') {
+      try {
+        metadata = JSON.parse(metadata);
+      } catch (e) {
+        metadata = null;
+      }
+    }
+
+    const candidates = [
+      option[filterBy],
+      metadata && metadata[filterBy]
+    ];
+
+    if (filterBy === 'gender') {
+      const inferredGender = this._inferGenderFromOption(option, metadata);
+      candidates.push(option.gender, option.sex, option.gender_id, inferredGender);
+      if (metadata) {
+        candidates.push(metadata.gender, metadata.sex, metadata.gender_id);
+      }
+
+    }
+
+    const matched = candidates.find(v => v !== undefined && v !== null && v !== '');
+    return matched === undefined ? '' : matched;
+  },
+
+  _inferGenderFromOption(option, metadata) {
+    const textCandidates = [
+      option.option_key,
+      option.option_value,
+      option.prompt_text,
+      option.name,
+      option.label,
+      option.image,
+      option.image_url,
+      metadata && metadata.option_key,
+      metadata && metadata.option_value,
+      metadata && metadata.prompt_text,
+      metadata && metadata.name,
+      metadata && metadata.label,
+      metadata && metadata.image,
+      metadata && metadata.image_url
+    ];
+
+    const merged = textCandidates
+      .filter(v => v !== undefined && v !== null && v !== '')
+      .map(v => String(v).toLowerCase())
+      .join(' ');
+
+    if (!merged) return '';
+
+    const maleHints = ['male', 'man', 'boy', '/male/', '男', '男士'];
+    const femaleHints = ['female', 'woman', 'girl', '/female/', '女', '女士'];
+
+    const hasMaleHint = maleHints.some(hint => merged.includes(hint));
+    const hasFemaleHint = femaleHints.some(hint => merged.includes(hint));
+
+    if (hasMaleHint && !hasFemaleHint) return 'male';
+    if (hasFemaleHint && !hasMaleHint) return 'female';
+    return '';
+  },
+
+  _resolveStepDependsOn(step, allSteps = []) {
+    if (!step) return null;
+    if (step.depends_on) return step.depends_on;
+
+    if (step.component_type !== 'image_tags') return null;
+
+    const options = step.options || [];
+    const hasGenderField = options.some(opt => {
+      const value = this._getOptionFilterValue(opt, 'gender');
+      return this._normalizeFilterValue(value) === 'male' || this._normalizeFilterValue(value) === 'female';
+    });
+
+    if (!hasGenderField) return null;
+
+    const genderStep = allSteps.find(s => s.component_type === 'gender_select');
+    if (!genderStep) return null;
+
+    return {
+      step: genderStep.step_key,
+      filter_field: 'gender'
+    };
   },
 
   /**
@@ -373,6 +490,21 @@ I18nPage({
       // 过滤可见步骤（后端已根据语言返回正确的 title）
       const visibleSteps = steps.filter(step => step.is_visible !== false);
 
+      // 统一解析依赖关系（兼容后端未返回 depends_on，但 options 里含 gender 字段的情况）
+      const stepDependsOnMap = {};
+      const genderStepKey = (visibleSteps.find(s => s.component_type === 'gender_select') || {}).step_key || '';
+      visibleSteps.forEach(step => {
+        const resolvedDependsOn = this._resolveStepDependsOn(step, visibleSteps);
+        if (resolvedDependsOn) {
+          const normalizedDependsOn = { ...resolvedDependsOn };
+          const stepExists = normalizedDependsOn.step && visibleSteps.some(s => s.step_key === normalizedDependsOn.step);
+          if (!stepExists && normalizedDependsOn.filter_field === 'gender' && genderStepKey) {
+            normalizedDependsOn.step = genderStepKey;
+          }
+          stepDependsOnMap[step.step_key] = normalizedDependsOn;
+        }
+      });
+
       // 第一遍：处理没有依赖的步骤（如性别选择）
       visibleSteps.forEach(step => {
         const key = step.step_key;
@@ -385,7 +517,7 @@ I18nPage({
         }
 
         // 跳过有依赖的步骤，稍后处理
-        if (step.depends_on) {
+        if (stepDependsOnMap[key]) {
           return;
         }
 
@@ -415,7 +547,7 @@ I18nPage({
         const key = step.step_key;
         const options = step.options || [];
         const componentType = step.component_type;
-        const dependsOn = step.depends_on;
+        const dependsOn = stepDependsOnMap[key];
 
         // 只处理有依赖的步骤
         if (!dependsOn || componentType === 'image_upload') {
@@ -440,12 +572,13 @@ I18nPage({
       this._stepDependencies = {};
       this._allStepOptions = {};
       this._allSteps = visibleSteps;
-      
+
       visibleSteps.forEach(step => {
-        if (step.depends_on) {
+        const resolvedDependsOn = stepDependsOnMap[step.step_key];
+        if (resolvedDependsOn) {
           // 记录依赖关系
           this._stepDependencies[step.step_key] = {
-            dependsOn: step.depends_on,
+            dependsOn: resolvedDependsOn,
             componentType: step.component_type
           };
           // 保存原始选项

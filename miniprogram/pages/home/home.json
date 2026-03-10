@@ -7,7 +7,5 @@
   },
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
-  "backgroundTextStyle": "dark",
-  "enableShareAppMessage": true,
-  "enableShareTimeline": true
+  "backgroundTextStyle": "dark"
 }

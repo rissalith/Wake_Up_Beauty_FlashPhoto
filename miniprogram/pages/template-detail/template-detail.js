@@ -26,8 +26,8 @@ Page({
     }
 
     // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync();
-    const statusBarHeight = systemInfo.statusBarHeight || 20;
+    const windowInfo = wx.getWindowInfo();
+    const statusBarHeight = windowInfo.statusBarHeight || 20;
     const navBarHeight = statusBarHeight + 44;
 
     this.setData({

@@ -23,14 +23,15 @@ Page({
     showLoginModal: false,
     currentLang: 'zh-CN',
     titleImage: '',
+    titleImageError: false,
     bannerList: [],
     officialAvatar: '' // 官方头像
   },
 
   onLoad() {
     // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync();
-    const statusBarHeight = systemInfo.statusBarHeight || 20;
+    const windowInfo = wx.getWindowInfo();
+    const statusBarHeight = windowInfo.statusBarHeight || 20;
     const navBarHeight = statusBarHeight + 44;
 
     // 获取当前语言
@@ -186,6 +187,10 @@ Page({
     wx.navigateTo({
       url: '/pages/market-search/market-search'
     });
+  },
+
+  onTitleImageError() {
+    this.setData({ titleImageError: true });
   },
 
   // 切换语言

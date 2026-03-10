@@ -28,6 +28,7 @@ Page({
     featureImage: imageConfig.images.featureZhCN,
     // 导航栏标题图片
     titleImage: imageConfig.images.titleZhCN,
+    titleImageError: false,
     // 中台配置
     activeScenes: [],
     comingSoonScenes: [],
@@ -43,7 +44,7 @@ Page({
 
   onLoad(options) {
     const app = getApp();
-    const systemInfo = app.globalData.systemInfo || wx.getSystemInfoSync();
+    const systemInfo = app.globalData.systemInfo || wx.getWindowInfo();
     const statusBarHeight = systemInfo.statusBarHeight;
     this.setData({
       statusBarHeight,
@@ -117,7 +118,10 @@ Page({
       const fileName = icon.split('/').pop().split('?')[0].replace('.png', '').replace('.svg', '');
       const normalizedKey = fileName.replace(/-/g, '').toLowerCase();
 
-      for (const [key, url] of Object.entries(imageConfig.images)) {
+      const imageEntries = Object.entries(imageConfig.images);
+      for (let i = 0; i < imageEntries.length; i += 1) {
+        const key = imageEntries[i][0];
+        const url = imageEntries[i][1];
         if (key.toLowerCase() === normalizedKey) {
           return url;
         }
@@ -402,6 +406,10 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().loadLanguage();
     }
+  },
+
+  onTitleImageError() {
+    this.setData({ titleImageError: true });
   },
 
   async switchLanguage(e) {

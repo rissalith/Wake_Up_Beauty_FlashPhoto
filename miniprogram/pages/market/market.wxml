@@ -15,7 +15,8 @@
         </view>
       </view>
       <!-- 中间标题图片 -->
-      <image class="nav-title-img" src="{{titleImage}}" mode="heightFix"></image>
+      <image class="nav-title-img" src="{{titleImage}}" mode="heightFix" binderror="onTitleImageError" wx:if="{{!titleImageError}}"></image>
+      <text class="nav-title" wx:if="{{titleImageError}}">{{i18n.appName || '醒美闪图'}}</text>
       <!-- 右侧占位 -->
       <view class="nav-placeholder"></view>
     </view>

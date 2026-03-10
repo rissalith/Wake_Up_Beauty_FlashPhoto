@@ -19,8 +19,8 @@
         </view>
       </view>
       <text class="nav-title">{{i18n.appName || '醒美闪图'}}</text>
-      <view class="nav-title-wrap">
-        <image class="nav-title-img" src="{{titleImage}}" mode="heightFix"></image>
+      <view class="nav-title-wrap" wx:if="{{!titleImageError}}">
+        <image class="nav-title-img {{currentLanguage === 'en' ? 'lang-en' : 'lang-zh'}}" src="{{titleImage}}" mode="heightFix" binderror="onTitleImageError"></image>
       </view>
     </view>
   </view>
@@ -48,29 +48,26 @@
       <text class="announcement-text">{{announcement}}</text>
     </view>
 
-    <!-- 功能列表 - 两个场景横向并列 -->
-    <view class="service-section">
-      <!-- 配置加载完成后渲染 -->
-      <block wx:if="{{configLoaded}}">
-        <view class="service-grid">
-          <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}}" wx:for="{{scenePages[0]}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100">
-            <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
-              <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
-            </view>
-            <view class="service-info">
-              <text class="service-title">{{item.displayName}}</text>
-              <text class="service-desc">{{item.displayDesc}}</text>
-            </view>
+    <!-- 两个独立场景卡片 -->
+    <block wx:if="{{configLoaded}}">
+      <view class="scenes-container">
+        <view class="service-card {{item.status === 'coming_soon' ? 'disabled' : ''}}" wx:for="{{scenePages[0]}}" wx:key="id" bindtap="{{item.status === 'active' ? 'goToScene' : ''}}" data-scene="{{item.scene_key || item.id}}" hover-class="{{item.status === 'active' ? 'service-card-hover' : ''}}" hover-stay-time="100">
+          <view class="service-icon-wrap {{item.status === 'coming_soon' ? 'coming' : ''}}">
+            <image class="service-icon" src="{{item.iconUrl}}" mode="aspectFit"></image>
+          </view>
+          <view class="service-info">
+            <text class="service-title {{currentLanguage === 'en' ? 'lang-en' : ''}}">{{item.displayName}}</text>
+            <text class="service-desc {{currentLanguage === 'en' ? 'lang-en' : ''}}">{{item.displayDesc}}</text>
           </view>
         </view>
-      </block>
+      </view>
+    </block>
 
-      <!-- 加载中状态 -->
-      <view class="service-loading" wx:if="{{!configLoaded}}">
-        <view class="loading-placeholder" wx:for="{{[1,2]}}" wx:key="*this">
-          <view class="placeholder-icon"></view>
-          <view class="placeholder-text"></view>
-        </view>
+    <!-- 加载中状态 -->
+    <view class="service-loading" wx:if="{{!configLoaded}}">
+      <view class="loading-placeholder" wx:for="{{[1,2]}}" wx:key="*this">
+        <view class="placeholder-icon"></view>
+        <view class="placeholder-text"></view>
       </view>
     </view>
 

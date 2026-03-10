@@ -1,4 +1,4 @@
-let ww = wx.getSystemInfoSync().windowWidth;
+let ww = wx.getWindowInfo().windowWidth;
 
 Component({
   /**

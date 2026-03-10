@@ -27,14 +27,14 @@ Component({
 
   lifetimes: {
     attached() {
-      const systemInfo = wx.getSystemInfoSync();
+      const windowInfo = wx.getWindowInfo();
       const menuButtonInfo = wx.getMenuButtonBoundingClientRect();
 
-      const statusBarHeight = systemInfo.statusBarHeight || 20;
+      const statusBarHeight = windowInfo.statusBarHeight || 20;
       // 导航栏高度 = 胶囊按钮高度 + 上下间距
       const navBarHeight = (menuButtonInfo.height || 32) + (menuButtonInfo.top - statusBarHeight) * 2;
       // 胶囊按钮右边距
-      const menuRight = systemInfo.windowWidth - menuButtonInfo.right;
+      const menuRight = windowInfo.windowWidth - menuButtonInfo.right;
       // 胶囊按钮宽度
       const menuWidth = menuButtonInfo.width;
 
