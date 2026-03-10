@@ -114,9 +114,4 @@ export const couponsApi = {
   getStats: () => Promise.resolve({ code: 0, data: { totalUsed: 0, totalIssued: 0 } })
 }
 
-// 场景管理
-export const scenesApi = {
-  getList: () => api.get('/admin/scenes')
-}
-
 export default api

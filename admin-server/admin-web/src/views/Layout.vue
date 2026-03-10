@@ -35,14 +35,6 @@
         </el-menu-item>
 
         <el-divider style="margin: 10px 15px; border-color: rgba(255,255,255,0.1);" />
-        <div style="padding: 0 20px; color: #999; font-size: 12px; margin-bottom: 5px;">证件照配置</div>
-
-        <el-menu-item index="/scenes">
-          <el-icon><Grid /></el-icon>
-          <span>场景管理</span>
-        </el-menu-item>
-
-        <el-divider style="margin: 10px 15px; border-color: rgba(255,255,255,0.1);" />
         <div style="padding: 0 20px; color: #999; font-size: 12px; margin-bottom: 5px;">系统管理</div>
 
         <el-menu-item index="/monitor">

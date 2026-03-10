@@ -49,12 +49,6 @@ const routes = [
         meta: { title: '意见反馈' }
       },
       {
-        path: 'scenes',
-        name: 'Scenes',
-        component: () => import('../views/Scenes.vue'),
-        meta: { title: '场景管理' }
-      },
-      {
         path: 'monitor',
         name: 'Monitor',
         component: () => import('../views/Monitor.vue'),
