@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
 
 // 批量删除用户（注销）
 router.post('/batch-delete', (req, res) => {
@@ -150,20 +150,30 @@ router.post('/:userId/adjust-points', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    // 处理 points 为 NULL 的情况
+    // 扣减时检查余额是否足够
     const currentPoints = user.points || 0;
-    const newBalance = currentPoints + adjustAmount;
-
-    if (newBalance < 0) {
+    if (currentPoints + adjustAmount < 0) {
       return res.status(400).json({ code: -1, msg: '调整后余额不能为负数' });
     }
 
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, userId]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, operator) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), userId, 'admin_adjust', adjustAmount, newBalance, reason || '管理员调整', operator || 'admin']);
-
-    saveDatabase();
+    // 事务 + 原子更新，防止并发竞态
+    const newBalance = transaction(() => {
+      if (adjustAmount < 0) {
+        // 扣减：原子操作 + 防超扣
+        const result = db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND points >= ?').run(adjustAmount, userId, -adjustAmount);
+        if (result.changes === 0) {
+          throw new Error('积分不足');
+        }
+      } else {
+        // 增加：原子操作
+        db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(adjustAmount, userId);
+      }
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, operator) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), userId, 'admin_adjust', adjustAmount, updated.points, reason || '管理员调整', operator || 'admin');
+      return updated.points;
+    });
 
     res.json({
       code: 0,
