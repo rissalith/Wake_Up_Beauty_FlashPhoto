@@ -13,6 +13,25 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:3002';
 
 const { findUserByIdOrOpenid } = require('../../lib/helpers');
 
+// SQLite 事务重试（应对 SQLITE_BUSY）
+function retryTransaction(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return transaction(fn);
+    } catch (err) {
+      if (err.code === 'SQLITE_BUSY' && i < maxRetries - 1) {
+        console.warn(`[事务重试] 数据库繁忙, 第${i + 1}次重试...`);
+        const waitMs = 200 * (i + 1);
+        const sharedBuffer = new SharedArrayBuffer(4);
+        const sharedArray = new Int32Array(sharedBuffer);
+        Atomics.wait(sharedArray, 0, 0, waitMs);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 // 创建照片任务
 router.post('/create', (req, res) => {
   try {
@@ -211,6 +230,12 @@ router.post('/batch-delete', async (req, res) => {
 
 // 异步生成图片 - 提交任务后立即返回
 router.post('/generate', (req, res) => {
+  // 前置校验：确保请求体已正确解析
+  if (!req.body || typeof req.body !== 'object') {
+    console.error('[异步生图] 请求体解析异常:', typeof req.body, req.headers?.['content-type']);
+    return res.status(400).json({ code: -1, msg: '请求体解析失败' });
+  }
+
   try {
     const db = getDb();
     const {
@@ -244,7 +269,7 @@ router.post('/generate', (req, res) => {
     const photoId = uuidv4();
     const taskId = uuidv4();
 
-    const newBalance = transaction(() => {
+    const newBalance = retryTransaction(() => {
       // 原子扣减 + 防超扣
       const result = db.prepare('UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND points >= ?').run(pointsCost, user.id, pointsCost);
       if (result.changes === 0) {
@@ -361,16 +386,19 @@ router.post('/generate', (req, res) => {
     });
 
   } catch (error) {
-    console.error('异步生图接口错误:', {
+    console.error('异步生图接口错误:', error);
+    console.error('异步生图接口错误详情:', {
       message: error.message,
-      stack: error.stack,
-      type: error.constructor?.name,
       code: error.code,
+      type: error.constructor?.name,
+      stack: error.stack,
       userId: req.body?.userId,
       hasImageData: !!req.body?.imageBase64,
+      bodyKeys: req.body ? Object.keys(req.body) : 'no body',
       bodySize: req.headers?.['content-length'] || 'unknown'
     });
-    res.status(500).json({ code: -1, msg: '服务器错误' });
+    const userMsg = error.message === '积分不足' ? '醒币不足' : '服务器错误';
+    res.status(500).json({ code: -1, msg: userMsg, debug: error.message });
   }
 });
 
