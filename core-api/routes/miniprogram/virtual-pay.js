@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
 const signService = require('../../services/signService');
 
 // 创建虚拟支付订单
@@ -108,25 +108,36 @@ router.post('/deliver/:orderId', async (req, res) => {
       return res.status(404).json({ code: 404, message: '用户不存在' });
     }
 
-    const newBalance = (user.points || 0) + points;
+    // 事务 + 乐观锁：防止双重发货
+    const newBalance = transaction(() => {
+      // 乐观锁：只更新未发货的订单
+      const result = db.prepare(`
+        UPDATE virtual_pay_orders
+        SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP
+        WHERE order_id = ? AND status != 'delivered'
+      `).run(orderId);
 
-    // 更新用户积分
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, userId]);
+      if (result.changes === 0) {
+        // 订单已被其他请求发货
+        return null;
+      }
 
-    // 记录积分变动
-    dbRun(db, `
-      INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id)
-      VALUES (?, ?, 'virtual_recharge', ?, ?, '虚拟支付充值', ?)
-    `, [uuidv4(), userId, points, newBalance, orderId]);
+      // 原子更新用户积分
+      db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(points, userId);
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
 
-    // 更新订单状态
-    dbRun(db, `
-      UPDATE virtual_pay_orders
-      SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP
-      WHERE order_id = ?
-    `, [orderId]);
+      // 记录积分变动
+      db.prepare(`
+        INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id)
+        VALUES (?, ?, 'virtual_recharge', ?, ?, '虚拟支付充值', ?)
+      `).run(uuidv4(), userId, points, updated.points, orderId);
 
-    saveDatabase();
+      return updated.points;
+    });
+
+    if (newBalance === null) {
+      return res.json({ code: 200, message: '订单已发货', data: { orderId, status: 'delivered' } });
+    }
 
     console.log('[虚拟支付] 发货成功:', { orderId, points, newBalance });
 
@@ -187,24 +198,31 @@ router.post('/notify/deliver', async (req, res) => {
       return res.json({ ErrCode: 0, ErrMsg: 'success' });
     }
 
-    const newBalance = (user.points || 0) + points;
+    // 事务 + 乐观锁：防止双重发货
+    transaction(() => {
+      // 乐观锁：只更新未发货的订单
+      const result = db.prepare(`
+        UPDATE virtual_pay_orders
+        SET status = 'delivered', wx_transaction_id = ?, delivered_at = CURRENT_TIMESTAMP
+        WHERE order_id = ? AND status != 'delivered'
+      `).run(transactionId, outTradeNo);
 
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, userId]);
+      if (result.changes === 0) {
+        // 订单已被其他请求发货，跳过
+        return;
+      }
 
-    dbRun(db, `
-      INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id)
-      VALUES (?, ?, 'virtual_recharge', ?, ?, '虚拟支付充值', ?)
-    `, [uuidv4(), userId, points, newBalance, outTradeNo]);
+      // 原子更新用户积分
+      db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(points, userId);
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
 
-    dbRun(db, `
-      UPDATE virtual_pay_orders
-      SET status = 'delivered', wx_transaction_id = ?, delivered_at = CURRENT_TIMESTAMP
-      WHERE order_id = ?
-    `, [transactionId, outTradeNo]);
+      db.prepare(`
+        INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id)
+        VALUES (?, ?, 'virtual_recharge', ?, ?, '虚拟支付充值', ?)
+      `).run(uuidv4(), userId, points, updated.points, outTradeNo);
 
-    saveDatabase();
-
-    console.log('[虚拟支付] 发货成功:', { orderId: outTradeNo, points, newBalance });
+      console.log('[虚拟支付] 发货成功:', { orderId: outTradeNo, points, newBalance: updated.points });
+    });
 
     res.json({ ErrCode: 0, ErrMsg: 'success' });
   } catch (error) {

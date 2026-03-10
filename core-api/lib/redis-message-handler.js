@@ -200,22 +200,36 @@ class RedisMessageHandler {
 
       const totalPoints = points + (bonusPoints || 0);
 
-      // 更新订单状态
-      this.dbRunner(db, "UPDATE orders SET status = 'paid', updated_at = datetime('now') WHERE id = ?", [orderId]);
-      
-      // 增加用户醒币
-      this.dbRunner(db, "UPDATE users SET points = points + ?, updated_at = datetime('now') WHERE id = ?", [totalPoints, userId]);
+      // 事务保护：确保订单状态更新、积分增加、积分记录三步操作的原子性
+      const newBalance = db.transaction(() => {
+        // 乐观锁：只更新未支付的订单
+        const result = db.prepare("UPDATE orders SET status = 'paid', updated_at = datetime('now') WHERE id = ? AND status != 'paid'").run(orderId);
+        if (result.changes === 0) {
+          return null; // 订单已被其他请求处理
+        }
 
-      // 获取更新后的余额
-      const user = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
-      const newBalance = user ? user.points : totalPoints;
+        // 原子更新用户积分
+        db.prepare("UPDATE users SET points = points + ?, updated_at = datetime('now') WHERE id = ?").run(totalPoints, userId);
 
-      // 记录积分流水
-      const description = `充值 ¥${amount}` + (bonusPoints > 0 ? ` (含赠送${bonusPoints})` : '');
-      this.dbRunner(db,
-        `INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id, created_at)
-         VALUES (?, ?, 'recharge', ?, ?, ?, ?, datetime('now'))`,
-        [uuidv4(), userId, totalPoints, newBalance, description, orderId]);
+        // 获取更新后的余额
+        const user = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+        const balance = user ? user.points : totalPoints;
+
+        // 记录积分流水
+        const description = `充值 ¥${amount}` + (bonusPoints > 0 ? ` (含赠送${bonusPoints})` : '');
+        const { v4: uuidv4 } = require('uuid');
+        db.prepare(
+          `INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id, created_at)
+           VALUES (?, ?, 'recharge', ?, ?, ?, ?, datetime('now'))`
+        ).run(uuidv4(), userId, totalPoints, balance, description, orderId);
+
+        return balance;
+      })();
+
+      if (newBalance === null) {
+        const user = db.prepare('SELECT points FROM users WHERE id = ?').get(userId);
+        return { success: true, orderId, newBalance: user?.points || 0, message: '订单已处理' };
+      }
 
       this.dbSaver();
 

@@ -5,7 +5,8 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, dbGet, dbAll, saveDatabase } = require('../../config/database');
+const { getDb, dbRun, dbGet, dbAll, saveDatabase, transaction } = require('../../config/database');
+const { findUserByIdOrOpenid, getRewardConfig } = require('../../lib/helpers');
 
 // 微信小程序配置
 const WX_CONFIG = {
@@ -32,11 +33,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     // 查找用户
-    const db = getDb();
-    let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-    if (!user) {
-      user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
-    }
+    const user = findUserByIdOrOpenid(userId);
 
     if (!user) {
       return res.status(401).json({ code: 401, message: '用户不存在' });
@@ -50,16 +47,6 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// 辅助函数：通过 id 或 openid 查找用户
-function findUserByIdOrOpenid(userId) {
-  const db = getDb();
-  let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) {
-    user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
-  }
-  return user;
-}
-
 // 生成默认昵称（醒宝_XXX格式）
 function generateDefaultNickname() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -68,25 +55,6 @@ function generateDefaultNickname() {
     randomId += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return `醒宝_${randomId}`;
-}
-
-// 获取奖励配置
-function getRewardConfig(type) {
-  const db = getDb();
-  try {
-    const row = db.prepare('SELECT points, is_active, max_times FROM point_rewards WHERE type = ?').get(type);
-    if (row) {
-      return { points: row.points, isActive: row.is_active === 1, maxTimes: row.max_times };
-    }
-  } catch (e) {
-    console.error('获取奖励配置失败:', e.message);
-  }
-  const defaults = {
-    new_user: { points: 50, isActive: true, maxTimes: 1 },
-    daily_login: { points: 2, isActive: true, maxTimes: 1 },
-    invite_friend: { points: 10, isActive: true, maxTimes: -1 }
-  };
-  return defaults[type] || { points: 0, isActive: false, maxTimes: 0 };
 }
 
 // 微信登录（用code换取openid和session_key）
@@ -182,11 +150,12 @@ router.post('/login', (req, res) => {
         if (inviter) {
           const inviteReward = getRewardConfig('invite_friend');
           if (inviteReward.isActive && inviteReward.points > 0) {
-            const newInviterBalance = inviter.points + inviteReward.points;
-            dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newInviterBalance, inviterId]);
+            // 原子更新邀请者积分
+            db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(inviteReward.points, inviterId);
+            const updatedInviter = db.prepare('SELECT points FROM users WHERE id = ?').get(inviterId);
             dbRun(db,
               'INSERT INTO points_records (id, user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?, ?)',
-              [uuidv4(), inviterId, 'invite_friend', inviteReward.points, newInviterBalance, '邀请好友奖励']);
+              [uuidv4(), inviterId, 'invite_friend', inviteReward.points, updatedInviter.points, '邀请好友奖励']);
             dbRun(db,
               'INSERT INTO invites (id, inviter_id, invitee_id, status, reward_points) VALUES (?, ?, ?, ?, ?)',
               [uuidv4(), inviterId, userId, 'completed', inviteReward.points]);

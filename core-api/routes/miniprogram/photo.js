@@ -5,11 +5,13 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
 const { isCOSConfigured, extractKeyFromUrl, deleteObject, deleteObjects, uploadToUserBucket } = require('../../config/cos');
 
 // AI 服务内网地址（Docker 网络内部通信）
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:3002';
+
+const { findUserByIdOrOpenid } = require('../../lib/helpers');
 
 // 创建照片任务
 router.post('/create', (req, res) => {
@@ -211,15 +213,6 @@ router.post('/batch-delete', async (req, res) => {
 
 // ========== 异步生图接口 ==========
 
-// 辅助函数：根据 userId 或 openid 查找用户
-function findUserByIdOrOpenid(db, userId) {
-  let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) {
-    user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
-  }
-  return user;
-}
-
 // 异步生成图片 - 提交任务后立即返回
 router.post('/generate', (req, res) => {
   try {
@@ -243,7 +236,7 @@ router.post('/generate', (req, res) => {
     }
 
     // 1. 查找用户并检查积分
-    const user = findUserByIdOrOpenid(db, userId);
+    const user = findUserByIdOrOpenid(userId);
     if (!user) {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
@@ -251,22 +244,29 @@ router.post('/generate', (req, res) => {
       return res.status(400).json({ code: -1, msg: '醒币不足', data: { balance: user.points, required: pointsCost } });
     }
 
-    // 2. 扣积分
-    const newBalance = user.points - pointsCost;
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, user.id]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), user.id, 'consume', -pointsCost, newBalance, 'AI生图消费', null]);
-
-    // 3. 创建 photo_history 记录
+    // 2. 扣积分 + 创建 photo_history（事务 + 原子更新）
     const photoId = uuidv4();
     const taskId = uuidv4();
-    dbRun(db, `
-      INSERT INTO photo_history (id, user_id, task_id, scene, spec, beauty, clothing, bg_color, original_url, status, points_cost)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'generating', ?)
-    `, [photoId, user.id, taskId, scene || null, spec || null, beauty || null, clothing || null, bgColor || null, originalUrl || null, pointsCost]);
 
-    saveDatabase();
+    const newBalance = transaction(() => {
+      // 原子扣减 + 防超扣
+      const result = db.prepare('UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND points >= ?').run(pointsCost, user.id, pointsCost);
+      if (result.changes === 0) {
+        throw new Error('积分不足');
+      }
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), user.id, 'consume', -pointsCost, updated.points, 'AI生图消费', null);
+
+      // 3. 创建 photo_history 记录
+      db.prepare(`
+        INSERT INTO photo_history (id, user_id, task_id, scene, spec, beauty, clothing, bg_color, original_url, status, points_cost)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'generating', ?)
+      `).run(photoId, user.id, taskId, scene || null, spec || null, beauty || null, clothing || null, bgColor || null, originalUrl || null, pointsCost);
+
+      return updated.points;
+    });
 
     // 4. 立即返回 taskId 给前端
     res.json({
@@ -341,26 +341,23 @@ router.post('/generate', (req, res) => {
       } catch (err) {
         console.error(`[异步生图] 任务失败 taskId=${taskId}:`, err.message);
 
-        // 更新状态为失败
+        // 更新状态为失败 + 退还积分（事务 + 原子更新）
         try {
           const dbNow = getDb();
-          dbRun(dbNow, `
-            UPDATE photo_history
-            SET status = 'failed', error_msg = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `, [err.message || '生成失败', photoId]);
+          transaction(() => {
+            dbNow.prepare(`
+              UPDATE photo_history
+              SET status = 'failed', error_msg = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).run(err.message || '生成失败', photoId);
 
-          // 退还积分
-          const currentUser = dbNow.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
-          if (currentUser) {
-            const refundBalance = currentUser.points + pointsCost;
-            dbRun(dbNow, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [refundBalance, user.id]);
-            dbRun(dbNow,
-              'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-              [uuidv4(), user.id, 'refund', pointsCost, refundBalance, 'AI生图失败退还', null]);
-          }
-
-          saveDatabase();
+            // 退还积分（原子更新）
+            dbNow.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(pointsCost, user.id);
+            const currentUser = dbNow.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+            dbNow.prepare(
+              'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            ).run(uuidv4(), user.id, 'refund', pointsCost, currentUser.points, 'AI生图失败退还', null);
+          });
           console.log(`[异步生图] 已退还 ${pointsCost} 醒币给用户 ${user.id}`);
         } catch (dbErr) {
           console.error(`[异步生图] 更新失败状态或退还积分出错:`, dbErr.message);

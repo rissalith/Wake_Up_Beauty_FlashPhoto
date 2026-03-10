@@ -4,17 +4,8 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
-
-// 辅助函数
-function findUserByIdOrOpenid(userId) {
-  const db = getDb();
-  let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) {
-    user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
-  }
-  return user;
-}
+const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
+const { findUserByIdOrOpenid } = require('../../lib/helpers');
 
 // 获取积分余额
 router.get('/balance/:userId', (req, res) => {
@@ -55,13 +46,18 @@ router.post('/consume', (req, res) => {
       return res.status(400).json({ code: -2, msg: '醒币不足', data: { balance: user.points } });
     }
 
-    const newBalance = user.points - amount;
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, user.id]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), user.id, 'consume', -amount, newBalance, description || '消费', orderId || null]);
-
-    saveDatabase();
+    const newBalance = transaction(() => {
+      // 原子扣减 + 防超扣
+      const result = db.prepare('UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND points >= ?').run(amount, user.id, amount);
+      if (result.changes === 0) {
+        throw new Error('积分不足或用户不存在');
+      }
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), user.id, 'consume', -amount, updated.points, description || '消费', orderId || null);
+      return updated.points;
+    });
 
     res.json({
       code: 0,
@@ -89,13 +85,14 @@ router.post('/recharge', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    const newBalance = user.points + amount;
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, user.id]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), user.id, 'recharge', amount, newBalance, '充值', paymentId || null]);
-
-    saveDatabase();
+    const newBalance = transaction(() => {
+      db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(amount, user.id);
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), user.id, 'recharge', amount, updated.points, '充值', paymentId || null);
+      return updated.points;
+    });
 
     res.json({
       code: 0,
@@ -123,13 +120,14 @@ router.post('/refund', (req, res) => {
       return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
-    const newBalance = user.points + amount;
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, user.id]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), user.id, 'refund', amount, newBalance, description || '退还', orderId || null]);
-
-    saveDatabase();
+    const newBalance = transaction(() => {
+      db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(amount, user.id);
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), user.id, 'refund', amount, updated.points, description || '退还', orderId || null);
+      return updated.points;
+    });
 
     res.json({
       code: 0,
@@ -181,18 +179,18 @@ router.post('/grant', (req, res) => {
     const { userId, type, relatedId } = req.body;
 
     if (!userId || !type) {
-      return res.status(400).json({ code: 400, message: '参数错误' });
+      return res.status(400).json({ code: -1, msg: '参数错误' });
     }
 
     const user = findUserByIdOrOpenid(userId);
     if (!user) {
-      return res.status(404).json({ code: 404, message: '用户不存在' });
+      return res.status(404).json({ code: -1, msg: '用户不存在' });
     }
 
     // 获取奖励配置
     const rewardConfig = db.prepare('SELECT * FROM point_rewards WHERE type = ?').get(type);
     if (!rewardConfig || !rewardConfig.is_active) {
-      return res.json({ code: 200, data: { alreadyGranted: true, points: 0 } });
+      return res.json({ code: 0, data: { alreadyGranted: true, points: 0 } });
     }
 
     // 检查是否已经领取过（针对分享照片，每张照片只能领取一次）
@@ -203,7 +201,7 @@ router.post('/grant', (req, res) => {
         ).get(user.id, type, relatedId);
 
         if (existing) {
-          return res.json({ code: 200, data: { alreadyGranted: true, points: 0 } });
+          return res.json({ code: 0, data: { alreadyGranted: true, points: 0 } });
         }
       }
 
@@ -214,25 +212,26 @@ router.post('/grant', (req, res) => {
       ).get(user.id, type, today).count;
 
       if (rewardConfig.max_times > 0 && todayCount >= rewardConfig.max_times) {
-        return res.json({ code: 200, data: { alreadyGranted: true, points: 0, reason: '今日分享奖励已达上限' } });
+        return res.json({ code: 0, data: { alreadyGranted: true, points: 0, reason: '今日分享奖励已达上限' } });
       }
     }
 
-    // 发放奖励
+    // 发放奖励（事务 + 原子更新）
     const points = rewardConfig.points || 10;
-    const newBalance = user.points + points;
 
-    dbRun(db, 'UPDATE users SET points = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newBalance, user.id]);
-    dbRun(db,
-      'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [uuidv4(), user.id, type, points, newBalance, rewardConfig.description || '分享奖励', relatedId || null]);
-
-    saveDatabase();
+    const newBalance = transaction(() => {
+      db.prepare('UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(points, user.id);
+      const updated = db.prepare('SELECT points FROM users WHERE id = ?').get(user.id);
+      db.prepare(
+        'INSERT INTO points_records (id, user_id, type, amount, balance_after, description, order_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(uuidv4(), user.id, type, points, updated.points, rewardConfig.description || '分享奖励', relatedId || null);
+      return updated.points;
+    });
 
     console.log(`[积分] 发放分享奖励: userId=${user.id}, type=${type}, points=${points}, newBalance=${newBalance}`);
 
     res.json({
-      code: 200,
+      code: 0,
       data: {
         alreadyGranted: false,
         points: points,
@@ -241,7 +240,7 @@ router.post('/grant', (req, res) => {
     });
   } catch (error) {
     console.error('发放奖励错误:', error);
-    res.status(500).json({ code: 500, message: '服务器错误' });
+    res.status(500).json({ code: -1, msg: '服务器错误' });
   }
 });
 

@@ -4,28 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../../config/database');
-
-// 辅助函数
-function findUserByIdOrOpenid(userId) {
-  const db = getDb();
-  let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) {
-    user = db.prepare('SELECT * FROM users WHERE openid = ?').get(userId);
-  }
-  return user;
-}
-
-// 获取奖励配置
-function getRewardConfig(type) {
-  const db = getDb();
-  try {
-    const row = db.prepare('SELECT points, is_active, max_times FROM point_rewards WHERE type = ?').get(type);
-    if (row) {
-      return { points: row.points, isActive: row.is_active === 1, maxTimes: row.max_times };
-    }
-  } catch (e) {}
-  return { points: 10, isActive: true, maxTimes: -1 };
-}
+const { findUserByIdOrOpenid, getRewardConfig } = require('../../lib/helpers');
 
 // 获取邀请统计
 router.get('/stats/:userId', (req, res) => {

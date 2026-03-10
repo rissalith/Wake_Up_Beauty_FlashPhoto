@@ -17,9 +17,13 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // AI 服务配置
-const AI_API_KEY = process.env.AI_API_KEY || 'sk-GtmTU7PTpPmWTVurx2SPBdaRsJoDPaJDpkSgRIK8Xu6huLt8';
+const AI_API_KEY = process.env.AI_API_KEY;
 const AI_API_BASE = process.env.AI_API_BASE || 'https://api.vectorengine.ai';
 const AI_MODEL = process.env.AI_MODEL || 'gemini-3-pro-image-preview';
+
+if (!AI_API_KEY) {
+  console.error('[AI Service] 错误: AI_API_KEY 环境变量未配置，服务无法正常工作');
+}
 
 // 请求日志
 app.use((req, res, next) => {
