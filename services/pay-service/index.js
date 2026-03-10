@@ -360,8 +360,15 @@ app.post('/api/pay/notify', async (req, res) => {
   }
 });
 
-// 手动确认支付（测试用）
+// 手动确认支付（仅限管理员，需提供 ADMIN_SECRET）
 app.post('/api/pay/confirm', async (req, res) => {
+  // 鉴权：检查管理员密钥
+  const adminSecret = process.env.ADMIN_SECRET;
+  const providedSecret = req.headers['x-admin-secret'];
+  if (!adminSecret || providedSecret !== adminSecret) {
+    return res.status(403).json({ code: 403, message: '无权限：需要管理员密钥' });
+  }
+
   const { orderId } = req.body;
 
   if (!orderId) {

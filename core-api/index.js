@@ -25,8 +25,20 @@ const PORT = process.env.PORT || 3001;
 app.set('trust proxy', 1);
 
 // CORS
+const allowedOrigins = [
+  'https://pop-pub.com',
+  'https://www.pop-pub.com',
+  'http://localhost:8080'
+];
 app.use(cors({
-  origin: '*',
+  origin: function(origin, callback) {
+    // 允许无 origin 的请求（小程序、服务间调用）
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-Service']
 }));

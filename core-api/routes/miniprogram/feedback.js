@@ -65,12 +65,25 @@ router.get('/user/:userId', (req, res) => {
   }
 });
 
-// 更新反馈
+// 更新反馈（需验证是反馈提交者本人）
 router.put('/:feedbackId', (req, res) => {
   try {
     const db = getDb();
     const { feedbackId } = req.params;
-    const { content, images, contact } = req.body;
+    const { userId, content, images, contact } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ code: -1, msg: '缺少用户ID' });
+    }
+
+    // 校验反馈是否属于该用户
+    const feedback = db.prepare('SELECT user_id FROM feedbacks WHERE id = ?').get(feedbackId);
+    if (!feedback) {
+      return res.status(404).json({ code: -1, msg: '反馈不存在' });
+    }
+    if (feedback.user_id !== userId) {
+      return res.status(403).json({ code: -1, msg: '无权修改此反馈' });
+    }
 
     const imagesJson = images ? JSON.stringify(images) : null;
 
@@ -91,11 +104,25 @@ router.put('/:feedbackId', (req, res) => {
   }
 });
 
-// 删除反馈
+// 删除反馈（需验证是反馈提交者本人）
 router.delete('/:feedbackId', (req, res) => {
   try {
     const db = getDb();
     const { feedbackId } = req.params;
+    const userId = req.query.userId || req.body.userId;
+
+    if (!userId) {
+      return res.status(400).json({ code: -1, msg: '缺少用户ID' });
+    }
+
+    // 校验反馈是否属于该用户
+    const feedback = db.prepare('SELECT user_id FROM feedbacks WHERE id = ?').get(feedbackId);
+    if (!feedback) {
+      return res.status(404).json({ code: -1, msg: '反馈不存在' });
+    }
+    if (feedback.user_id !== userId) {
+      return res.status(403).json({ code: -1, msg: '无权删除此反馈' });
+    }
 
     dbRun(db, 'DELETE FROM feedbacks WHERE id = ?', [feedbackId]);
     saveDatabase();
