@@ -109,9 +109,4 @@ export const statsApi = {
   getRevenue: (params) => api.get('/stats/revenue', { params })
 }
 
-// 优惠券管理（后端暂无此接口）
-export const couponsApi = {
-  getStats: () => Promise.resolve({ code: 0, data: { totalUsed: 0, totalIssued: 0 } })
-}
-
 export default api

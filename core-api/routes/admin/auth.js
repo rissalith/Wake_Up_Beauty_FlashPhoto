@@ -9,6 +9,35 @@ const { getDb, dbRun, saveDatabase } = require('../../config/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'flashphoto-admin-jwt-secret-2024';
 
+if (!process.env.JWT_SECRET) {
+  console.warn('[Admin Auth] 警告: JWT_SECRET 环境变量未配置，正在使用不安全的默认值！请在生产环境中配置 JWT_SECRET');
+}
+
+// Admin JWT 鉴权中间件（供其他 admin 路由使用）
+function adminAuthMiddleware(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ code: -1, msg: '未提供认证信息' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    req.admin = {
+      adminId: decoded.adminId,
+      username: decoded.username,
+      role: decoded.role
+    };
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ code: -1, msg: 'Token已过期' });
+    }
+    res.status(401).json({ code: -1, msg: 'Token无效' });
+  }
+}
+
 // 管理员登录
 router.post('/login', async (req, res) => {
   try {
@@ -56,52 +85,22 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// 验证 token
-router.get('/verify', (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ code: -1, msg: '未提供认证信息' });
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    res.json({
-      code: 0,
-      data: {
-        adminId: decoded.adminId,
-        username: decoded.username,
-        role: decoded.role
-      }
-    });
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ code: -1, msg: 'Token已过期' });
-    }
-    res.status(401).json({ code: -1, msg: 'Token无效' });
-  }
+// 验证 token（复用中间件）
+router.get('/verify', adminAuthMiddleware, (req, res) => {
+  res.json({ code: 0, data: req.admin });
 });
 
-// 修改密码
-router.post('/change-password', async (req, res) => {
+// 修改密码（复用中间件）
+router.post('/change-password', adminAuthMiddleware, async (req, res) => {
   try {
     const db = getDb();
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ code: -1, msg: '未提供认证信息' });
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET);
-
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
       return res.status(400).json({ code: -1, msg: '参数不完整' });
     }
 
-    const admin = db.prepare('SELECT * FROM admins WHERE id = ?').get(decoded.adminId);
+    const admin = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.admin.adminId);
     if (!admin) {
       return res.status(404).json({ code: -1, msg: '管理员不存在' });
     }
@@ -112,7 +111,7 @@ router.post('/change-password', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    dbRun(db, 'UPDATE admins SET password = ? WHERE id = ?', [hashedPassword, decoded.adminId]);
+    dbRun(db, 'UPDATE admins SET password = ? WHERE id = ?', [hashedPassword, req.admin.adminId]);
     saveDatabase();
 
     res.json({ code: 0, msg: '密码修改成功' });
@@ -123,3 +122,4 @@ router.post('/change-password', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.adminAuthMiddleware = adminAuthMiddleware;

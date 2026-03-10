@@ -72,6 +72,7 @@ const miniprogramSecurityRoutes = require('./routes/miniprogram/security');
 
 // 后台管理路由
 const adminAuthRoutes = require('./routes/admin/auth');
+const { adminAuthMiddleware } = require('./routes/admin/auth');
 const adminUsersRoutes = require('./routes/admin/users');
 const adminStatsRoutes = require('./routes/admin/stats');
 const adminConfigRoutes = require('./routes/admin/config');
@@ -101,22 +102,22 @@ app.use('/api/security', miniprogramSecurityRoutes);
 
 // 注册后台管理路由 (带 /admin 前缀)
 app.use('/api/admin/auth', adminAuthRoutes);
-app.use('/api/admin/users', adminUsersRoutes);
-app.use('/api/admin/stats', adminStatsRoutes);
-app.use('/api/admin/config', adminConfigRoutes);
-app.use('/api/admin/scenes', adminScenesRoutes);
-app.use('/api/admin/monitor', adminMonitorRoutes);
+app.use('/api/admin/users', adminAuthMiddleware, adminUsersRoutes);
+app.use('/api/admin/stats', adminAuthMiddleware, adminStatsRoutes);
+app.use('/api/admin/config', adminAuthMiddleware, adminConfigRoutes);
+app.use('/api/admin/scenes', adminAuthMiddleware, adminScenesRoutes);
+app.use('/api/admin/monitor', adminAuthMiddleware, adminMonitorRoutes);
 
 // 兼容旧版前端 API 路径 (不带 /admin 前缀)
 app.use('/api/auth', adminAuthRoutes);
-app.use('/api/users', adminUsersRoutes);
-app.use('/api/stats', adminStatsRoutes);
-app.use('/api/scenes', adminScenesRoutes); // 场景管理
-app.use('/api/monitor', adminMonitorRoutes); // 服务监控
+app.use('/api/users', adminAuthMiddleware, adminUsersRoutes);
+app.use('/api/stats', adminAuthMiddleware, adminStatsRoutes);
+app.use('/api/scenes', adminAuthMiddleware, adminScenesRoutes);
+app.use('/api/monitor', adminAuthMiddleware, adminMonitorRoutes);
 
 // 注册额外路由（如果存在）
-if (adminTranslateRoutes) app.use('/api/translate', adminTranslateRoutes);
-if (adminPhotosRoutes) app.use('/api/photos', adminPhotosRoutes);
+if (adminTranslateRoutes) app.use('/api/translate', adminAuthMiddleware, adminTranslateRoutes);
+if (adminPhotosRoutes) app.use('/api/photos', adminAuthMiddleware, adminPhotosRoutes);
 
 // ==================== AI 服务转发路由 ====================
 
