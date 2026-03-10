@@ -1873,6 +1873,8 @@ I18nPage({
           statusCode: error.statusCode,
           code: error.code,
           errMsg: error.errMsg,
+          debug: error.data?.debug,
+          serverData: error.data,
           error: error.error ? JSON.stringify(error.error) : undefined
         }));
         const errorMsg = error.msg || error.message || t('fp_generateFailed') || '提交失败';

@@ -943,6 +943,20 @@ function createTables() {
     db.exec('ALTER TABLE users ADD COLUMN creator_id TEXT');
   } catch (e) { /* 字段可能已存在 */ }
 
+  // 为 photo_history 表添加缺失的核心字段
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN task_id TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN error_msg TEXT');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN retry_count INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+  try {
+    db.exec('ALTER TABLE photo_history ADD COLUMN points_cost INTEGER DEFAULT 0');
+  } catch (e) { /* 字段可能已存在 */ }
+
   // 为 photo_history 表添加模板相关字段
   try {
     db.exec('ALTER TABLE photo_history ADD COLUMN template_id TEXT');
