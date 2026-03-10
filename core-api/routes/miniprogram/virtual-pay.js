@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
+const { getDb, dbRun, transaction } = require('../../config/database');
 const signService = require('../../services/signService');
 
 // 创建虚拟支付订单
@@ -38,7 +38,6 @@ router.post('/create-order', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
     `, [uuidv4(), orderId, userId, openid, amount * 100, points, JSON.stringify({ userId, points })]);
 
-    saveDatabase();
 
     console.log('[虚拟支付] 创建订单:', orderId);
 
@@ -270,7 +269,6 @@ router.post('/cancel/:orderId', async (req, res) => {
     }
 
     dbRun(db, "UPDATE virtual_pay_orders SET status = 'cancelled' WHERE order_id = ?", [orderId]);
-    saveDatabase();
 
     res.json({ code: 200, message: '订单已取消' });
   } catch (error) {

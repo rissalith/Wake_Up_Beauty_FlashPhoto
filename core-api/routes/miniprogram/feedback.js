@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun } = require('../../config/database');
 
 // 提交反馈
 router.post('/submit', (req, res) => {
@@ -24,7 +24,6 @@ router.post('/submit', (req, res) => {
       VALUES (?, ?, ?, ?, ?, 'pending')
     `, [feedbackId, userId, content, imagesJson, contact || null]);
 
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -95,7 +94,6 @@ router.put('/:feedbackId', (req, res) => {
       WHERE id = ?
     `, [content || null, imagesJson, contact || null, feedbackId]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -125,7 +123,6 @@ router.delete('/:feedbackId', (req, res) => {
     }
 
     dbRun(db, 'DELETE FROM feedbacks WHERE id = ?', [feedbackId]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {

@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, dbGet, dbAll, saveDatabase, transaction } = require('../../config/database');
+const { getDb, dbRun, dbGet, dbAll, transaction } = require('../../config/database');
 const { findUserByIdOrOpenid, getRewardConfig } = require('../../lib/helpers');
 
 // 微信小程序配置
@@ -163,7 +163,6 @@ router.post('/login', (req, res) => {
         }
       }
 
-      saveDatabase();
       userObj = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     } else {
       // 老用户更新信息（包括可能新获取的 unionid）和登录时间
@@ -173,14 +172,12 @@ router.post('/login', (req, res) => {
         dbRun(db,
           'UPDATE users SET nickname = COALESCE(?, nickname), avatar_url = COALESCE(?, avatar_url), unionid = COALESCE(?, unionid), last_login_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
           [nickname || null, avatarUrl || null, unionid || null, now, userObj.id]);
-        saveDatabase();
         userObj = db.prepare('SELECT * FROM users WHERE id = ?').get(userObj.id);
       } else {
         // 即使没有其他更新，也要更新登录时间
         dbRun(db,
           'UPDATE users SET last_login_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
           [now, userObj.id]);
-        saveDatabase();
         userObj = db.prepare('SELECT * FROM users WHERE id = ?').get(userObj.id);
       }
     }
@@ -248,7 +245,6 @@ router.put('/:userId', (req, res) => {
     dbRun(db,
       'UPDATE users SET nickname = COALESCE(?, nickname), avatar_url = COALESCE(?, avatar_url), email = COALESCE(?, email), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [nickname || null, avatarUrl || null, email || null, userId]);
-    saveDatabase();
 
     const userObj = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
 
@@ -294,7 +290,6 @@ router.post('/sign-agreement', (req, res) => {
       dbRun(db, 'UPDATE users SET privacy_agreed = 1, terms_agreed = 1, agreement_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [now, user.id]);
     }
 
-    saveDatabase();
 
     const updatedUser = findUserByIdOrOpenid(user.id);
 

@@ -28,21 +28,19 @@ class RedisMessageHandler {
     this.isConnected = false;
     this.dbGetter = null; // 数据库获取函数
     this.dbRunner = null; // 数据库执行函数
-    this.dbSaver = null;  // 数据库保存函数
   }
 
   /**
    * 初始化 Redis 连接
    * @param {Function} getDb - 获取数据库实例的函数
    * @param {Function} dbRun - 执行数据库语句的函数
-   * @param {Function} saveDatabase - 保存数据库的函数
+   * 
    */
-  async connect(getDb, dbRun, saveDatabase) {
+  async connect(getDb, dbRun) {
     if (this.isConnected) return;
 
     this.dbGetter = getDb;
     this.dbRunner = dbRun;
-    this.dbSaver = saveDatabase;
 
     try {
       // 创建发布者连接
@@ -164,7 +162,6 @@ class RedisMessageHandler {
          VALUES (?, ?, ?, ?, ?, 'pending', ?, datetime('now'))`,
         [orderId, userId, amount, points, bonusPoints || 0, paymentMethod || 'wxpay']);
       
-      this.dbSaver();
 
       console.log('[Redis Handler] 创建订单成功:', orderId);
       return { success: true, orderId };
@@ -231,7 +228,6 @@ class RedisMessageHandler {
         return { success: true, orderId, newBalance: user?.points || 0, message: '订单已处理' };
       }
 
-      this.dbSaver();
 
       console.log('[Redis Handler] 完成支付成功:', { orderId, userId, totalPoints, newBalance });
       return { success: true, orderId, newBalance };

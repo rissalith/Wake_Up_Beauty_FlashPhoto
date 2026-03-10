@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun } = require('../../config/database');
 
 // 获取所有系统配置
 router.get('/', (req, res) => {
@@ -48,7 +48,6 @@ router.put('/:key', (req, res) => {
         [key, value, description || '', isPublic ? 1 : 0]);
     }
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -74,7 +73,6 @@ router.post('/batch', (req, res) => {
       }
     });
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -121,7 +119,6 @@ router.put('/rewards/:type', (req, res) => {
       WHERE type = ?`,
       [points, isActive !== undefined ? (isActive ? 1 : 0) : null, maxTimes, name, description, type]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {

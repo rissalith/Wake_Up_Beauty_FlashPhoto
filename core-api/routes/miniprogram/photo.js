@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
+const { getDb, dbRun, transaction } = require('../../config/database');
 const { isCOSConfigured, extractKeyFromUrl, deleteObject, deleteObjects, uploadToUserBucket } = require('../../config/cos');
 
 // AI 服务内网地址（Docker 网络内部通信）
@@ -30,7 +30,6 @@ router.post('/create', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'generating', ?)
     `, [photoId, userId, taskId || null, scene || null, spec || null, beauty || null, clothing || null, bgColor || null, originalUrl || null, pointsCost || 50]);
 
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -59,7 +58,6 @@ router.put('/:photoId', (req, res) => {
       WHERE id = ?
     `, [status || null, resultUrl || null, errorMsg || null, photoId]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -141,7 +139,6 @@ router.delete('/:photoId', async (req, res) => {
 
     // 删除数据库记录
     dbRun(db, 'DELETE FROM photo_history WHERE id = ?', [photoId]);
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -194,7 +191,6 @@ router.post('/batch-delete', async (req, res) => {
 
     // 删除数据库记录
     dbRun(db, `DELETE FROM photo_history WHERE id IN (${placeholders})`, photoIds);
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -332,7 +328,6 @@ router.post('/generate', (req, res) => {
             SET status = 'completed', result_url = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
           `, [uploadResult.url, photoId]);
-          saveDatabase();
 
           console.log(`[异步生图] 任务完成 taskId=${taskId}`);
         } else {

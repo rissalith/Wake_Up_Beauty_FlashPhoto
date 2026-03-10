@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
+const { getDb, dbRun, transaction } = require('../../config/database');
 
 // 批量删除用户（注销）
 router.post('/batch-delete', (req, res) => {
@@ -50,7 +50,6 @@ router.post('/batch-delete', (req, res) => {
     });
 
     const deletedCount = transaction();
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -199,7 +198,6 @@ router.post('/:userId/toggle-status', (req, res) => {
 
     const newStatus = user.status === 'active' ? 'disabled' : 'active';
     dbRun(db, 'UPDATE users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newStatus, userId]);
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -617,7 +615,6 @@ router.delete('/:userId', (req, res) => {
     });
 
     transaction();
-    saveDatabase();
 
     res.json({
       code: 0,

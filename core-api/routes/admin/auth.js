@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun } = require('../../config/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'flashphoto-admin-jwt-secret-2024';
 
@@ -61,7 +61,6 @@ router.post('/login', async (req, res) => {
 
     // 更新最后登录时间
     dbRun(db, 'UPDATE admins SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [admin.id]);
-    saveDatabase();
 
     // 生成 JWT
     const token = jwt.sign(
@@ -112,7 +111,6 @@ router.post('/change-password', adminAuthMiddleware, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     dbRun(db, 'UPDATE admins SET password = ? WHERE id = ?', [hashedPassword, req.admin.adminId]);
-    saveDatabase();
 
     res.json({ code: 0, msg: '密码修改成功' });
   } catch (error) {

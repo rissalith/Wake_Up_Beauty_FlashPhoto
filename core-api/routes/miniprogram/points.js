@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { getDb, dbRun, saveDatabase, transaction } = require('../../config/database');
+const { getDb, dbRun, transaction } = require('../../config/database');
 const { findUserByIdOrOpenid } = require('../../lib/helpers');
 
 // 获取积分余额

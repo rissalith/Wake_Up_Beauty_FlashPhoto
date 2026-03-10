@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun } = require('../../config/database');
 
 // 获取场景列表
 router.get('/', (req, res) => {
@@ -133,7 +133,6 @@ router.post('/:sceneId/phrases', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?)
     `, [sceneId, phrase, phraseEn || null, rarity || 'common', weight || 100, promptText || phrase]);
 
-    saveDatabase();
     res.json({ code: 0, msg: 'success', data: { id: result.lastInsertRowid } });
   } catch (error) {
     console.error('添加词组错误:', error);
@@ -171,7 +170,6 @@ router.post('/:sceneId/phrases/batch', (req, res) => {
     });
 
     insertMany(phrases);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success', data: { count: phrases.length } });
   } catch (error) {
@@ -203,7 +201,6 @@ router.put('/:sceneId/phrases/:id', (req, res) => {
 
     values.push(id);
     dbRun(db, `UPDATE random_phrase_pool SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -219,7 +216,6 @@ router.delete('/:sceneId/phrases/:id', (req, res) => {
     const { id } = req.params;
 
     dbRun(db, 'DELETE FROM random_phrase_pool WHERE id = ?', [id]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -263,7 +259,6 @@ router.post('/:sceneId/horse-grades', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [sceneId, gradeKey, name, nameEn || null, description || null, image || null, probability, promptText || null, sortOrder || 0]);
 
-    saveDatabase();
     res.json({ code: 0, msg: 'success', data: { id: result.lastInsertRowid } });
   } catch (error) {
     console.error('添加马品级错误:', error);
@@ -297,7 +292,6 @@ router.put('/:sceneId/horse-grades/:id', (req, res) => {
 
     values.push(id);
     dbRun(db, `UPDATE horse_grades SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -313,7 +307,6 @@ router.delete('/:sceneId/horse-grades/:id', (req, res) => {
     const { id } = req.params;
 
     dbRun(db, 'DELETE FROM horse_grades WHERE id = ?', [id]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -324,8 +317,10 @@ router.delete('/:sceneId/horse-grades/:id', (req, res) => {
 
 // ==================== 通用抽奖池 API ====================
 
-// 确保 draw_pool 表存在
+// 确保 draw_pool 表存在（懒初始化，只执行一次）
+let _drawPoolTableReady = false;
 function ensureDrawPoolTable(db) {
+  if (_drawPoolTableReady) return;
   db.exec(`
     CREATE TABLE IF NOT EXISTS draw_pool (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -341,12 +336,10 @@ function ensureDrawPoolTable(db) {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  // 创建索引（如果不存在）
   try {
     db.exec('CREATE INDEX IF NOT EXISTS idx_draw_pool_scene_step ON draw_pool(scene_id, step_key)');
-  } catch (e) {
-    // 索引可能已存在
-  }
+  } catch (e) {}
+  _drawPoolTableReady = true;
 }
 
 // 获取抽奖池列表
@@ -400,7 +393,6 @@ router.post('/:sceneId/draw-pool/:stepKey', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [sceneId, stepKey, name, nameEn || null, image || null, rarity || 'common', weight || 100, promptText || name]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success', data: { id: result.lastInsertRowid } });
   } catch (error) {
@@ -443,7 +435,6 @@ router.post('/:sceneId/draw-pool/:stepKey/batch', (req, res) => {
     });
 
     insertMany(items);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success', data: { count: items.length } });
   } catch (error) {
@@ -476,7 +467,6 @@ router.put('/:sceneId/draw-pool/:stepKey/:id', (req, res) => {
 
     values.push(id);
     dbRun(db, `UPDATE draw_pool SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -492,7 +482,6 @@ router.delete('/:sceneId/draw-pool/:stepKey/:id', (req, res) => {
     const { id } = req.params;
 
     dbRun(db, 'DELETE FROM draw_pool WHERE id = ?', [id]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -520,7 +509,6 @@ router.put('/:sceneId/draw-pool/:stepKey/batch-rarity', (req, res) => {
     const params = [rarity, weight || 100, ...ids, sceneId, stepKey];
 
     dbRun(db, sql, params);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success', data: { updated: ids.length } });
   } catch (error) {
@@ -531,8 +519,10 @@ router.put('/:sceneId/draw-pool/:stepKey/batch-rarity', (req, res) => {
 
 // ==================== 品级定义 API ====================
 
-// 确保品级表存在
+// 确保品级表存在（懒初始化，只执行一次）
+let _gradesTableReady = false;
 function ensureGradesTable(db) {
+  if (_gradesTableReady) return;
   db.exec(`
     CREATE TABLE IF NOT EXISTS draw_pool_grades (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -550,12 +540,10 @@ function ensureGradesTable(db) {
   try {
     db.exec('CREATE INDEX IF NOT EXISTS idx_draw_pool_grades_scene_step ON draw_pool_grades(scene_id, step_key)');
   } catch (e) {}
-  // 为已存在的表添加 prompt_text 字段
   try {
     db.exec('ALTER TABLE draw_pool_grades ADD COLUMN prompt_text TEXT');
-  } catch (e) {
-    // 字段已存在，忽略错误
-  }
+  } catch (e) {}
+  _gradesTableReady = true;
 }
 
 // 获取品级列表
@@ -594,7 +582,6 @@ router.post('/:sceneId/draw-pool/:stepKey/grades', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [sceneId, stepKey, name, nameEn || null, weight || 100, color || '#409eff', promptText || null, sortOrder || 0]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success', data: { id: result.lastInsertRowid } });
   } catch (error) {
@@ -626,7 +613,6 @@ router.put('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
 
     values.push(id);
     dbRun(db, `UPDATE draw_pool_grades SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -642,7 +628,6 @@ router.delete('/:sceneId/draw-pool/:stepKey/grades/:id', (req, res) => {
     const { id } = req.params;
 
     dbRun(db, 'DELETE FROM draw_pool_grades WHERE id = ?', [id]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {

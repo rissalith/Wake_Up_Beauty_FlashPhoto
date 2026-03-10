@@ -12,7 +12,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // 核心模块
-const { initDatabase, getDb, dbRun, saveDatabase } = require('./config/database');
+const { initDatabase, getDb, dbRun } = require('./config/database');
 const { redisMessageHandler } = require('./lib/redis-message-handler');
 const { cacheManager } = require('./lib/cache');
 
@@ -296,7 +296,6 @@ app.post('/api/sync/photo', (req, res) => {
       `, [photo_id, user_id, original_image || null, result_image || null, spec || null, bg_color || null, status || 'done', created_at || new Date().toISOString()]);
     }
 
-    saveDatabase();
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
     console.error('同步照片错误:', error);
@@ -401,7 +400,6 @@ app.post('/api/behavior/report', (req, res) => {
       saved += 1;
     });
 
-    saveDatabase();
     res.json({ code: 0, msg: 'success', data: { received: behaviors.length, saved } });
   } catch (error) {
     console.error('行为上报错误:', error);
@@ -472,7 +470,6 @@ app.post('/api/users/sign-agreement', (req, res) => {
       dbRun(db, 'UPDATE users SET privacy_agreed = 1, terms_agreed = 1, agreement_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [now, user.id]);
     }
 
-    saveDatabase();
 
     const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
 
@@ -1126,7 +1123,6 @@ app.post('/api/config/scenes/:sceneId/steps', (req, res) => {
       }
     });
     
-    saveDatabase();
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
     console.error('保存场景步骤错误:', error);
@@ -1145,7 +1141,6 @@ app.post('/api/config/prompts', (req, res) => {
       VALUES (?, ?, ?, ?)
     `).run(scene_id, name, template_content, JSON.stringify(variables || []));
     
-    saveDatabase();
     res.json({ code: 0, data: { id: result.lastInsertRowid } });
   } catch (error) {
     console.error('保存Prompt模板错误:', error);
@@ -1165,7 +1160,6 @@ app.put('/api/config/prompts/:id', (req, res) => {
       WHERE id = ?
     `).run(name, template_content, JSON.stringify(variables || []), id);
     
-    saveDatabase();
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
     console.error('更新Prompt模板错误:', error);
@@ -1179,7 +1173,6 @@ app.delete('/api/config/prompts/:id', (req, res) => {
     const db = getDb();
     const { id } = req.params;
     db.prepare('DELETE FROM prompt_templates WHERE id = ?').run(id);
-    saveDatabase();
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
     console.error('删除Prompt模板错误:', error);
@@ -1422,7 +1415,6 @@ app.post('/api/config/admin/scene/:sceneId/batch-save', (req, res) => {
 
     // 执行事务
     transaction();
-    saveDatabase();
 
     console.log('[batch-save] 保存成功');
     res.json({ code: 200, message: '批量保存成功' });
@@ -1500,7 +1492,6 @@ app.post('/api/config/admin/scene', (req, res) => {
       );
     }
 
-    saveDatabase();
     console.log('[save-scene] 保存成功, sceneKey:', sceneKey);
     res.json({ code: 200, message: '保存成功' });
   } catch (error) {
@@ -1520,7 +1511,6 @@ app.post('/api/config/admin/scene/status', (req, res) => {
     }
 
     db.prepare('UPDATE scenes SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE scene_key = ? OR id = ?').run(status, id, id);
-    saveDatabase();
 
     res.json({ code: 200, message: '状态更新成功' });
   } catch (error) {
@@ -1673,7 +1663,7 @@ async function startServer() {
 
     // 初始化 Redis 消息处理器
     try {
-      await redisMessageHandler.connect(getDb, dbRun, saveDatabase);
+      await redisMessageHandler.connect(getDb, dbRun);
       console.log('[Core API] Redis 消息处理器已连接');
     } catch (redisError) {
       console.warn('[Core API] Redis 连接失败，服务将在无 Redis 模式下运行:', redisError.message);

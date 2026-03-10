@@ -4,7 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const { getDb, dbRun, saveDatabase } = require('../../config/database');
+const { getDb, dbRun } = require('../../config/database');
 
 // ==================== 品级方案 CRUD ====================
 
@@ -119,7 +119,6 @@ router.post('/', (req, res) => {
       sortOrder || 0
     ]);
 
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -162,7 +161,6 @@ router.put('/:id', (req, res) => {
     values.push(id);
 
     dbRun(db, `UPDATE grade_schemes SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -198,7 +196,6 @@ router.delete('/:id', (req, res) => {
 
     // 删除方案（级联删除品级定义）
     dbRun(db, 'DELETE FROM grade_schemes WHERE id = ?', [id]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -270,7 +267,6 @@ router.post('/:id/duplicate', (req, res) => {
       );
     }
 
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -353,7 +349,6 @@ router.post('/:schemeId/grades', (req, res) => {
       sortOrder || 0
     ]);
 
-    saveDatabase();
 
     res.json({
       code: 0,
@@ -402,7 +397,6 @@ router.put('/:schemeId/grades/:gradeId', (req, res) => {
 
     values.push(gradeId);
     dbRun(db, `UPDATE grade_definitions SET ${fields.join(', ')} WHERE id = ?`, values);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -418,7 +412,6 @@ router.delete('/:schemeId/grades/:gradeId', (req, res) => {
     const { gradeId } = req.params;
 
     dbRun(db, 'DELETE FROM grade_definitions WHERE id = ?', [gradeId]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -447,7 +440,6 @@ router.put('/:schemeId/grades/reorder', (req, res) => {
     });
 
     updateMany(gradeIds);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -519,7 +511,6 @@ router.put('/mapping/:sceneId/:stepKey', (req, res) => {
       VALUES (?, ?, ?)
     `, [sceneId, stepKey, schemeId]);
 
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
@@ -535,7 +526,6 @@ router.delete('/mapping/:sceneId/:stepKey', (req, res) => {
     const { sceneId, stepKey } = req.params;
 
     dbRun(db, 'DELETE FROM step_scheme_mappings WHERE scene_id = ? AND step_key = ?', [sceneId, stepKey]);
-    saveDatabase();
 
     res.json({ code: 0, msg: 'success' });
   } catch (error) {
