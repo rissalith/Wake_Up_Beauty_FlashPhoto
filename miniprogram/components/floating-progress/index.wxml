@@ -9,7 +9,7 @@
     <!-- 图标区域 -->
     <view class="progress-icon">
       <view class="spinner" wx:if="{{!showCompleted}}"></view>
-      <view class="check-icon" wx:else></view>
+      <text class="check-icon" wx:else>✓</text>
     </view>
 
     <!-- 文字内容区 -->
