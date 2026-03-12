@@ -201,19 +201,6 @@ Page({
   },
 
   // 隐私政策弹窗关闭
-
-    if (!privacyConfirmed) {
-      // 显示隐私政策弹窗（用户不同意会退出小程序）
-      this.setData({ showPrivacyModal: true });
-    }
-
-    // 刷新其他数据
-    this.loadInviteStats();
-    this.loadRecentPointsRecords();
-    this.loadPrivacyStatus(); // 刷新隐私协议签订状态
-  },
-
-  // 隐私政策弹窗关闭
   onPrivacyModalClose() {
     this.setData({ showPrivacyModal: false });
   },
