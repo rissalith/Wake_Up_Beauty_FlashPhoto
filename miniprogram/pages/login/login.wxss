@@ -154,14 +154,15 @@
   border-radius: 24px 24px 0 0;
   margin-top: 12px;
   overflow-y: auto;
+  justify-content: flex-end;
 }
 
 /* 协议勾选区 */
 .agreement-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .agreement-item {
@@ -257,7 +258,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(124, 92, 219, 0.4);
   position: relative;
@@ -301,12 +301,6 @@
 
 .wx-login-btn.loading {
   opacity: 0.8;
-}
-
-.btn-icon {
-  width: 20px;
-  height: 20px;
-  tint-color: #fff;
 }
 
 /* 登录步骤提示 */
