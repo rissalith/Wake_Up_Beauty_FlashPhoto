@@ -127,10 +127,10 @@ INSERT OR REPLACE INTO knowledge_base (category, name, name_en, content, tags, q
     }
   ],
   "prompt_template": {
-    "template": "Generate a professional {{spec}} ID photo. Subject: {{gender}}. Background: {{background}}. Requirements: front-facing, formal attire, neutral expression, even lighting, centered composition, head occupying 55-60% of frame height.",
-    "negative_prompt": "blurry, distorted, multiple people, cropped, side view, closed eyes, watermark"
+    "template": "基于参考图生成专业{{spec}}证件照。【核心要求】必须严格保持参考图中人物的面部特征一致性，包括五官轮廓、脸型、眼睛形状、鼻子、嘴巴、肤色等，确保生成结果与本人高度相似。纵向竖版构图（高度大于宽度，宽高比约3:4），{{background}}。正面免冠，光线均匀，人物居中，采用标准证件照构图：头顶到画面顶端留有约8%-10%空间，头部（从下巴到头顶）占画面高度约55%-60%，肩部需完整露出至胸口上方位置。【重要】必须保持人物主体完整，肩膀两侧不能被画面边缘裁切。{{gender}}。",
+    "negative_prompt": "模糊, 变形, 多人, 裁切不完整, 侧脸, 闭眼, 水印, 头部过小, 头部过大, 肩膀被裁切"
   }
-}', '证件照,ID,正式,标准', 0.95);
+}', '证件照,ID,正式,标准,头身比例', 0.96);
 
 -- 职业照场景模板
 INSERT OR REPLACE INTO knowledge_base (category, name, name_en, content, tags, quality_score) VALUES
@@ -186,10 +186,10 @@ INSERT OR REPLACE INTO knowledge_base (category, name, name_en, content, tags, q
     }
   ],
   "prompt_template": {
-    "template": "Generate a professional corporate portrait. Subject: {{gender}}, {{style}}. Background: {{background}}. Style: confident pose, professional lighting, sharp focus, high-end corporate photography.",
-    "negative_prompt": "casual, unprofessional, blurry, distorted, low quality"
+    "template": "基于参考图生成专业职业照。【核心要求】必须严格保持参考图中人物的面部特征一致性，包括五官轮廓、脸型、眼睛形状、鼻子、嘴巴、肤色等，确保生成结果与本人高度相似。半身竖版构图（高度大于宽度，宽高比约3:4），{{background}}，{{style}}。正面或微侧面，自信表情，光线均匀，人物居中，采用标准职业照构图：头顶到画面顶端留有约5%-8%空间，头部（从下巴到头顶）占画面高度约40%-45%，肩膀需完整露出至胸口上方位置。【重要】必须保持人物主体完整，肩膀两侧不能被画面边缘裁切。{{gender}}。",
+    "negative_prompt": "模糊, 变形, 多人, 裁切不完整, 侧脸过度, 闭眼, 水印, 头部过小, 头部过大, 肩膀被裁切"
   }
-}', '职业照,商务,正装,LinkedIn', 0.92);
+}', '职业照,商务,正装,LinkedIn,头身比例', 0.95);
 
 -- 节日主题场景模板
 INSERT OR REPLACE INTO knowledge_base (category, name, name_en, content, tags, quality_score) VALUES
