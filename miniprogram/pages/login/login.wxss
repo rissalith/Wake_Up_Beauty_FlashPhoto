@@ -272,19 +272,17 @@
 }
 
 /* 协议文本 */
-.agreement-text {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex: 1;
-  align-items: center;
-  line-height: 1.4;
-}
-
 .agreement-label {
   font-size: 14px;
   color: #fff;
   font-weight: 500;
+  flex-shrink: 0;
+}
+
+.agreement-link-wrap {
+  padding: 4px 8px;
+  margin: -4px 0;
+  flex-shrink: 0;
 }
 
 .agreement-link {
