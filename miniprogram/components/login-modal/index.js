@@ -54,61 +54,22 @@ Component({
       });
     },
 
-    // 确认登录 - 直接调用 wx.login
-    async onLogin() {
-      const app = getApp();
-      const { i18n } = this.data;
-      this.setData({ loading: true, loginStep: i18n.loginStep1 || '正在验证微信...' });
+    // 确认登录 - 导航到独立登录页面
+    onLogin() {
+      // 关闭弹窗
+      this.triggerEvent('close');
 
-      try {
-        console.log('[Login] 开始登录流程...');
-
-        // 步骤1: 微信验证
-        this.setData({ loginStep: i18n.loginStep1 || '正在验证微信...' });
-
-        // 步骤2: 创建账户（在 userLogin 内部完成）
-        setTimeout(() => {
-          if (this.data.loading) {
-            this.setData({ loginStep: i18n.loginStep2 || '正在创建账户...' });
-          }
-        }, 800);
-
-        // 步骤3: 加载数据
-        setTimeout(() => {
-          if (this.data.loading) {
-            this.setData({ loginStep: i18n.loginStep3 || '正在加载数据...' });
-          }
-        }, 1500);
-
-        // 直接登录，不需要头像昵称
-        const userData = await app.userLogin({});
-        console.log('[Login] 登录成功:', userData);
-
-        this.setData({ loginStep: i18n.loginSuccess || '登录成功' });
-
-        wx.showToast({
-          title: i18n.loginSuccess || '登录成功',
-          icon: 'success'
-        });
-
-        // 触发登录成功事件（不触发close，由页面处理关闭）
-        this.triggerEvent('loginsuccess', userData);
-
-      } catch (error) {
-        // 打印详细错误信息便于调试
-        console.error('[Login] 登录失败:', error);
-        console.error('[Login] 错误详情:', JSON.stringify(error));
-
-        const errorMsg = error.message || error.msg || error.errMsg || '登录失败';
-        this.setData({ loginStep: '' });
-        wx.showToast({
-          title: errorMsg,
-          icon: 'none',
-          duration: 3000
-        });
-      } finally {
-        this.setData({ loading: false, loginStep: '' });
-      }
+      // 导航到登录页面
+      wx.navigateTo({
+        url: '/pages/login/login',
+        fail: (err) => {
+          console.error('[Login Modal] 导航失败:', err);
+          wx.showToast({
+            title: '页面跳转失败',
+            icon: 'none'
+          });
+        }
+      });
     },
 
     // 阻止点击穿透

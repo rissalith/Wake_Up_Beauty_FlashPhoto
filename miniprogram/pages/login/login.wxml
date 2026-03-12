@@ -1,0 +1,112 @@
+<view class="login-page">
+  <!-- 背景渐变 -->
+  <view class="login-bg"></view>
+
+  <!-- 主容器 -->
+  <view class="login-container">
+    <!-- 顶部关闭按钮 -->
+    <view class="login-header">
+      <view class="close-btn" bindtap="onClose">
+        <image src="/images/close.svg" class="close-icon"></image>
+      </view>
+    </view>
+
+    <!-- Logo 和标题 -->
+    <view class="login-logo-section">
+      <image src="{{logoUrl}}" class="login-logo"></image>
+      <text class="login-title">{{i18n.appName || '醒美闪图'}}</text>
+      <text class="login-subtitle">{{i18n.loginSubtitle || '一键生成专业证件照'}}</text>
+    </view>
+
+    <!-- 登录内容区 -->
+    <view class="login-content" wx:if="{{!showPrivacyDetail && !showTermsDetail}}">
+      <!-- 协议勾选区 -->
+      <view class="agreement-section">
+        <!-- 隐私政策勾选 -->
+        <view class="agreement-item" bindtap="togglePrivacyCheck">
+          <view class="checkbox {{privacyChecked ? 'checked' : ''}}">
+            <image wx:if="{{privacyChecked}}" src="/images/icon-check.svg" class="check-icon"></image>
+          </view>
+          <view class="agreement-text">
+            <text class="agreement-label">{{i18n.agreePrivacy || '我已阅读并同意'}}</text>
+            <text class="agreement-link" bindtap="viewPrivacyDetail" catchtap>{{i18n.privacyPolicy || '隐私政策'}}</text>
+          </view>
+        </view>
+
+        <!-- 用户协议勾选 -->
+        <view class="agreement-item" bindtap="toggleTermsCheck">
+          <view class="checkbox {{termsChecked ? 'checked' : ''}}">
+            <image wx:if="{{termsChecked}}" src="/images/icon-check.svg" class="check-icon"></image>
+          </view>
+          <view class="agreement-text">
+            <text class="agreement-label">{{i18n.agreeTerms || '我已阅读并同意'}}</text>
+            <text class="agreement-link" bindtap="viewTermsDetail" catchtap>{{i18n.userAgreement || '用户协议'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 微信登录按钮 -->
+      <view class="login-button-section">
+        <button
+          class="wx-login-btn {{loading ? 'loading' : ''}}"
+          bindtap="onWxLogin"
+          disabled="{{loading || !privacyChecked || !termsChecked}}"
+          hover-class="{{loading ? '' : 'btn-hover'}}">
+          <image src="/images/wechat.svg" class="btn-icon"></image>
+          <text>{{loading ? (loginStep || i18n.logging || '登录中...') : (i18n.wxLogin || '微信授权登录')}}</text>
+        </button>
+
+        <!-- 登录步骤提示 -->
+        <view class="login-step-hint" wx:if="{{loading && loginStep}}">
+          <view class="loading-spinner"></view>
+          <text>{{loginStep}}</text>
+        </view>
+      </view>
+
+      <!-- 底部提示 -->
+      <view class="login-footer-tip">
+        <text>{{i18n.loginTip || '登录即表示您同意上述协议'}}</text>
+      </view>
+    </view>
+
+    <!-- 隐私政策详情 -->
+    <view class="policy-detail" wx:if="{{showPrivacyDetail}}">
+      <view class="policy-header">
+        <text class="policy-title">{{i18n.privacyPolicy || '隐私政策'}}</text>
+        <view class="policy-close" bindtap="closePrivacyDetail">
+          <image src="/images/close.svg" class="close-icon"></image>
+        </view>
+      </view>
+      <scroll-view class="policy-content" scroll-y scroll-top="{{privacyScrollTop}}">
+        <view class="policy-text">
+          <text>{{privacyContent || '隐私政策内容加载中...'}}</text>
+        </view>
+      </scroll-view>
+      <view class="policy-footer">
+        <button class="policy-confirm-btn" bindtap="closePrivacyDetail">
+          {{i18n.confirm || '我已阅读'}}
+        </button>
+      </view>
+    </view>
+
+    <!-- 用户协议详情 -->
+    <view class="policy-detail" wx:if="{{showTermsDetail}}">
+      <view class="policy-header">
+        <text class="policy-title">{{i18n.userAgreement || '用户协议'}}</text>
+        <view class="policy-close" bindtap="closeTermsDetail">
+          <image src="/images/close.svg" class="close-icon"></image>
+        </view>
+      </view>
+      <scroll-view class="policy-content" scroll-y scroll-top="{{termsScrollTop}}">
+        <view class="policy-text">
+          <text>{{termsContent || '用户协议内容加载中...'}}</text>
+        </view>
+      </scroll-view>
+      <view class="policy-footer">
+        <button class="policy-confirm-btn" bindtap="closeTermsDetail">
+          {{i18n.confirm || '我已阅读'}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

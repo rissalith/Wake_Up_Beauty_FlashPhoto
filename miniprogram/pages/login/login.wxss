@@ -1,0 +1,373 @@
+/* 登录页面容器 */
+.login-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  background: #fff;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 背景渐变 */
+.login-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 0;
+}
+
+/* 主容器 */
+.login-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 顶部头部 */
+.login-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 20px;
+  height: 60px;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.3s ease;
+}
+
+.close-btn:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.close-icon {
+  width: 24px;
+  height: 24px;
+  tint-color: #fff;
+}
+
+/* Logo 和标题区 */
+.login-logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 30px;
+  color: #fff;
+}
+
+.login-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+/* 登录内容区 */
+.login-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 20px 20px;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  margin-top: 20px;
+  overflow-y: auto;
+}
+
+/* 协议勾选区 */
+.agreement-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.agreement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  transition: background 0.2s ease;
+}
+
+.agreement-item:active {
+  background: #efefef;
+}
+
+/* 复选框 */
+.checkbox {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+}
+
+.checkbox.checked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+.check-icon {
+  width: 16px;
+  height: 16px;
+  tint-color: #fff;
+}
+
+/* 协议文本 */
+.agreement-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  align-items: center;
+}
+
+.agreement-label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.agreement-link {
+  font-size: 14px;
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* 登录按钮区 */
+.login-button-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+  margin-bottom: 20px;
+}
+
+.wx-login-btn {
+  width: 100%;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.wx-login-btn:not([disabled]):active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.wx-login-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wx-login-btn.loading {
+  opacity: 0.8;
+}
+
+.btn-icon {
+  width: 20px;
+  height: 20px;
+  tint-color: #fff;
+}
+
+/* 登录步骤提示 */
+.login-step-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  color: #667eea;
+  font-size: 13px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #667eea;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 底部提示 */
+.login-footer-tip {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  padding: 12px 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* 政策详情页面 */
+.policy-detail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  border-radius: 24px 24px 0 0;
+  margin-top: 60px;
+}
+
+.policy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.policy-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.policy-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f5f5f5;
+  transition: background 0.2s ease;
+}
+
+.policy-close:active {
+  background: #efefef;
+}
+
+.policy-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.policy-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #666;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.policy-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.policy-confirm-btn {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.policy-confirm-btn:active {
+  transform: translateY(2px);
+  opacity: 0.9;
+}
+
+/* 响应式设计 */
+@media (max-height: 600px) {
+  .login-logo-section {
+    padding: 20px 20px 15px;
+  }
+
+  .login-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .login-content {
+    padding: 20px 20px 10px;
+  }
+
+  .agreement-section {
+    margin-bottom: 15px;
+  }
+
+  .wx-login-btn {
+    height: 48px;
+    font-size: 15px;
+  }
+}

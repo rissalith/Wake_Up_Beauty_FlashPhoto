@@ -713,4 +713,36 @@ router.get('/grade-schemes', (req, res) => {
   }
 });
 
+// 获取隐私政策内容
+router.get('/privacy-policy', (req, res) => {
+  try {
+    const db = getDb();
+    const policy = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'privacy_policy'").get();
+
+    res.json({
+      code: 0,
+      data: policy ? policy.config_value : '隐私政策内容加载中...'
+    });
+  } catch (error) {
+    console.error('获取隐私政策错误:', error);
+    res.status(500).json({ code: -1, msg: '获取隐私政策失败' });
+  }
+});
+
+// 获取用户协议内容
+router.get('/user-agreement', (req, res) => {
+  try {
+    const db = getDb();
+    const agreement = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'user_agreement'").get();
+
+    res.json({
+      code: 0,
+      data: agreement ? agreement.config_value : '用户协议内容加载中...'
+    });
+  } catch (error) {
+    console.error('获取用户协议错误:', error);
+    res.status(500).json({ code: -1, msg: '获取用户协议失败' });
+  }
+});
+
 module.exports = router;

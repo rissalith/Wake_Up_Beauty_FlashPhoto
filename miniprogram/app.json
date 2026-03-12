@@ -14,7 +14,8 @@
     "pages/feedback/feedback",
     "pages/feedback-submit/feedback-submit",
     "pages/webview/index",
-    "pages/video-reward/video-reward"
+    "pages/video-reward/video-reward",
+    "pages/login/login"
   ],
   "window": {
     "backgroundTextStyle": "light",
