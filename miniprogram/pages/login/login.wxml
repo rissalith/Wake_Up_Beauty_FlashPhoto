@@ -23,9 +23,7 @@
       <view class="agreement-section">
         <!-- 隐私政策勾选 -->
         <view class="agreement-item {{privacyChecked ? 'checked' : ''}}" bindtap="togglePrivacyCheck">
-          <view class="checkbox {{privacyChecked ? 'checked' : ''}}">
-            <image src="/images/icon-check.svg" class="check-icon" wx:if="{{privacyChecked}}"></image>
-          </view>
+          <view class="checkbox {{privacyChecked ? 'checked' : ''}}"></view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreePrivacy || '我已阅读并同意'}}</text>
             <text class="agreement-link" bindtap="viewPrivacyDetail" catchtap>{{i18n.privacyPolicy || '隐私政策'}}</text>
@@ -34,9 +32,7 @@
 
         <!-- 用户协议勾选 -->
         <view class="agreement-item {{termsChecked ? 'checked' : ''}}" bindtap="toggleTermsCheck">
-          <view class="checkbox {{termsChecked ? 'checked' : ''}}">
-            <image src="/images/icon-check.svg" class="check-icon" wx:if="{{termsChecked}}"></image>
-          </view>
+          <view class="checkbox {{termsChecked ? 'checked' : ''}}"></view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreeTerms || '我已阅读并同意'}}</text>
             <text class="agreement-link" bindtap="viewTermsDetail" catchtap>{{i18n.userAgreement || '用户协议'}}</text>
