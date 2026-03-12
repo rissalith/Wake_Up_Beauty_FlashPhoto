@@ -1128,6 +1128,65 @@ async function initDefaultData() {
   // 初始化默认系统配置
   const configCount = db.prepare("SELECT COUNT(*) as count FROM system_config").get().count;
   if (configCount === 0) {
+    const privacyPolicy = `隐私政策
+
+欢迎使用WakeUp FlashPhoto（以下简称"本应用"）。我们非常重视您的隐私保护。本隐私政策说明了我们如何收集、使用、披露和保护您的个人信息。
+
+1. 信息收集
+我们可能收集以下类型的信息：
+- 账户信息：包括昵称、头像、微信账号等
+- 使用数据：包括您使用本应用的方式、生成的照片等
+- 设备信息：包括设备型号、操作系统版本等
+
+2. 信息使用
+我们使用收集的信息用于：
+- 提供和改进本应用的功能和服务
+- 个性化您的使用体验
+- 进行数据分析和统计
+- 遵守法律义务
+
+3. 信息保护
+我们采取适当的技术和组织措施来保护您的个人信息安全。
+
+4. 信息共享
+我们不会将您的个人信息出售、交易或出租给第三方，除非获得您的明确同意或法律要求。
+
+5. 您的权利
+您有权访问、更正或删除您的个人信息。如有任何疑问，请联系我们。
+
+6. 政策更新
+我们可能不时更新本隐私政策。更新后的政策将在本应用中发布。`;
+
+    const userAgreement = `用户协议
+
+欢迎使用WakeUp FlashPhoto（以下简称"本应用"）。使用本应用即表示您同意本用户协议的所有条款。
+
+1. 服务描述
+本应用提供AI图片生成和编辑服务，帮助用户创建个性化的艺术照片。
+
+2. 用户责任
+- 您同意仅将本应用用于合法目的
+- 您不得上传、发布或传播任何违法、有害或冒犯性的内容
+- 您对您上传的所有内容负责
+
+3. 知识产权
+- 本应用及其所有内容（包括但不限于文本、图形、徽标等）受版权保护
+- 您生成的照片归您所有，但您同意授予我们使用权以改进服务
+
+4. 免责声明
+- 本应用按"现状"提供，不提供任何明示或暗示的保证
+- 我们不对因使用本应用而产生的任何直接或间接损害负责
+
+5. 服务条款
+- 我们保留随时修改或终止服务的权利
+- 我们保留删除违反本协议的用户账户的权利
+
+6. 协议修改
+我们可能不时更新本用户协议。继续使用本应用即表示您接受更新后的条款。
+
+7. 联系方式
+如有任何问题或疑虑，请通过应用内的反馈功能与我们联系。`;
+
     const configs = [
       ['review_mode', 'false', 'boolean', '审核模式开关', 1],
       ['maintenance_mode', 'false', 'boolean', '维护模式开关', 1],
@@ -1137,7 +1196,9 @@ async function initDefaultData() {
       ['default_scene_price', '50', 'number', '默认场景价格', 1],
       ['new_user_points', '50', 'number', '新用户赠送醒币', 0],
       ['invite_reward', '20', 'number', '邀请奖励醒币', 0],
-      ['points_per_photo', '50', 'number', '每张照片消耗', 0]
+      ['points_per_photo', '50', 'number', '每张照片消耗', 0],
+      ['privacy_policy', privacyPolicy, 'text', '隐私政策', 1],
+      ['user_agreement', userAgreement, 'text', '用户协议', 1]
     ];
     const stmt = db.prepare('INSERT INTO system_config (config_key, config_value, config_type, description, is_public) VALUES (?, ?, ?, ?, ?)');
     configs.forEach(c => stmt.run(...c));
