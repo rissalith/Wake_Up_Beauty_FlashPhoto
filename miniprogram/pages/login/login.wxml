@@ -4,16 +4,16 @@
 
   <!-- 主容器 -->
   <view class="login-container">
-    <!-- 顶部关闭按钮 -->
+    <!-- 顶部返回按钮 -->
     <view class="login-header">
-      <view class="close-btn" bindtap="onClose">
-        <image src="/images/close.svg" class="close-icon"></image>
+      <view class="back-btn" bindtap="onClose">
+        <image src="/images/icon-back-white.svg" class="back-icon"></image>
       </view>
     </view>
 
     <!-- Logo 和标题 -->
     <view class="login-logo-section">
-      <image src="{{logoUrl}}" class="login-logo"></image>
+      <image src="{{logoUrl}}" class="login-logo-img"></image>
       <text class="login-title">{{i18n.appName || '醒美闪图'}}</text>
       <text class="login-subtitle">{{i18n.loginSubtitle || '一键生成专业证件照'}}</text>
     </view>
@@ -83,7 +83,7 @@
       </scroll-view>
       <view class="policy-footer">
         <button class="policy-confirm-btn" bindtap="closePrivacyDetail">
-          {{i18n.confirm || '我已阅读'}}
+          {{i18n.backToBrowse || '返回继续浏览'}}
         </button>
       </view>
     </view>
@@ -103,7 +103,7 @@
       </scroll-view>
       <view class="policy-footer">
         <button class="policy-confirm-btn" bindtap="closeTermsDetail">
-          {{i18n.confirm || '我已阅读'}}
+          {{i18n.backToBrowse || '返回继续浏览'}}
         </button>
       </view>
     </view>
