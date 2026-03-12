@@ -9,10 +9,31 @@
   height: 100vh;
   background: linear-gradient(135deg, #d4a574 0%, #e8b686 50%, #f0c9a0 100%);
   background-size: 200% 200%;
-  animation: gradientShift 8s ease infinite, shimmer 6s ease-in-out infinite;
+  animation: gradientShift 8s ease infinite;
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(212, 165, 116, 0.3) 40%,
+    rgba(124, 92, 219, 0.2) 50%,
+    rgba(212, 165, 116, 0.3) 60%,
+    transparent 70%
+  );
+  animation: shimmerSweep 4s infinite;
+  pointer-events: none;
 }
 
 /* 背景渐变 */
@@ -32,15 +53,24 @@
   }
 }
 
-@keyframes shimmer {
+@keyframes shimmerSweep {
   0% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.1);
+    transform: translate(-100%, -100%) rotate(45deg);
   }
   100% {
-    filter: brightness(1);
+    transform: translate(100%, 100%) rotate(45deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.25) saturate(1.2);
+  }
+  100% {
+    filter: brightness(1) saturate(1);
   }
 }
 
@@ -259,12 +289,12 @@
 
 .wx-login-btn {
   width: 100%;
-  height: 56px;
+  min-height: 56px;
   background: #fff;
   color: #d4a574;
   border: none;
   border-radius: 28px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -272,7 +302,12 @@
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  line-height: 1.5;
+  padding: 12px 20px;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
 }
 
 .wx-login-btn::before {
