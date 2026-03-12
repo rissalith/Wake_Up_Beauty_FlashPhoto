@@ -1,14 +1,14 @@
 // 协议和政策相关的 API 调用
 
-const request = require('./request');
+const { api } = require('../config/api');
 
 /**
  * 获取隐私政策内容
  */
 async function getPrivacyPolicy() {
   try {
-    const res = await request.get('/api/config/privacy-policy');
-    return res.data || '';
+    const res = await api.getSystemConfig();
+    return res.data?.privacy_policy || '隐私政策加载中...';
   } catch (error) {
     console.error('[Policy API] 获取隐私政策失败:', error);
     return '隐私政策加载失败，请稍后重试';
@@ -20,8 +20,8 @@ async function getPrivacyPolicy() {
  */
 async function getUserAgreement() {
   try {
-    const res = await request.get('/api/config/user-agreement');
-    return res.data || '';
+    const res = await api.getSystemConfig();
+    return res.data?.user_agreement || '用户协议加载中...';
   } catch (error) {
     console.error('[Policy API] 获取用户协议失败:', error);
     return '用户协议加载失败，请稍后重试';
@@ -33,10 +33,12 @@ async function getUserAgreement() {
  */
 async function recordAgreement(type) {
   try {
-    await request.post('/api/user/agreement', {
-      type, // 'privacy' 或 'terms'
-      agreedAt: new Date().toISOString()
-    });
+    const userId = wx.getStorageSync('userId');
+    if (!userId) {
+      console.warn('[Policy API] 未登录，无法记录协议同意');
+      return;
+    }
+    await api.signAgreement(userId, type);
   } catch (error) {
     console.error('[Policy API] 记录协议同意失败:', error);
   }
