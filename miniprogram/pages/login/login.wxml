@@ -21,7 +21,7 @@
     </view>
 
     <!-- 登录内容区 -->
-    <view class="login-content" wx:if="{{!showPrivacyDetail && !showTermsDetail}}">
+    <view class="login-content">
       <!-- 协议勾选区 -->
       <view class="agreement-section">
         <!-- 隐私政策勾选 -->
@@ -29,7 +29,7 @@
           <view class="checkbox {{privacyChecked ? 'checked' : ''}}"></view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreePrivacy || '我已阅读并同意'}}</text>
-            <text class="agreement-link" bindtap="viewPrivacyDetail" catchtap>{{i18n.privacyPolicy || '隐私政策'}}</text>
+            <text class="agreement-link" catchtap="viewPrivacyDetail">{{i18n.privacyPolicy || '隐私政策'}}</text>
           </view>
         </view>
 
@@ -38,7 +38,7 @@
           <view class="checkbox {{termsChecked ? 'checked' : ''}}"></view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreeTerms || '我已阅读并同意'}}</text>
-            <text class="agreement-link" bindtap="viewTermsDetail" catchtap>{{i18n.userAgreement || '用户协议'}}</text>
+            <text class="agreement-link" catchtap="viewTermsDetail">{{i18n.userAgreement || '用户协议'}}</text>
           </view>
         </view>
       </view>
@@ -63,46 +63,6 @@
       <!-- 底部提示 -->
       <view class="login-footer-tip">
         <text>{{i18n.loginTip || '登录即表示您同意上述协议'}}</text>
-      </view>
-    </view>
-
-    <!-- 隐私政策详情 -->
-    <view class="policy-detail" wx:if="{{showPrivacyDetail}}">
-      <view class="policy-header">
-        <text class="policy-title">{{i18n.privacyPolicy || '隐私政策'}}</text>
-        <view class="policy-close" bindtap="closePrivacyDetail">
-          <image src="/images/close.svg" class="close-icon"></image>
-        </view>
-      </view>
-      <scroll-view class="policy-content" scroll-y scroll-top="{{privacyScrollTop}}">
-        <view class="policy-text">
-          <text>{{privacyContent || '隐私政策内容加载中...'}}</text>
-        </view>
-      </scroll-view>
-      <view class="policy-footer">
-        <button class="policy-confirm-btn" bindtap="closePrivacyDetail">
-          {{i18n.backToBrowse || '返回继续浏览'}}
-        </button>
-      </view>
-    </view>
-
-    <!-- 用户协议详情 -->
-    <view class="policy-detail" wx:if="{{showTermsDetail}}">
-      <view class="policy-header">
-        <text class="policy-title">{{i18n.userAgreement || '用户协议'}}</text>
-        <view class="policy-close" bindtap="closeTermsDetail">
-          <image src="/images/close.svg" class="close-icon"></image>
-        </view>
-      </view>
-      <scroll-view class="policy-content" scroll-y scroll-top="{{termsScrollTop}}">
-        <view class="policy-text">
-          <text>{{termsContent || '用户协议内容加载中...'}}</text>
-        </view>
-      </scroll-view>
-      <view class="policy-footer">
-        <button class="policy-confirm-btn" bindtap="closeTermsDetail">
-          {{i18n.backToBrowse || '返回继续浏览'}}
-        </button>
       </view>
     </view>
   </view>
