@@ -1,12 +1,5 @@
 <!-- 醒美闪图 - 主页面 -->
 
-<!-- 悬浮进度条组件 -->
-<floating-progress
-  topOffset="{{navBarHeight}}"
-  showReassurance="{{true}}"
-  theme="golden"
-/>
-
 <view class="page-container">
   <!-- 自定义导航栏 -->
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
@@ -142,13 +135,6 @@
   </view>
 </view>
 
-<!-- 登录弹窗 -->
-<login-modal
-  show="{{showLoginModal}}"
-  bind:close="onLoginModalClose"
-  bind:loginsuccess="onLoginSuccess"
-  bind:skip="onLoginSkip"
-/>
 
 <!-- 隐私政策弹窗 -->
 <privacy-modal

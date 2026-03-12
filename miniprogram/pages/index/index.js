@@ -9,7 +9,6 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 88,
     showPrivacyModal: false,
-    showLoginModal: false,
     showUserInfoModal: false,
     // 场景滑动
     currentPage: 0,
@@ -87,11 +86,6 @@ Page({
       };
       app.on('languageChanged', this._languageChangeHandler);
 
-      // 监听显示登录弹窗事件（从其他页面触发，如历史记录页面）
-      this._showLoginModalHandler = () => {
-        this.setData({ showLoginModal: true });
-      };
-      app.on('showLoginModal', this._showLoginModalHandler);
     }
   },
 
@@ -338,7 +332,22 @@ Page({
       return;
     }
 
-    // 直接跳转，登录检查移到场景页面生成时触发
+    // 检查登录状态
+    const app = getApp();
+    const isLoggedIn = app.globalData.isLoggedIn;
+
+    if (!isLoggedIn) {
+      // 未登录，导航到登录页面
+      wx.navigateTo({
+        url: '/pages/login/login',
+        fail: () => {
+          wx.showToast({ title: '页面跳转失败', icon: 'none' });
+        }
+      });
+      return;
+    }
+
+    // 已登录，直接跳转
     this._doNavigateToScene(scene);
   },
 
@@ -365,9 +374,6 @@ Page({
       }
       if (this._languageChangeHandler) {
         app.off('languageChanged', this._languageChangeHandler);
-      }
-      if (this._showLoginModalHandler) {
-        app.off('showLoginModal', this._showLoginModalHandler);
       }
     }
 
@@ -594,8 +600,13 @@ Page({
     app.globalData.isLoggedIn = isLoggedIn;
 
     if (!isLoggedIn) {
-      // 未登录，显示登录弹窗
-      this.setData({ showLoginModal: true });
+      // 未登录，导航到登录页面
+      wx.navigateTo({
+        url: '/pages/login/login',
+        fail: () => {
+          wx.showToast({ title: '页面跳转失败', icon: 'none' });
+        }
+      });
       this.notifyTabBarDisabled(true, '请先登录');
     } else {
       // 已登录，检查隐私政策
@@ -611,44 +622,6 @@ Page({
         disabled,
         reason: reason || (disabled ? '请先完成操作' : '')
       });
-    }
-  },
-
-  // 检查登录状态（onShow时调用）
-  // 强制模式：必须登录并签署协议
-  checkLoginStatus() {
-    // 如果正在显示弹窗，不要重复检查
-    if (this.data.showLoginModal || this.data.showPrivacyModal || this.data.showUserInfoModal) {
-      return;
-    }
-
-    const app = getApp();
-    const userId = wx.getStorageSync('userId');
-    const sessionKey = wx.getStorageSync('session_key');
-    const isLoggedIn = !!userId && !!sessionKey;
-
-    app.globalData.isLoggedIn = isLoggedIn;
-
-    if (isLoggedIn) {
-      const privacyConfirmed = wx.getStorageSync('privacyPolicyConfirmed');
-
-      if (privacyConfirmed) {
-        // 已签署协议，确保所有弹窗关闭
-        this.setData({
-          showPrivacyModal: false,
-          showLoginModal: false,
-          showUserInfoModal: false
-        });
-        this.notifyTabBarDisabled(false);
-      } else {
-        // 未签署协议，显示隐私弹窗
-        this.setData({ showPrivacyModal: true, showLoginModal: false, showUserInfoModal: false });
-        this.notifyTabBarDisabled(true, '请先同意协议');
-      }
-    } else {
-      // 未登录，显示登录弹窗
-      this.setData({ showLoginModal: true, showPrivacyModal: false, showUserInfoModal: false });
-      this.notifyTabBarDisabled(true, '请先登录');
     }
   },
 
@@ -679,57 +652,6 @@ Page({
       this.notifyTabBarDisabled(true, '请先同意协议');
     } else {
       // 都通过了，启用TabBar
-      this.notifyTabBarDisabled(false);
-    }
-  },
-
-  // 登录弹窗关闭（暂不登录 / 先逛逛）
-  // 延迟登录模式：允许关闭登录弹窗
-  onLoginModalClose() {
-    this.setData({ showLoginModal: false });
-    this._pendingScene = null;
-  },
-
-  // 用户选择稍后登录（跳过登录）
-  onLoginSkip() {
-    this.setData({ showLoginModal: false });
-    this._pendingScene = null;
-  },
-
-  // 登录成功
-  onLoginSuccess(e) {
-    const userData = e.detail || {};
-    this.setData({ showLoginModal: false });
-    
-    const pendingScene = this._pendingScene;
-    this._pendingScene = null;
-    
-    // 检查协议签署状态
-    const privacyAgreed = userData.privacyAgreed === true;
-    const termsAgreed = userData.termsAgreed === true;
-    const privacyConfirmed = (privacyAgreed && termsAgreed) || wx.getStorageSync('privacyPolicyConfirmed');
-    
-    // 检查是否为新用户（没有昵称或头像）
-    const isNewUser = !userData.nickname || !userData.avatarUrl;
-    
-    if (!privacyConfirmed) {
-      // 未签署协议，显示隐私弹窗
-      this._pendingSceneAfterPrivacy = pendingScene;
-      this._isNewUser = isNewUser;
-      this.checkPrivacyAfterLogin();
-    } else if (isNewUser) {
-      // 已签署协议但是新用户，显示用户信息设置弹窗
-      this._pendingSceneAfterPrivacy = pendingScene;
-      this.setData({ showUserInfoModal: true });
-      this.notifyTabBarDisabled(true, '请完善个人信息');
-    } else {
-      // 老用户且已签署协议，直接进入
-      if (pendingScene) {
-        const scene = this.data.activeScenes.find(s => s.scene_key === pendingScene || s.id === pendingScene);
-        if (scene) {
-          setTimeout(() => this._doNavigateToScene(scene), 300);
-        }
-      }
       this.notifyTabBarDisabled(false);
     }
   },
