@@ -212,11 +212,15 @@
 .agreement-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   padding: 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.35);
   transition: background 0.2s ease;
+}
+
+.agreement-item .checkbox {
+  margin-right: 4px;
 }
 
 .agreement-item:active {
@@ -280,7 +284,7 @@
 }
 
 .agreement-link-wrap {
-  padding: 4px 8px;
+  padding: 4px 2px;
   margin: -4px 0;
   flex-shrink: 0;
 }
