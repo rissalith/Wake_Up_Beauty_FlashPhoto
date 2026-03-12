@@ -14,7 +14,11 @@
     <!-- Logo 和标题 -->
     <view class="login-logo-section">
       <image src="{{logoUrl}}" class="login-logo-img"></image>
-      <text class="login-title">{{i18n.appName || '醒美闪图'}}</text>
+      <view class="login-title-wrapper">
+        <text class="login-title">Wake Up</text>
+        <text class="login-title">Beauty</text>
+        <text class="login-title">Flash Photo</text>
+      </view>
     </view>
 
     <!-- 登录内容区 -->
