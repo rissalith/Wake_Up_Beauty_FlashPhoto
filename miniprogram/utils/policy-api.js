@@ -1,14 +1,16 @@
 // 协议和政策相关的 API 调用
 
-const { api } = require('../config/api');
+const { api, request } = require('../config/api');
 
 /**
  * 获取隐私政策内容
  */
 async function getPrivacyPolicy() {
   try {
-    const res = await api.getSystemConfig();
-    return res.data?.privacy_policy || '隐私政策加载中...';
+    const res = await request({
+      url: '/config/privacy-policy'
+    });
+    return res.data || '隐私政策加载中...';
   } catch (error) {
     console.error('[Policy API] 获取隐私政策失败:', error);
     return '隐私政策加载失败，请稍后重试';
@@ -20,8 +22,10 @@ async function getPrivacyPolicy() {
  */
 async function getUserAgreement() {
   try {
-    const res = await api.getSystemConfig();
-    return res.data?.user_agreement || '用户协议加载中...';
+    const res = await request({
+      url: '/config/user-agreement'
+    });
+    return res.data || '用户协议加载中...';
   } catch (error) {
     console.error('[Policy API] 获取用户协议失败:', error);
     return '用户协议加载失败，请稍后重试';

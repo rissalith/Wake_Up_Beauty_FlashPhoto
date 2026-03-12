@@ -968,7 +968,7 @@ const languages = {
     tabMine: 'Me',
 
     // Home
-    appName: 'WakeUp FlashPhoto',
+    appName: 'Wake Up Beauty\nFlashPhoto',
     appSlogan: 'Upload once, get perfect photos instantly',
     selectScene: 'Select Scene',
     moreScene: 'More Scenes',
@@ -1197,7 +1197,7 @@ const languages = {
 
     // About Us Page
     about_pageTitle: 'About Us',
-    about_appName: 'WakeUp FlashPhoto',
+    about_appName: 'Wake Up Beauty\nFlashPhoto',
     about_slogan: 'Upload Once, Get Perfect Photos',
     about_intro_title: 'About',
     about_intro_content: 'FlashPhoto is an intelligent photo generation tool powered by advanced AI technology. We provide convenient, high-quality photo services for ID photos, portraits, family photos, pet portraits, wedding photos and more, allowing you to get professional-grade beautiful photos without leaving home.',

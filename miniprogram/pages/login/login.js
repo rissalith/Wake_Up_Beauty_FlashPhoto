@@ -59,17 +59,26 @@ Page({
   // 加载协议内容
   async loadPolicies() {
     try {
+      console.log('[Login] 开始加载协议内容...');
       const [privacyContent, termsContent] = await Promise.all([
         policyApi.getPrivacyPolicy(),
         policyApi.getUserAgreement()
       ]);
 
+      console.log('[Login] 隐私政策长度:', privacyContent?.length || 0);
+      console.log('[Login] 用户协议长度:', termsContent?.length || 0);
+
       this.setData({
-        privacyContent,
-        termsContent
+        privacyContent: privacyContent || '隐私政策加载失败',
+        termsContent: termsContent || '用户协议加载失败'
       });
     } catch (error) {
       console.error('[Login] 加载协议内容失败:', error);
+      // 加载失败时设置默认内容
+      this.setData({
+        privacyContent: '隐私政策加载失败，请稍后重试',
+        termsContent: '用户协议加载失败，请稍后重试'
+      });
     }
   },
 

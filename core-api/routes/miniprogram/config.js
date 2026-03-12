@@ -719,9 +719,51 @@ router.get('/privacy-policy', (req, res) => {
     const db = getDb();
     const policy = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'privacy_policy'").get();
 
+    if (!policy || !policy.config_value) {
+      // 如果数据库中没有，返回默认内容
+      const defaultPolicy = `隐私政策
+
+欢迎使用醒美闪图小程序。我们非常重视您的隐私保护。本隐私政策说明了我们如何收集、使用、披露和保护您的个人信息。
+
+1. 信息收集
+我们收集以下类型的信息：
+- 账户信息：微信昵称、头像、openid等
+- 使用数据：您使用本小程序的功能、生成的照片等
+- 设备信息：设备型号、操作系统版本等
+
+2. 信息使用
+我们使用收集的信息用于：
+- 提供和改进服务
+- 个性化用户体验
+- 技术支持和客户服务
+- 安全和欺诈防护
+
+3. 信息保护
+我们采取适当的技术和组织措施保护您的个人信息安全。
+
+4. 第三方共享
+我们不会将您的个人信息出售给第三方。我们仅在以下情况下共享信息：
+- 获得您的明确同意
+- 法律要求
+- 保护我们的权利和安全
+
+5. 数据保留
+我们仅在必要期间内保留您的个人信息。
+
+6. 您的权利
+您有权访问、更正或删除您的个人信息。
+
+7. 联系我们
+如有任何隐私相关问题，请联系我们。`;
+      return res.json({
+        code: 0,
+        data: defaultPolicy
+      });
+    }
+
     res.json({
       code: 0,
-      data: policy ? policy.config_value : '隐私政策内容加载中...'
+      data: policy.config_value
     });
   } catch (error) {
     console.error('获取隐私政策错误:', error);
@@ -735,9 +777,69 @@ router.get('/user-agreement', (req, res) => {
     const db = getDb();
     const agreement = db.prepare("SELECT config_value FROM system_config WHERE config_key = 'user_agreement'").get();
 
+    if (!agreement || !agreement.config_value) {
+      // 如果数据库中没有，返回默认内容
+      const defaultAgreement = `用户协议
+
+欢迎使用醒美闪图小程序。使用本小程序即表示您同意本用户协议的所有条款。
+
+1. 服务描述
+醒美闪图是一个AI驱动的照片生成平台，允许用户上传照片并使用AI技术生成个性化的艺术照片。
+
+2. 用户责任
+您同意：
+- 仅为合法目的使用本服务
+- 不上传违法、侵权或有害的内容
+- 不尝试破坏或干扰服务
+- 遵守所有适用的法律法规
+
+3. 知识产权
+- 您上传的照片的所有权归您所有
+- 生成的照片可供您个人使用
+- 您不得将生成的照片用于商业目的，除非获得明确授权
+
+4. 免责声明
+本服务按"现状"提供。我们不保证：
+- 服务的不间断或无错误
+- 生成照片的质量或准确性
+- 特定的结果或效果
+
+5. 责任限制
+在任何情况下，我们对因使用本服务而产生的任何间接、附带或后果性损害不承担责任。
+
+6. 服务修改
+我们保留随时修改或终止服务的权利。
+
+7. 用户账户
+您负责维护账户的机密性和安全性。您同意对账户下的所有活动负责。
+
+8. 禁止行为
+您不得：
+- 上传包含个人隐私信息的照片
+- 使用本服务进行骚扰或骚扰他人
+- 尝试获得未授权的访问权限
+- 进行任何形式的欺诈活动
+
+9. 终止
+我们可以随时因任何原因终止您的账户，包括违反本协议。
+
+10. 协议修改
+我们可能会不时修改本协议。继续使用本服务即表示您接受修改后的条款。
+
+11. 管辖法律
+本协议受相关法律管辖。
+
+12. 联系信息
+如有任何问题，请联系我们。`;
+      return res.json({
+        code: 0,
+        data: defaultAgreement
+      });
+    }
+
     res.json({
       code: 0,
-      data: agreement ? agreement.config_value : '用户协议内容加载中...'
+      data: agreement.config_value
     });
   } catch (error) {
     console.error('获取用户协议错误:', error);
