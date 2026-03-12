@@ -47,7 +47,7 @@
           bindtap="onWxLogin"
           disabled="{{loading || !privacyChecked || !termsChecked}}"
           hover-class="{{loading ? '' : 'btn-hover'}}">
-          <text>{{loading ? (loginStep || i18n.logging || '登录中...') : (i18n.wxLogin || '微信授权登录')}}</text>
+          <text>{{loading ? (loginStep || i18n.logging || '登录中...') : (i18n.wxLogin || 'Login')}}</text>
         </button>
 
         <!-- 登录步骤提示 -->

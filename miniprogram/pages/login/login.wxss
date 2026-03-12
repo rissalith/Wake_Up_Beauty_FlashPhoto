@@ -32,7 +32,7 @@
     rgba(212, 165, 116, 0.3) 60%,
     transparent 70%
   );
-  animation: shimmerSweep 4s infinite;
+  animation: shimmerSweep 8s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -56,9 +56,17 @@
 @keyframes shimmerSweep {
   0% {
     transform: translate(-100%, -100%) rotate(45deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
   }
   100% {
     transform: translate(100%, 100%) rotate(45deg);
+    opacity: 0;
   }
 }
 
@@ -275,7 +283,7 @@
 .agreement-link {
   font-size: 14px;
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: underline;
 }
 
@@ -289,12 +297,12 @@
 
 .wx-login-btn {
   width: 100%;
-  min-height: 56px;
+  height: 56px;
   background: #fff;
   color: #d4a574;
   border: none;
   border-radius: 28px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -302,12 +310,8 @@
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: visible;
-  line-height: 1.5;
-  padding: 12px 20px;
-  white-space: normal;
-  word-break: break-word;
-  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .wx-login-btn::before {
