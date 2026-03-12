@@ -289,24 +289,34 @@ Page({
           await this.deliverOrder(payParams.orderId);
         },
         fail: async (err) => {
-          console.error('[虚拟支付] 支付失败:', err);
-          this.setData({ loading: false });
+          console.error('[虚拟支付] 支付回调失败:', err);
 
-          // 取消订单
-          const reason = err.errMsg && err.errMsg.includes('cancel') ? '用户取消' : (err.errMsg || '支付失败');
-          try {
-            await api.cancelVirtualPayOrder(payParams.orderId, reason);
-          } catch (cancelErr) {
-            // 静默处理
-          }
+          // 判断是否为用户主动取消
+          const isUserCancel = err.errMsg && (
+            err.errMsg.includes('cancel') ||
+            err.errMsg.includes('取消')
+          );
 
-          if (err.errMsg && err.errMsg.includes('cancel')) {
+          if (isUserCancel) {
+            // 用户主动取消 → 安全取消订单
+            this.setData({ loading: false });
+            try {
+              await api.cancelVirtualPayOrder(payParams.orderId, '用户取消');
+            } catch (cancelErr) {
+              // 静默处理
+            }
             wx.showToast({ title: i18n.paymentCancelled || '已取消支付', icon: 'none' });
           } else {
+            // 非用户取消的失败（可能 Apple 已扣款但回调异常）
+            // 不要取消订单！改为轮询订单状态，等待微信服务器回调发货
+            console.log('[虚拟支付] 非取消类失败，尝试轮询订单状态（Apple可能已扣款）');
             wx.showToast({
-              title: err.errMsg || i18n.paymentFailed || '支付失败',
-              icon: 'none'
+              title: '支付处理中，请稍候...',
+              icon: 'none',
+              duration: 3000
             });
+            // 轮询等待微信服务器发货通知
+            await this.pollOrderStatus(payParams.orderId);
           }
         }
       });
@@ -356,14 +366,15 @@ Page({
     }
   },
 
-  // 轮询订单状态
-  async pollOrderStatus(orderId, maxRetries = 15) {
+  // 轮询订单状态（同时尝试主动发货）
+  async pollOrderStatus(orderId, maxRetries = 20) {
     const { i18n } = this.data;
 
     for (let i = 0; i < maxRetries; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5秒间隔
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2秒间隔
 
       try {
+        // 先查询订单状态
         const res = await api.queryVirtualPayOrder(orderId);
 
         if (res.data && res.data.status === 'delivered') {
@@ -389,16 +400,26 @@ Page({
         if (res.data && res.data.status === 'failed') {
           throw new Error('支付失败');
         }
+
+        // 订单仍为 pending，每隔几次尝试主动发货（Apple 可能已扣款）
+        if (res.data && res.data.status === 'pending' && i > 0 && i % 3 === 0) {
+          console.log(`[虚拟支付] 轮询第${i + 1}次，尝试主动发货:`, orderId);
+          try {
+            await api.deliverVirtualPayOrder(orderId);
+          } catch (deliverErr) {
+            // 静默处理，发货失败不影响轮询
+          }
+        }
       } catch (e) {
         // 静默处理
       }
     }
 
-    // 超时，提示用户
+    // 超时，提示用户（不取消订单，等待微信服务器回调）
     this.setData({ loading: false });
     wx.showModal({
       title: i18n.tipTitle || '提示',
-      content: '订单处理中，请稍后在订单记录中查看',
+      content: '支付正在处理中，醒币将在1-2分钟内到账。如长时间未到账，请联系客服。',
       showCancel: false
     });
   },

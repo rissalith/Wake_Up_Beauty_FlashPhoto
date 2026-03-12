@@ -264,12 +264,23 @@ router.post('/cancel/:orderId', async (req, res) => {
       return res.json({ code: 200, message: '订单不存在或已处理' });
     }
 
+    // 只允许取消 pending 状态的订单，delivered/paid 状态不可取消
     if (order.status !== 'pending') {
-      return res.json({ code: 200, message: '订单状态不允许取消' });
+      console.log(`[虚拟支付] 订单 ${orderId} 状态为 ${order.status}，不允许取消`);
+      return res.json({ code: 200, message: '订单状态不允许取消', data: { status: order.status } });
     }
 
-    dbRun(db, "UPDATE virtual_pay_orders SET status = 'cancelled' WHERE order_id = ?", [orderId]);
+    // 使用乐观锁，只取消仍为 pending 的订单（防止并发情况下误取消）
+    const result = db.prepare(
+      "UPDATE virtual_pay_orders SET status = 'cancelled' WHERE order_id = ? AND status = 'pending'"
+    ).run(orderId);
 
+    if (result.changes === 0) {
+      console.log(`[虚拟支付] 订单 ${orderId} 取消时状态已变更，跳过`);
+      return res.json({ code: 200, message: '订单状态已变更' });
+    }
+
+    console.log(`[虚拟支付] 订单 ${orderId} 已取消`);
     res.json({ code: 200, message: '订单已取消' });
   } catch (error) {
     console.error('[虚拟支付] 取消订单失败:', error);
