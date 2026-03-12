@@ -7,7 +7,9 @@
   bottom: 0;
   width: 100%;
   height: 100vh;
-  background: #fff;
+  background: linear-gradient(135deg, #d4a574 0%, #e8b686 50%, #f0c9a0 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -15,15 +17,7 @@
 
 /* 背景渐变 */
 .login-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(135deg, #d4a574 0%, #e8b686 50%, #f0c9a0 100%);
-  z-index: 0;
-  animation: gradientShift 8s ease infinite;
-  background-size: 200% 200%;
+  display: none;
 }
 
 @keyframes gradientShift {
@@ -83,13 +77,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 20px 15px;
+  padding: 60px 20px 30px;
   color: #fff;
 }
 
 .login-logo-img {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   margin-bottom: 20px;
   border-radius: 20px;
   animation: float 3s ease-in-out infinite;
@@ -143,15 +137,11 @@
 
 /* 登录内容区 */
 .login-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 12px 20px 12px;
-  background: #fff;
-  border-radius: 24px 24px 0 0;
-  margin-top: 12px;
-  overflow-y: auto;
-  justify-content: flex-end;
+  padding: 20px 20px 0;
+  background: transparent;
+  flex: 1;
 }
 
 /* 协议勾选区 */
@@ -168,12 +158,16 @@
   gap: 12px;
   padding: 12px;
   border-radius: 12px;
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.35);
   transition: background 0.2s ease;
 }
 
 .agreement-item:active {
-  background: #efefef;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.agreement-item.checked {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* 复选框 */
@@ -181,34 +175,34 @@
   width: 24px;
   height: 24px;
   min-width: 24px;
-  border: 2px solid #ddd;
+  border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.3);
   transition: all 0.2s ease;
 }
 
 .checkbox.checked {
-  background: linear-gradient(135deg, #d4a574 0%, #e8b686 100%);
-  border-color: #d4a574;
+  background: #fff;
+  border-color: #fff;
   animation: checkboxGlow 2s ease-in-out infinite;
 }
 
 @keyframes checkboxGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
   }
   50% {
-    box-shadow: 0 0 8px 2px rgba(212, 165, 116, 0.2);
+    box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
   }
 }
 
 .check-icon {
   width: 16px;
   height: 16px;
-  tint-color: #fff;
+  tint-color: #d4a574;
 }
 
 /* 协议文本 */
@@ -223,13 +217,13 @@
 
 .agreement-label {
   font-size: 14px;
-  color: #333;
+  color: #fff;
   font-weight: 500;
 }
 
 .agreement-link {
   font-size: 14px;
-  color: #d4a574;
+  color: #fff;
   font-weight: 600;
   text-decoration: underline;
 }
@@ -238,25 +232,24 @@
 .login-button-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: auto;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .wx-login-btn {
   width: 100%;
   height: 56px;
-  background: linear-gradient(135deg, #d4a574 0%, #e8b686 100%);
-  color: #fff;
+  background: #fff;
+  color: #d4a574;
   border: none;
-  border-radius: 12px;
+  border-radius: 28px;
   font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(212, 165, 116, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -271,7 +264,7 @@
   background: linear-gradient(
     45deg,
     transparent 30%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(212, 165, 116, 0.08) 50%,
     transparent 70%
   );
   animation: shine 3s infinite;
@@ -307,16 +300,16 @@
   justify-content: center;
   gap: 10px;
   padding: 12px;
-  background: #fef5e7;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  color: #d4a574;
+  color: #fff;
   font-size: 13px;
 }
 
 .loading-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid #d4a574;
+  border: 2px solid #fff;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -332,9 +325,10 @@
 .login-footer-tip {
   text-align: center;
   font-size: 12px;
-  color: #999;
-  padding: 8px 0;
-  border-top: 1px solid #f0f0f0;
+  color: #fff;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: auto;
 }
 
 /* 政策详情页面 */

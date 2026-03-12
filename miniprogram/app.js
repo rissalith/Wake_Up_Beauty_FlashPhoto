@@ -6,6 +6,31 @@ const preloader = require('./utils/preloader');
 const tracker = require('./utils/tracker');
 
 App({
+  // 事件系统
+  _eventHandlers: {},
+
+  on(eventName, handler) {
+    if (!this._eventHandlers[eventName]) {
+      this._eventHandlers[eventName] = [];
+    }
+    this._eventHandlers[eventName].push(handler);
+  },
+
+  off(eventName, handler) {
+    if (!this._eventHandlers[eventName]) return;
+    const index = this._eventHandlers[eventName].indexOf(handler);
+    if (index > -1) {
+      this._eventHandlers[eventName].splice(index, 1);
+    }
+  },
+
+  emit(eventName, ...args) {
+    if (!this._eventHandlers[eventName]) return;
+    this._eventHandlers[eventName].forEach(handler => {
+      handler(...args);
+    });
+  },
+
   onLaunch(options) {
     // 使用新 API 替代已废弃的 wx.getSystemInfoSync
     const deviceInfo = wx.getDeviceInfo();

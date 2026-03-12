@@ -15,7 +15,6 @@
     <view class="login-logo-section">
       <image src="{{logoUrl}}" class="login-logo-img"></image>
       <text class="login-title">{{i18n.appName || '醒美闪图'}}</text>
-      <text class="login-subtitle">{{i18n.loginSubtitle || '一键生成专业证件照'}}</text>
     </view>
 
     <!-- 登录内容区 -->
@@ -23,9 +22,9 @@
       <!-- 协议勾选区 -->
       <view class="agreement-section">
         <!-- 隐私政策勾选 -->
-        <view class="agreement-item" bindtap="togglePrivacyCheck">
+        <view class="agreement-item {{privacyChecked ? 'checked' : ''}}" bindtap="togglePrivacyCheck">
           <view class="checkbox {{privacyChecked ? 'checked' : ''}}">
-            <image wx:if="{{privacyChecked}}" src="/images/icon-check.svg" class="check-icon"></image>
+            <image src="/images/icon-check.svg" class="check-icon" wx:if="{{privacyChecked}}"></image>
           </view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreePrivacy || '我已阅读并同意'}}</text>
@@ -34,9 +33,9 @@
         </view>
 
         <!-- 用户协议勾选 -->
-        <view class="agreement-item" bindtap="toggleTermsCheck">
+        <view class="agreement-item {{termsChecked ? 'checked' : ''}}" bindtap="toggleTermsCheck">
           <view class="checkbox {{termsChecked ? 'checked' : ''}}">
-            <image wx:if="{{termsChecked}}" src="/images/icon-check.svg" class="check-icon"></image>
+            <image src="/images/icon-check.svg" class="check-icon" wx:if="{{termsChecked}}"></image>
           </view>
           <view class="agreement-text">
             <text class="agreement-label">{{i18n.agreeTerms || '我已阅读并同意'}}</text>
