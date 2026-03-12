@@ -9,7 +9,7 @@
   height: 100vh;
   background: linear-gradient(135deg, #d4a574 0%, #e8b686 50%, #f0c9a0 100%);
   background-size: 200% 200%;
-  animation: gradientShift 8s ease infinite;
+  animation: gradientShift 8s ease infinite, shimmer 6s ease-in-out infinite;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -29,6 +29,18 @@
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+  100% {
+    filter: brightness(1);
   }
 }
 
@@ -149,7 +161,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .agreement-item {
