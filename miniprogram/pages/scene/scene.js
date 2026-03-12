@@ -1890,9 +1890,6 @@ I18nPage({
       const submitMsg = (t('photosGenerateComplete') || '{count}张照片已提交生成').replace('{count}', submitCount);
       this.showNotice(submitMsg);
 
-      // 重置骰子状态
-      this.resetDiceSteps();
-
       // 跳转到历史页面查看结果
       setTimeout(() => {
         wx.switchTab({ url: '/pages/history/history' });

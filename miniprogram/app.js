@@ -574,40 +574,6 @@ App({
     this.emit('historyUpdated');
   },
 
-  // 简单的事件系统
-  _eventListeners: {},
-
-  // 监听事件
-  on(eventName, callback) {
-    if (!this._eventListeners[eventName]) {
-      this._eventListeners[eventName] = [];
-    }
-    this._eventListeners[eventName].push(callback);
-  },
-
-  // 取消监听
-  off(eventName, callback) {
-    if (this._eventListeners[eventName]) {
-      const index = this._eventListeners[eventName].indexOf(callback);
-      if (index > -1) {
-        this._eventListeners[eventName].splice(index, 1);
-      }
-    }
-  },
-
-  // 触发事件
-  emit(eventName, data) {
-    if (this._eventListeners[eventName]) {
-      this._eventListeners[eventName].forEach(callback => {
-        try {
-          callback(data);
-        } catch (e) {
-          // 静默处理
-        }
-      });
-    }
-  },
-
   globalData: {
     theme: null,
     language: 'zh',

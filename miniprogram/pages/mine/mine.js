@@ -37,8 +37,6 @@ Page({
     languageOptions: ['zh-CN', 'en'],
     // 多语言文本
     i18n: {},
-    // 登录弹窗
-    showLoginModal: false,
     // 隐私政策弹窗
     showPrivacyModal: false,
     // 个人资料弹窗
@@ -143,20 +141,10 @@ Page({
   // 跳转到充值页面
   goToRecharge() {
     // 埋点：点击充值
-    tracker.trackClick('recharge_entry', 'button', '充值');
+    tracker.trackClick('recharge_entry', 'button', this.data.i18n.recharge || '充值');
 
     if (!this.data.isLoggedIn) {
       this.showLoginPrompt();
-      return;
-    }
-    // iOS 平台暂时不支持充值
-    if (!this.data.showRecharge) {
-      wx.showModal({
-        title: this.data.i18n.tipTitle || '提示',
-        content: this.data.platformTips.rechargeTip || 'iOS 支付功能即将开放，敬请期待',
-        showCancel: false,
-        confirmText: this.data.i18n.confirm || '知道了'
-      });
       return;
     }
     wx.navigateTo({
@@ -167,7 +155,7 @@ Page({
   // 跳转到醒币明细页面
   goToPointsRecord() {
     // 埋点：点击醒币明细
-    tracker.trackClick('points_record_entry', 'button', '醒币明细');
+    tracker.trackClick('points_record_entry', 'button', this.data.i18n.pointsDetail || '明细');
 
     if (!this.data.isLoggedIn) {
       this.showLoginPrompt();
@@ -202,35 +190,17 @@ Page({
     this.setData({ userInfo, userId, isLoggedIn });
   },
 
-  // 点击登录 - 显示登录弹窗
+  // 点击登录 - 导航到登录页面
   wxLogin() {
-    this.setData({ showLoginModal: true });
-  },
-
-  // 登录弹窗关闭
-  onLoginModalClose() {
-    this.setData({ showLoginModal: false });
-  },
-
-  // 登录成功
-  onLoginSuccess(e) {
-    const userData = e.detail || {};
-
-    // 从本地存储读取最新的用户信息（app.js已同步）
-    const userInfo = wx.getStorageSync('userInfo') || {};
-
-    this.setData({
-      showLoginModal: false,
-      userInfo: userInfo,
-      userId: userData.userId,
-      isLoggedIn: true,
-      userPoints: userData.points || 0
+    wx.navigateTo({
+      url: '/pages/login/login',
+      fail: () => {
+        wx.showToast({ title: '页面跳转失败', icon: 'none' });
+      }
     });
+  },
 
-    // 优先使用服务器返回的协议状态，其次使用本地存储
-    const privacyAgreed = userData.privacyAgreed === true;
-    const termsAgreed = userData.termsAgreed === true;
-    const privacyConfirmed = (privacyAgreed && termsAgreed) || wx.getStorageSync('privacyPolicyConfirmed');
+  // 隐私政策弹窗关闭
 
     if (!privacyConfirmed) {
       // 显示隐私政策弹窗（用户不同意会退出小程序）
@@ -295,7 +265,8 @@ Page({
   // 加载统计数据（优先从服务器获取）
   async loadStats() {
     if (!this.data.isLoggedIn) {
-      this.setData({ stats: { totalPhotos: 0, totalSpent: '0醒币' } });
+      const pointsUnit = this.data.i18n.pointsUnit || '醒币';
+      this.setData({ stats: { totalPhotos: 0, totalSpent: `0${pointsUnit}` } });
       return;
     }
 
@@ -306,10 +277,11 @@ Page({
       // 从服务器获取用户统计
       const res = await api.getUserStats(userId);
       if (res.code === 0 || res.code === 200) {
+        const pointsUnit = this.data.i18n.pointsUnit || '醒币';
         this.setData({
           stats: {
             totalPhotos: res.data.totalPhotos || 0,
-            totalSpent: (res.data.totalSpent || 0) + '醒币'
+            totalSpent: (res.data.totalSpent || 0) + pointsUnit
           }
         });
         return;
@@ -322,10 +294,11 @@ Page({
     const history = wx.getStorageSync('photoHistory') || [];
     const totalPhotos = history.filter(item => item.status === 'done' || item.status === 'success').length;
     const totalSpent = totalPhotos * 30;
+    const pointsUnit = this.data.i18n.pointsUnit || '醒币';
     this.setData({
       stats: {
         totalPhotos,
-        totalSpent: totalSpent + '醒币'
+        totalSpent: totalSpent + pointsUnit
       }
     });
   },

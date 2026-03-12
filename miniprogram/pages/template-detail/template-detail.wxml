@@ -115,12 +115,4 @@
       <text>做同款</text>
     </view>
   </view>
-
-  <!-- 登录弹窗 -->
-  <login-modal
-    wx:if="{{showLoginModal}}"
-    show="{{showLoginModal}}"
-    bind:close="onLoginModalClose"
-    bind:success="onLoginSuccess"
-  ></login-modal>
 </view>

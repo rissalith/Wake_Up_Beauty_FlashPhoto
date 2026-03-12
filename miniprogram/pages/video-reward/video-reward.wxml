@@ -3,18 +3,18 @@
   <!-- 顶部信息卡片 -->
   <view class="info-card">
     <view class="stat-section">
-      <text class="stat-label">累计获得</text>
-      <text class="stat-value">{{totalEarned}}<text class="stat-unit">醒币</text></text>
+      <text class="stat-label">{{i18n.videoReward_totalEarned || '累计获得'}}</text>
+      <text class="stat-value">{{totalEarned}}<text class="stat-unit">{{i18n.pointsUnit || '醒币'}}</text></text>
     </view>
     <view class="divider"></view>
     <view class="stat-section">
-      <text class="stat-label">今日已获得</text>
-      <text class="stat-value highlight">{{todayCount * pointsPerVideo}}<text class="stat-unit">醒币</text></text>
+      <text class="stat-label">{{i18n.videoReward_todayEarned || '今日已获得'}}</text>
+      <text class="stat-value highlight">{{todayCount * pointsPerVideo}}<text class="stat-unit">{{i18n.pointsUnit || '醒币'}}</text></text>
     </view>
     <view class="divider"></view>
     <view class="stat-section">
-      <text class="stat-label">今日剩余</text>
-      <text class="stat-value">{{remainCount}}<text class="stat-unit">次</text></text>
+      <text class="stat-label">{{i18n.videoReward_remainCount || '今日剩余'}}</text>
+      <text class="stat-value">{{remainCount}}<text class="stat-unit">{{i18n.videoReward_times || '次'}}</text></text>
     </view>
   </view>
 
@@ -43,26 +43,26 @@
 
       <!-- 次数用完提示 -->
       <view class="exhausted-tip" wx:if="{{remainCount <= 0 && !isWatching}}">
-        <text>今日次数已用完</text>
+        <text>{{i18n.videoReward_tips || '今日次数已用完'}}</text>
       </view>
     </view>
   </view>
 
   <!-- 说明 -->
   <view class="tips-section">
-    <view class="tips-title">活动说明</view>
+    <view class="tips-title">{{i18n.videoReward_activityDesc || '活动说明'}}</view>
     <view class="tips-list">
       <view class="tip-item">
         <text class="tip-num">1</text>
-        <text class="tip-text">观看完整视频（15秒）即可获得{{pointsPerVideo}}醒币</text>
+        <text class="tip-text">{{i18n.videoReward_tip1 || '观看完整视频（15秒）即可获得'}}{{pointsPerVideo}}{{i18n.pointsUnit || '醒币'}}</text>
       </view>
       <view class="tip-item">
         <text class="tip-num">2</text>
-        <text class="tip-text">每日最多观看5次，多看多得</text>
+        <text class="tip-text">{{i18n.videoReward_tip2 || '每日最多观看5次，多看多得'}}</text>
       </view>
       <view class="tip-item">
         <text class="tip-num">3</text>
-        <text class="tip-text">醒币可用于生成AI照片</text>
+        <text class="tip-text">{{i18n.pointsUnit || '醒币'}}{{i18n.videoReward_tip3 || '可用于生成AI照片'}}</text>
       </view>
     </view>
   </view>
@@ -84,12 +84,12 @@
   </view>
   <view class="success-content">
     <view class="success-icon bounce">🎉</view>
-    <view class="success-title">恭喜获得</view>
-    <view class="success-points scale-in">+{{earnedPoints}} 醒币</view>
-    <view class="success-balance">当前余额: {{currentBalance}} 醒币</view>
+    <view class="success-title">{{i18n.videoReward_success || '恭喜获得'}}</view>
+    <view class="success-points scale-in">+{{earnedPoints}} {{i18n.pointsUnit || '醒币'}}</view>
+    <view class="success-balance">{{i18n.currentBalance || '当前余额'}}: {{currentBalance}} {{i18n.pointsUnit || '醒币'}}</view>
     <view class="success-btns">
-      <view class="success-btn continue" bindtap="continueWatch" wx:if="{{remainCount > 0}}">继续观看</view>
-      <view class="success-btn back" bindtap="closeSuccess">{{remainCount > 0 ? '返回' : '知道了'}}</view>
+      <view class="success-btn continue" bindtap="continueWatch" wx:if="{{remainCount > 0}}">{{i18n.videoReward_continue || '继续观看'}}</view>
+      <view class="success-btn back" bindtap="closeSuccess">{{remainCount > 0 ? (i18n.back || '返回') : (i18n.iKnow || '知道了')}}</view>
     </view>
   </view>
 </view>

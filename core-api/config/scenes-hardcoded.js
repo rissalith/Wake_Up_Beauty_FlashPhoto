@@ -154,7 +154,7 @@ const HARDCODED_SCENES = [
         ]
       }
     ],
-    prompt: '职业形象照，{{gender}}性，{{style}}风格，{{background}}背景，专业打光，清晰面部，商务气质'
+    prompt: '职业形象照，{{gender}}性，{{style}}风格，{{background}}背景，专业打光，清晰面部，商务气质，身体略微侧身向左45度角，头身比例1:2.5标准，展现专业气场'
   }
 ];
 

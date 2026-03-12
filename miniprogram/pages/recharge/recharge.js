@@ -1,5 +1,5 @@
 const lang = require('../../utils/lang.js');
-const { canShowRecharge, isIOS, getPlatformTips, shouldUseVirtualPayment, getPaymentMethod } = require('../../utils/platform.js');
+const { canShowRecharge, getPlatformTips, shouldUseVirtualPayment, getPaymentMethod } = require('../../utils/platform.js');
 const { api } = require('../../config/api.js');
 const tracker = require('../../utils/tracker.js');
 
@@ -20,8 +20,7 @@ Page({
     isTestMode: false,    // 测试模式关闭，使用真实支付
     // 虚拟支付相关
     isVirtualPayment: false,  // 是否使用虚拟支付
-    paymentMethod: 'normal',  // 'virtual' | 'normal'
-    isIOSPlatform: false      // 是否为 iOS 平台
+    paymentMethod: 'normal'   // 'virtual' | 'normal'
   },
 
   onLoad() {
@@ -41,14 +40,12 @@ Page({
     const platformTips = getPlatformTips();
     const isVirtualPayment = shouldUseVirtualPayment();
     const paymentMethod = getPaymentMethod();
-    const isIOSPlatform = isIOS();
 
     this.setData({
       showRecharge,
       platformTips,
       isVirtualPayment,
-      paymentMethod,
-      isIOSPlatform
+      paymentMethod
     });
   },
 

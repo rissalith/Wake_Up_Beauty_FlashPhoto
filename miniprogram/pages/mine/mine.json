@@ -1,8 +1,6 @@
 {
   "usingComponents": {
-    "login-modal": "/components/login-modal/index",
-    "privacy-modal": "/components/privacy-modal/index",
-    "floating-progress": "/components/floating-progress/index"
+    "privacy-modal": "/components/privacy-modal/index"
   },
   "navigationBarTitleText": "我的"
 }

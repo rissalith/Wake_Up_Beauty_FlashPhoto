@@ -140,10 +140,3 @@
     <view class="safe-bottom"></view>
   </scroll-view>
 </view>
-
-<!-- 登录弹窗 -->
-<login-modal
-  show="{{showLoginModal}}"
-  bind:close="onLoginModalClose"
-  bind:loginsuccess="onLoginSuccess"
-/>

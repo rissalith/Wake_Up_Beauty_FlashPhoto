@@ -9,7 +9,6 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 88,
     showPrivacyModal: false,
-    showLoginModal: false,
     showUserInfoModal: false,
     // 场景滑动
     currentPage: 0,
@@ -72,11 +71,6 @@ Page({
         this.onLanguageChanged(langCode);
       };
       app.on('languageChanged', this._languageChangeHandler);
-
-      this._showLoginModalHandler = () => {
-        this.setData({ showLoginModal: true });
-      };
-      app.on('showLoginModal', this._showLoginModalHandler);
     }
   },
 
@@ -306,9 +300,6 @@ Page({
       if (this._languageChangeHandler) {
         app.off('languageChanged', this._languageChangeHandler);
       }
-      if (this._showLoginModalHandler) {
-        app.off('showLoginModal', this._showLoginModalHandler);
-      }
     }
 
     this._cleanupMemory();
@@ -493,7 +484,10 @@ Page({
     app.globalData.isLoggedIn = isLoggedIn;
 
     if (!isLoggedIn) {
-      this.setData({ showLoginModal: true });
+      // 未登录，导航到登录页面
+      wx.navigateTo({
+        url: '/pages/login/login'
+      });
       this.notifyTabBarDisabled(true, '请先登录');
     } else {
       this.checkPrivacyAfterLogin();
@@ -511,7 +505,7 @@ Page({
   },
 
   checkLoginStatus() {
-    if (this.data.showLoginModal || this.data.showPrivacyModal || this.data.showUserInfoModal) {
+    if (this.data.showPrivacyModal || this.data.showUserInfoModal) {
       return;
     }
 
@@ -528,16 +522,18 @@ Page({
       if (privacyConfirmed) {
         this.setData({
           showPrivacyModal: false,
-          showLoginModal: false,
           showUserInfoModal: false
         });
         this.notifyTabBarDisabled(false);
       } else {
-        this.setData({ showPrivacyModal: true, showLoginModal: false, showUserInfoModal: false });
+        this.setData({ showPrivacyModal: true, showUserInfoModal: false });
         this.notifyTabBarDisabled(true, '请先同意协议');
       }
     } else {
-      this.setData({ showLoginModal: true, showPrivacyModal: false, showUserInfoModal: false });
+      // 未登录，导航到登录页面
+      wx.navigateTo({
+        url: '/pages/login/login'
+      });
       this.notifyTabBarDisabled(true, '请先登录');
     }
   },
@@ -563,48 +559,6 @@ Page({
       this.setData({ showPrivacyModal: true });
       this.notifyTabBarDisabled(true, '请先同意协议');
     } else {
-      this.notifyTabBarDisabled(false);
-    }
-  },
-
-  onLoginModalClose() {
-    this.setData({ showLoginModal: false });
-    this._pendingScene = null;
-  },
-
-  onLoginSkip() {
-    this.setData({ showLoginModal: false });
-    this._pendingScene = null;
-  },
-
-  onLoginSuccess(e) {
-    const userData = e.detail || {};
-    this.setData({ showLoginModal: false });
-
-    const pendingScene = this._pendingScene;
-    this._pendingScene = null;
-
-    const privacyAgreed = userData.privacyAgreed === true;
-    const termsAgreed = userData.termsAgreed === true;
-    const privacyConfirmed = (privacyAgreed && termsAgreed) || wx.getStorageSync('privacyPolicyConfirmed');
-
-    const isNewUser = !userData.nickname || !userData.avatarUrl;
-
-    if (!privacyConfirmed) {
-      this._pendingSceneAfterPrivacy = pendingScene;
-      this._isNewUser = isNewUser;
-      this.checkPrivacyAfterLogin();
-    } else if (isNewUser) {
-      this._pendingSceneAfterPrivacy = pendingScene;
-      this.setData({ showUserInfoModal: true });
-      this.notifyTabBarDisabled(true, '请完善个人信息');
-    } else {
-      if (pendingScene) {
-        const scene = this.data.activeScenes.find(s => s.scene_key === pendingScene || s.id === pendingScene);
-        if (scene) {
-          setTimeout(() => this._doNavigateToScene(scene), 300);
-        }
-      }
       this.notifyTabBarDisabled(false);
     }
   },

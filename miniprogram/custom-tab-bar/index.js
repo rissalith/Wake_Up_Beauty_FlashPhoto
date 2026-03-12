@@ -1,4 +1,5 @@
 const { images } = require('../config/images');
+const lang = require('../utils/lang.js');
 const HISTORY_KEY = 'photoHistory';
 
 Component({
@@ -13,10 +14,13 @@ Component({
     tabHistory: images.tabHistory,
     tabHistoryActive: images.tabHistoryActive,
     tabMine: images.tabMine,
-    tabMineActive: images.tabMineActive
+    tabMineActive: images.tabMineActive,
+    // 多语言文本
+    i18n: {}
   },
   lifetimes: {
     attached() {
+      this.loadLanguage();
       this.updateGeneratingCount();
 
       // 监听全局历史更新事件，实时刷新进度
@@ -33,12 +37,12 @@ Component({
           if (typeof data === 'object') {
             this.setData({
               disabled: !!data.disabled,
-              disabledReason: data.reason || '请先完成操作'
+              disabledReason: data.reason || lang.t('pleaseCompleteAction')
             });
           } else {
             this.setData({
               disabled: !!data,
-              disabledReason: data ? '请先完成操作' : ''
+              disabledReason: data ? lang.t('pleaseCompleteAction') : ''
             });
           }
         };
@@ -68,7 +72,7 @@ Component({
       // 禁用状态下不允许切换
       if (this.data.disabled) {
         wx.showToast({
-          title: this.data.disabledReason || '请先完成操作',
+          title: this.data.disabledReason || lang.t('pleaseCompleteAction'),
           icon: 'none'
         });
         return;
@@ -88,9 +92,10 @@ Component({
         this.setData({ generatingCount: 0 });
       }
     },
-    // 保持兼容性的空方法
+    // 加载语言设置
     loadLanguage() {
-      // 简约版 TabBar 不需要多语言切换
+      const i18n = lang.getLangData();
+      this.setData({ i18n });
     }
   }
 });

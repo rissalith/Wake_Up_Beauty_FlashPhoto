@@ -8,13 +8,6 @@
 
   <!-- 主内容 -->
   <block wx:else>
-    <!-- 悬浮进度条组件 -->
-    <floating-progress
-      topOffset="{{navBarHeight}}"
-      showReassurance="{{true}}"
-      theme="grey"
-    />
-
     <scroll-view class="main-content" scroll-y>
       <!-- 顶部提醒 -->
       <view class="top-notice {{showTopNotice ? 'show' : ''}}" wx:if="{{showTopNotice}}">
@@ -331,14 +324,6 @@
       </view>
     </view>
   </view>
-
-  <!-- 登录弹窗 -->
-  <login-modal
-    show="{{showLoginModal}}"
-    bind:close="onLoginModalClose"
-    bind:skip="onLoginModalClose"
-    bind:loginsuccess="onLoginSuccess"
-  />
 
   <!-- 隐私协议弹窗 -->
   <privacy-modal

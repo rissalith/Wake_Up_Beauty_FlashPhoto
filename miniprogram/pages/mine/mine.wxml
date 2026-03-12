@@ -1,12 +1,5 @@
 <!-- 我的页面 -->
 
-<!-- 悬浮进度条组件 -->
-<floating-progress
-  topOffset="{{navBarHeight}}"
-  showReassurance="{{true}}"
-  theme="cream"
-/>
-
 <view class="container">
   <!-- 用户信息区域 -->
   <view class="user-section-wrap">
@@ -169,14 +162,6 @@
     </view>
   </view>
 </view>
-
-<!-- 登录弹窗 -->
-<login-modal
-  show="{{showLoginModal}}"
-  bind:close="onLoginModalClose"
-  bind:skip="onLoginModalClose"
-  bind:loginsuccess="onLoginSuccess"
-/>
 
 <!-- 隐私政策弹窗 -->
 <privacy-modal

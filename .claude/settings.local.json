@@ -299,7 +299,26 @@
       "Bash(git checkout 5aa2b24 -- \"admin-server/admin-web/src/views/Scenes.vue\")",
       "Bash(npm --prefix \"c:/Users/28218/WeChatProjects/miniprogram-1/admin-server/admin-web\" run build)",
       "Bash(git add \"admin-server/admin-web/src/api/index.js\" \"admin-server/admin-web/src/router/index.js\" \"admin-server/admin-web/src/views/Assets.vue\" \"admin-server/admin-web/src/views/Layout.vue\" \"admin-server/admin-web/src/views/Scenes.vue\" \"admin-server/admin-web/src/views/AiAgent.vue\" \"admin-server/admin-web/src/views/Categories.vue\" \"admin-server/admin-web/src/views/CreatorScenes.vue\" \"admin-server/admin-web/src/views/OfficialTemplates.vue\" \"admin-server/admin-web/src/views/TemplateManagement.vue\" \"core-api/index.js\" \"core-api/routes/admin/ai-agent.js\" \"core-api/routes/admin/creator-scene-review.js\" \"core-api/routes/admin/template-review.js\" \"core-api/public/admin/index.html\" \"core-api/public/admin/assets\" \"miniprogram/app.json\" \"miniprogram/custom-tab-bar/index.js\" \"miniprogram/custom-tab-bar/index.wxml\" \"miniprogram/images/icon-ai-spark.svg\" \"miniprogram/images/icon-check-circle.svg\" \"miniprogram/images/icon-delete.svg\" \"miniprogram/images/icon-driver.svg\" \"miniprogram/images/icon-id-card.svg\" \"miniprogram/images/icon-one-inch.svg\" \"miniprogram/images/icon-passport.svg\" \"miniprogram/images/icon-two-inch.svg\" \"miniprogram/images/icon-visa.svg\" \"miniprogram/pages/creator/create-template.js\" \"miniprogram/pages/creator/create-template.wxml\" \"miniprogram/pages/creator/create-template.wxss\" \"miniprogram/pages/history/history.js\" \"miniprogram/pages/mine/mine.js\" \"miniprogram/pages/scene/scene.js\" \"miniprogram/pages/scene/scene.wxml\" \"miniprogram/pages/scene/scene.wxss\" \"miniprogram/pages/home\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git push origin main)",
+      "WebFetch(domain:xingmeishantu-1310044729.cos.ap-shanghai.myqcloud.com)",
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(sed -i \"s/const { getDb, dbRun, saveDatabase } = require/const { getDb, dbRun } = require/\" core-api/routes/miniprogram/feedback.js core-api/routes/admin/config.js core-api/routes/admin/grade-schemes.js)",
+      "Bash(sed -i \"s/const { getDb, dbRun, saveDatabase, transaction } = require/const { getDb, dbRun, transaction } = require/\" core-api/routes/miniprogram/points.js core-api/routes/miniprogram/virtual-pay.js core-api/routes/miniprogram/photo.js core-api/routes/admin/users.js)",
+      "Bash(sed -i \"s/const { getDb, dbRun, dbGet, dbAll, saveDatabase, transaction } = require/const { getDb, dbRun, dbGet, dbAll, transaction } = require/\" core-api/routes/miniprogram/user.js)",
+      "Bash(sed -i \"s/const { getDb, dbRun, saveDatabase } = require/const { getDb, dbRun } = require/\" core-api/routes/admin/auth.js core-api/routes/admin/scenes.js)",
+      "Bash(rm -f core-api/utils/timeUtil.js)",
+      "Bash(rm -f miniprogram/utils/fileSystemManager.js)",
+      "Bash(rm -f miniprogram/images/beauty.svg miniprogram/images/horse.svg miniprogram/images/palette.svg)",
+      "Bash(rm -rf miniprogram/pages/delete-account)",
+      "Bash(rmdir \"admin-server/admin-web/src/components\")",
+      "Bash(gh run:*)",
+      "Bash(npm list:*)",
+      "Bash(/tmp/fix_db_schema.sql:*)",
+      "Read(//tmp/**)",
+      "Bash(git reset:*)"
     ]
   }
 }

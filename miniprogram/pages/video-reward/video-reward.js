@@ -3,6 +3,7 @@
  */
 const { request } = require('../../config/api');
 const { getBeijingDateString } = require('../../utils/timeUtil');
+const lang = require('../../utils/lang.js');
 
 const MAX_DAILY_COUNT = 5; // 每日最多观看次数
 
@@ -18,17 +19,20 @@ Page({
     showSuccess: false,      // 是否显示成功动画
     earnedPoints: 0,         // 本次获得的醒币
     videoDuration: 15,       // 视频时长（秒）
-    countdown: 15            // 倒计时
+    countdown: 15,           // 倒计时
+    i18n: {}                 // 多语言文本
   },
 
   watchTimer: null,
 
   onLoad() {
+    this.loadLanguage();
     this.loadStatus();
   },
 
   onShow() {
     // 每次显示页面时刷新状态
+    this.loadLanguage();
     this.loadStatus();
   },
 
@@ -36,6 +40,16 @@ Page({
     if (this.watchTimer) {
       clearInterval(this.watchTimer);
     }
+  },
+
+  // 加载语言设置
+  loadLanguage() {
+    const i18n = lang.getLangData();
+    this.setData({ i18n });
+    // 动态设置导航栏标题
+    wx.setNavigationBarTitle({
+      title: i18n.videoReward_title || '看视频得醒币'
+    });
   },
 
   // 加载状态
@@ -100,7 +114,7 @@ Page({
     if (this.data.isWatching) return;
     if (this.data.remainCount <= 0) {
       wx.showToast({
-        title: '今日次数已用完',
+        title: this.data.i18n.videoReward_tips || '今日次数已用完',
         icon: 'none'
       });
       return;
@@ -109,7 +123,7 @@ Page({
     const userId = wx.getStorageSync('userId');
     if (!userId) {
       wx.showToast({
-        title: '请先登录',
+        title: this.data.i18n.pleaseLogin || '请先登录',
         icon: 'none'
       });
       return;
@@ -187,14 +201,14 @@ Page({
           todayCount: res.data?.todayCount || MAX_DAILY_COUNT
         });
         wx.showToast({
-          title: res.msg || '今日次数已用完',
+          title: res.msg || this.data.i18n.videoReward_tips || '今日次数已用完',
           icon: 'none'
         });
       } else {
         // 其他错误
         this.setData({ isWatching: false });
         wx.showToast({
-          title: res.msg || '领取失败',
+          title: res.msg || this.data.i18n.common_loadFailed || '领取失败',
           icon: 'none'
         });
       }
@@ -202,7 +216,7 @@ Page({
       console.error('[VideoReward] Claim error:', error);
       this.setData({ isWatching: false });
       wx.showToast({
-        title: '网络错误，请重试',
+        title: this.data.i18n.common_networkError || '网络错误，请重试',
         icon: 'none'
       });
     }
@@ -218,7 +232,7 @@ Page({
     if (this.data.remainCount <= 0) {
       this.setData({ showSuccess: false });
       wx.showToast({
-        title: '今日次数已用完',
+        title: this.data.i18n.videoReward_tips || '今日次数已用完',
         icon: 'none'
       });
       return;
