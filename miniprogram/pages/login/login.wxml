@@ -52,7 +52,7 @@
           bindtap="onWxLogin"
           disabled="{{loading || !privacyChecked || !termsChecked}}"
           hover-class="{{loading ? '' : 'btn-hover'}}">
-          <image src="/images/wechat.svg" class="btn-icon"></image>
+          <image src="/images/icon-login.svg" class="btn-icon"></image>
           <text>{{loading ? (loginStep || i18n.logging || '登录中...') : (i18n.wxLogin || '微信授权登录')}}</text>
         </button>
 
