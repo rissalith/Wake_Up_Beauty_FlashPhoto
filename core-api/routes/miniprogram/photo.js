@@ -315,7 +315,7 @@ router.post('/generate', (req, res) => {
             referenceWeight: referenceWeight || 0.8,
             faceSwapMode: faceSwapMode || 'replace'
           }, {
-            timeout: 180000,
+            timeout: 600000, // 10分钟超时（AI生成可能需要较长时间）
             maxContentLength: 100 * 1024 * 1024,
             maxBodyLength: 100 * 1024 * 1024
           });
@@ -326,7 +326,7 @@ router.post('/generate', (req, res) => {
             imageBase64,
             mimeType: mimeType || 'image/jpeg'
           }, {
-            timeout: 180000,
+            timeout: 600000, // 10分钟超时（AI生成可能需要较长时间）
             maxContentLength: 100 * 1024 * 1024,
             maxBodyLength: 100 * 1024 * 1024
           });
