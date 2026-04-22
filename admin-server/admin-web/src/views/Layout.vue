@@ -73,6 +73,12 @@
       <div class="admin-content">
         <router-view />
       </div>
+
+      <footer class="admin-footer">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+          沪ICP备2025155388号
+        </a>
+      </footer>
     </main>
   </div>
 </template>
@@ -116,6 +122,24 @@ const handleCommand = async (command) => {
   &.is-active {
     background: linear-gradient(90deg, rgba(232, 182, 134, 0.1) 0%, transparent 100%);
     border-right: 3px solid #E8B686;
+  }
+}
+
+.admin-footer {
+  text-align: center;
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+
+  a {
+    color: #999;
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #E8B686;
+    }
   }
 }
 </style>

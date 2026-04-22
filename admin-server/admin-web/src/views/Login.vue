@@ -49,6 +49,12 @@
           </el-button>
         </el-form-item>
       </el-form>
+
+      <div class="beian-info">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+          沪ICP备2025155388号
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -263,6 +269,24 @@ const handleLogin = async () => {
 
   &.is-focus {
     box-shadow: 0 0 0 1px #E8B686 inset;
+  }
+}
+
+.beian-info {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(232, 182, 134, 0.2);
+
+  a {
+    color: #999;
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #E8B686;
+    }
   }
 }
 </style>
