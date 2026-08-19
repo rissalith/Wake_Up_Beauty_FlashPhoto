@@ -1,7 +1,7 @@
-<img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/5c993d7d-a62c-440b-baff-fb3d119835cf" /># 醒美闪图 (FlashPhoto)
-
-基于微信小程序的 AI 图片生成应用。
+# 醒美闪图 基于微信小程序的 AI 图片生成应用。
 <img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/04547657-c629-455b-98e1-a55a22bc3149" />
+<img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/5c993d7d-a62c-440b-baff-fb3d119835cf" />
+<img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/5c993d7d-a62c-440b-baff-fb3d119835cf" />
 <img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/0e0ae77e-00bf-48e5-a0d1-dd168f43fb63" />
 <img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/89efbaba-d57b-49f6-a5a3-97bfaf7bab67" />
 <img width="520" height="980" alt="image" src="https://github.com/user-attachments/assets/2a308a34-0866-4d08-b629-a9f63271ba73" />
